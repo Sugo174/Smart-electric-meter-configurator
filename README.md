@@ -92,13 +92,13 @@ Reduce commissioning time and eliminate manual communication setup by introducin
 ![Auto Detection](assets/screenshots/Connection.PNG)
 
 ### Device Info
-![Auto Detection](assets/screenshots/Device Info.PNG)
+![Auto Detection](assets/screenshots/Device_Info.PNG)
 
 ### Date & Time
-![Auto Detection](assets/screenshots/Date & Time.PNG)
+![Auto Detection](assets/screenshots/Date&Time.PNG)
 
 ### Current Values
-![Auto Detection](assets/screenshots/Current Values.PNG)
+![Auto Detection](assets/screenshots/Current_Values.PNG)
 
 ### Devise Settings
-![Auto Detection](assets/screenshots/Devise Settings.PNG)
+![Auto Detection](assets/screenshots/Device_Settings.PNG)
