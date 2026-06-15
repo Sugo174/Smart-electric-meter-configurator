@@ -88,4 +88,17 @@ Reduce commissioning time and eliminate manual communication setup by introducin
  
 ## Media
 
-Screenshots and demo video will be added soon.
+### Connection
+![Auto Detection](assets/screenshots/Connection.PNG)
+
+### Device Info
+![Auto Detection](assets/screenshots/Device Info.PNG)
+
+### Date & Time
+![Auto Detection](assets/screenshots/Date & Time.PNG)
+
+### Current Values
+![Auto Detection](assets/screenshots/Current Values.PNG)
+
+### Devise Settings
+![Auto Detection](assets/screenshots/Devise Settings.PNG)
