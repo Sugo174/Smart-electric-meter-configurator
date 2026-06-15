@@ -1,1 +1,4 @@
-
+pyserial>=3.5
+minimalmodbus>=2.0.1
+sv_ttk>=2.3.0
+tkcalendar>=1.6.1
