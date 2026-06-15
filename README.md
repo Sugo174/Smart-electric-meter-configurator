@@ -100,5 +100,5 @@ Reduce commissioning time and eliminate manual communication setup by introducin
 ### Current Values
 ![Auto Detection](assets/screenshots/Current_Values.PNG)
 
-### Devise Settings
+### Deviсe Settings
 ![Auto Detection](assets/screenshots/Device_Settings.PNG)
