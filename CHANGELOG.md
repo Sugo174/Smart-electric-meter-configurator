@@ -11,9 +11,9 @@ All notable changes to the Smart Meter Configurator will be documented in this f
 
 ### Added
 - Multilingual interface architecture (extensible), currently supporting:
-  - 🇷🇺 Russian
-  - 🇬 English
-  - 🇳 Simplified Chinese
+  - Russian
+  - English
+  - Simplified Chinese
 - Language persistence across application sessions.
 - UI/UX enhancements, including dedicated icons for program settings.
 - Visual meter type images for selection and switching screens.
