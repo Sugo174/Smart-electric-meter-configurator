@@ -85,7 +85,13 @@ Reduce commissioning time and eliminate manual communication setup by introducin
 ✔ Multilingual Interface
  
 ✔ Ready for Field Use
- 
+
+
+## 🎥 Demo
+
+Watch the demo video in the [latest release](https://https://github.com/Sugo174/Smart-electric-meter-configurator/releases/tag/v.1.08).
+
+
 ## Media
 
 ### Connection
