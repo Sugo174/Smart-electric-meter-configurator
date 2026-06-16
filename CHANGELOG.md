@@ -2,11 +2,6 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
-## [V1.08a]
-### Added
-- Visual meter type images for selection and switching screens.
-- Dynamic window resizing upon language switch to prevent text overflow.
-
 ## [V1.08]
 ### Changed
 - Tab layout restructured to match the official "EMIS Integrator" workflow.
@@ -21,6 +16,8 @@ All notable changes to the Smart Meter Configurator will be documented in this f
   - 🇳 Simplified Chinese
 - Language persistence across application sessions.
 - UI/UX enhancements, including dedicated icons for program settings.
+- Visual meter type images for selection and switching screens.
+- Dynamic window resizing upon language switch to prevent text overflow.
 
 ## [V1.07b]
 ### Added
