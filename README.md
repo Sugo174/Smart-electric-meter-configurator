@@ -91,6 +91,8 @@ Reduce commissioning time and eliminate manual communication setup by introducin
 
 Watch the demo video in the [latest release](https://https://github.com/Sugo174/Smart-electric-meter-configurator/releases/tag/v.1.08).
 
+**Direct download:** [smart-meter-configurator-demo.mp4](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v.1.08/smart-meter-configurator-demo.mp4)
+
 
 ## Media
 
