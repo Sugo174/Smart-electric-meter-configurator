@@ -110,3 +110,7 @@ Watch the demo video in the [latest release](https://github.com/Sugo174/Smart-el
 
 ### Deviсe Settings
 ![Auto Detection](assets/screenshots/Device_Settings.PNG)
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
