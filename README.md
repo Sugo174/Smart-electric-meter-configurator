@@ -1,7 +1,18 @@
 # Smart Meter Configurator
  
 Desktop application for configuration, diagnostics, and commissioning of smart electricity meters.
- 
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Download and Run](#download-and-run)
+- [Key Features](#key-features)
+- [Technology Stack](#technology-stack)
+- [Project Goals](#project-goals)
+- [Current Status](#current-status)
+- [Media](#media)
+- [License](#license)
+
 ## Overview
  
 Smart Meter Configurator is a Python-based desktop application designed for field engineers to simplify smart meter setup, diagnostics, and maintenance.
@@ -152,26 +163,31 @@ Reduce commissioning time and eliminate manual communication setup by introducin
 
 ## Demo video
 
-Watch the demo video in the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/tag/v.1.08).
+Watch the demonstration in the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
 
 **Direct download:** [smart-meter-configurator-demo.mp4](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v.1.08/smart-meter-configurator-demo.mp4)
 
 ## Screenshots
 
-### Connection
-![Auto Detection](assets/screenshots/Connection.PNG)
+#### Connection
 
-### Device Info
-![Auto Detection](assets/screenshots/Device_Info.PNG)
+![Automatic meter connection and parameter detection](assets/screenshots/Connection.PNG)
 
-### Date & Time
-![Auto Detection](assets/screenshots/Date&Time.PNG)
+#### Device Information
 
-### Current Values
-![Auto Detection](assets/screenshots/Current_Values.PNG)
+![Connected smart meter information](assets/screenshots/Device_Info.PNG)
 
-### Deviсe Settings
-![Auto Detection](assets/screenshots/Device_Settings.PNG)
+#### Date and Time
+
+![Smart meter date and time configuration](assets/screenshots/Date&Time.PNG)
+
+#### Current Values
+
+![Real-time electrical measurements](assets/screenshots/Current_Values.PNG)
+
+#### Device Settings
+
+![Smart meter configuration settings](assets/screenshots/Device_Settings.PNG)
 
 ## License
 
