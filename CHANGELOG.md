@@ -23,7 +23,7 @@ All notable changes to the Smart Meter Configurator will be documented in this f
 ### Added
 - New "Energy Consumption" tab.
 - Energy readings from register map tables 5.2 & 5.3 for all meter types.
-- Password-protected (`0451`) energy reset button.
+- Confirmation prompt added before clearing stored energy values.
 
 ## [V1.07a]
 ### Changed
