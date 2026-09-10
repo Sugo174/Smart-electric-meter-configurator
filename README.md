@@ -8,6 +8,7 @@ Desktop application for configuration, diagnostics, and commissioning of smart e
 - [Download and Run](#download-and-run)
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
 - [Project Goals](#project-goals)
 - [Current Status](#current-status)
 - [Media](#media)
@@ -144,6 +145,19 @@ Designed for easy extension with additional languages.
 - sv_ttk
 - Modbus RTU
 - RS-485 Communication
+
+## Project Structure
+
+- `gui.py` — Application entry point and graphical user interface.
+- `device.py` — Modbus RTU communication and meter operations.
+- `constants.py` — Register addresses, communication parameters, and shared constants.
+- `requirements.txt` — Python dependencies required to run the source code.
+- `CHANGELOG.md` — Version history and notable changes.
+- `icons/` — Interface icons.
+- `images/` — Smart meter images used by the application.
+- `assets/screenshots/` — Screenshots displayed in this README.
+- `assets/video/` — Demonstration video.
+- `LICENSE` — MIT License terms.
  
 ## Project Goals
 
