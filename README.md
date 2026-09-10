@@ -6,6 +6,43 @@ Desktop application for configuration, diagnostics, and commissioning of smart e
  
 Smart Meter Configurator is a Python-based desktop application designed for field engineers to simplify smart meter setup, diagnostics, and maintenance.
 It provides automatic communication parameter detection, real-time monitoring, device configuration, and multilingual support through a streamlined interface optimized for industrial environments.
+
+## Download and Run
+
+### Ready-to-Use Windows Version
+
+1. Download [Smart-Meter-Configurator-v1.08.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v.1.08/Smart-Meter-Configurator-v1.08.zip).
+2. Extract the entire archive to a folder.
+3. Connect the smart meter through an RS-485 adapter.
+4. Run `Smart-Meter-Configurator-v1.08.exe`.
+
+Keep the executable and the `_internal` folder together. Installation of Python is not required for this version.
+
+See the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest) for available downloads and release notes.
+
+### Running from Source
+
+Requirements:
+
+- Windows
+- Python 3.10+
+- RS-485 adapter
+- Supported smart electricity meter
+
+Clone the repository and install the dependencies:
+
+```bash
+git clone https://github.com/Sugo174/Smart-electric-meter-configurator.git
+cd Smart-electric-meter-configurator
+pip install -r requirements.txt
+```
+
+Start the application:
+
+```bash
+python gui.py
+```
+
  
 ## Key Features
  
@@ -43,12 +80,36 @@ This allows engineers to establish communication with a meter without prior know
 ### Protected Operations
  
 - Energy reset functionality
-- Password-protected critical operations
+- Confirmation code required before clearing stored energy values
+- Warning prompt before the reset operation
  
-### Device Support
+### Supported Devices
 
-The application supports specific smart meter models via documented register maps.
-New devices can be integrated by implementing their corresponding register maps and communication parameters.
+The application is designed and tested for EMIS-ELECTRA 977 DC smart electricity meters:
+
+- Single-channel configuration
+- Dual-channel configuration
+- Modbus RTU communication over RS-485
+- Automatic detection of device address, baud rate, and parity
+
+The automatic scan checks Modbus addresses from `1` to `10` and the following baud rates:
+
+- 1200
+- 2400
+- 4800
+- 9600
+- 19200
+
+Support for other meter models is not guaranteed. Additional devices require compatible register maps and corresponding changes to the communication logic.
+
+### Operational Safety
+
+The application can write configuration parameters directly to the connected meter.
+
+- Verify the selected meter type before changing any settings.
+- Follow the meter manufacturer's wiring and operating instructions.
+- Do not disconnect the meter or RS-485 adapter while parameters are being written.
+- Energy reset permanently clears stored energy values and requires confirmation.
  
 ### Multilingual Interface
  
@@ -68,7 +129,8 @@ Designed for easy extension with additional languages.
 ## Technology Stack
  
 - Python
-- PyQt
+- Tkinter
+- sv_ttk
 - Modbus RTU
 - RS-485 Communication
  
