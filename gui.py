@@ -1227,6 +1227,8 @@ def connect_scan():
 
     scan_result = [None]
     scan_error = [None]
+    scan_cancelled = [False]
+    finalize_connection_id = [None]
 
     def do_scan():
         try:
@@ -1240,7 +1242,9 @@ def connect_scan():
 
     def do_cleanup(success=False, result_data=None, error_msg=None):
         global search_window_ref, search_timeout_id, search_check_id
-
+        if scan_cancelled[0]:
+            return
+        
         # Отмена таймеров
         if search_timeout_id: root.after_cancel(search_timeout_id); search_timeout_id = None
         if search_check_id: root.after_cancel(search_check_id); search_check_id = None
@@ -1262,6 +1266,10 @@ def connect_scan():
 
             # 3. Планируем финализацию через 1.5 сек
             def finalize_connection():
+                finalize_connection_id[0] = None
+
+                if scan_cancelled[0]:
+                    return
                 global is_device_ready, search_window_ref
 
                 # Закрываем окно поиска
@@ -1290,7 +1298,10 @@ def connect_scan():
                 update_device_type_display()
 
             # Ждем 6 секунды перед выполнением финализации
-            root.after(6000, finalize_connection)
+            finalize_connection_id[0] = root.after(
+                6000,
+                finalize_connection,
+            )
 
         elif error_msg:
             # Обработка ошибки (без изменений)
@@ -1307,6 +1318,45 @@ def connect_scan():
                 messagebox.showerror(tr("dlg_port_unavailable"), tr("dlg_port_unavailable_msg").format(port))
             else:
                 messagebox.showerror(tr("dlg_error"), error_msg)
+
+    def cancel_scan():
+        """Отменяет поиск и не даёт его потоку завершить подключение."""
+        global search_window_ref, search_timeout_id, search_check_id
+
+        scan_cancelled[0] = True
+
+        if search_timeout_id:
+            root.after_cancel(search_timeout_id)
+            search_timeout_id = None
+
+        if search_check_id:
+            root.after_cancel(search_check_id)
+            search_check_id = None
+
+        if finalize_connection_id[0]:
+            root.after_cancel(finalize_connection_id[0])
+            finalize_connection_id[0] = None
+
+        try:
+            if search_window_ref and search_window_ref.winfo_exists():
+                search_window_ref.grab_release()
+                search_window_ref.destroy()
+        except tk.TclError:
+            pass
+        finally:
+            search_window_ref = None
+
+        root.config(cursor="")
+        root.update_idletasks()
+
+    tk.Button(
+        search_window_ref,
+        text=tr("dlg_cancel"),
+        command=cancel_scan,
+        width=12,
+    ).pack(pady=(0, 15))
+
+    search_window_ref.protocol("WM_DELETE_WINDOW", cancel_scan)
 
     def on_timeout():
         global search_timeout_id
