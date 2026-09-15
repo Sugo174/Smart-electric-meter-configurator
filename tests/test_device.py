@@ -10,7 +10,12 @@ from constants import (
     PARITY_STR_TO_VAL,
     PARITY_VAL_TO_STR,
 )
-from device import bcd_to_int, int_to_bcd, write_decimal_places
+from device import (
+    bcd_to_int,
+    int_to_bcd,
+    registers_to_i32,
+    write_decimal_places,
+)
 
 
 class BCDConversionTests(unittest.TestCase):
@@ -74,6 +79,27 @@ class BCDConversionTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
                     bcd_to_int(value)
+
+
+class SignedIntegerConversionTests(unittest.TestCase):
+    """Проверяет преобразование двух Modbus-регистров в I32."""
+
+    def test_registers_to_i32(self) -> None:
+        """Положительные и отрицательные значения должны читаться верно."""
+        test_cases = {
+            (0x0000, 0x0000): 0,
+            (0x0000, 0x0001): 1,
+            (0x7FFF, 0xFFFF): 2_147_483_647,
+            (0xFFFF, 0xFFFF): -1,
+            (0x8000, 0x0000): -2_147_483_648,
+        }
+
+        for registers, expected_value in test_cases.items():
+            with self.subTest(registers=registers):
+                self.assertEqual(
+                    registers_to_i32(list(registers)),
+                    expected_value,
+                )
 
 
 class CommunicationConstantTests(unittest.TestCase):

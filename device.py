@@ -133,6 +133,32 @@ def int_to_bcd(x):
     return ((x // 10) << 4) | (x % 10) # Склеиваем старший и младший байты и возвращаем BCD
 
 
+def registers_to_i32(registers):
+    """Преобразует два 16-битных регистра Modbus в число I32.
+
+    Прибор передаёт старший регистр первым. Если старший бит установлен,
+    число является отрицательным и записано в дополнительном коде.
+
+    Args:
+        registers (list[int]): Два регистра Modbus: старший и младший.
+
+    Returns:
+        int: Знаковое 32-битное целое число.
+
+    Raises:
+        ValueError: Если передано не два регистра.
+    """
+    if len(registers) != 2:
+        raise ValueError("Для I32 требуется ровно два регистра")
+
+    raw_value = (registers[0] << 16) | registers[1]
+
+    if raw_value & 0x80000000:
+        return raw_value - 0x100000000
+
+    return raw_value
+
+
 # =============================================================================
 # 4. Основные функции взаимодействия с устройством
 # Все функции изолированы, не имеют побочных эффектов и безопасны для вызова.
@@ -418,17 +444,17 @@ def read_device_parameters(port, slave, baud, parity):
         try:
             # Напряжение
             voltage_regs = dev.read_registers(REG_VOLTAGE, 2, functioncode=3)
-            voltage_raw = (voltage_regs[0] << 16) | voltage_regs[1]
+            voltage_raw = registers_to_i32(voltage_regs)
             voltage = voltage_raw * VOLTAGE_FACTOR
 
             # Ток
             current_regs = dev.read_registers(REG_CURRENT, 2, functioncode=3)
-            current_raw = (current_regs[0] << 16) | current_regs[1]
+            current_raw = registers_to_i32(current_regs)
             current = current_raw * CURRENT_FACTOR
 
             # Мощность
             power_regs = dev.read_registers(REG_POWER, 2, functioncode=3)
-            power_raw = (power_regs[0] << 16) | power_regs[1]
+            power_raw = registers_to_i32(power_regs)
             power = power_raw * POWER_FACTOR
 
             # Абсолютная активная энергия (0x001E)
@@ -487,50 +513,55 @@ def read_device_parameters_dual(port, slave, baud, parity):
         dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
         try:
             # Вспомогательная функция для чтения 32-битного значения с коэф. 0.01
-            def _read_32(addr):
+            def _read_u32(addr):
+                """Читает 32-битное беззнаковое значение с коэффициентом 0.01."""
                 regs = dev.read_registers(addr, 2, functioncode=3)
                 return ((regs[0] << 16) | regs[1]) * 0.01
 
+            def _read_i32(addr):
+                """Читает 32-битное знаковое значение с коэффициентом 0.01."""
+                regs = dev.read_registers(addr, 2, functioncode=3)
+                return registers_to_i32(regs) * 0.01
+
             # --- КАНАЛ 1 ---
             # Энергия
-            ch1_abs = _read_32(0x2000)
-            ch1_pos = _read_32(0x2014)
-            ch1_neg = _read_32(0x2028)
+            ch1_abs = _read_i32(0x2000)
+            ch1_pos = _read_u32(0x2014)
+            ch1_neg = _read_u32(0x2028)
 
             # Текущие параметры (как было)
             v1_regs = dev.read_registers(REG_VOLTAGE_CH1, 2, functioncode=3)
-            v1 = ((v1_regs[0] << 16) | v1_regs[1]) * VOLTAGE_FACTOR
+            v1 = registers_to_i32(v1_regs) * VOLTAGE_FACTOR
 
             i1_regs = dev.read_registers(REG_CURRENT_CH1, 2, functioncode=3)
-            i1 = ((i1_regs[0] << 16) | i1_regs[1]) * CURRENT_FACTOR
+            i1 = registers_to_i32(i1_regs) * CURRENT_FACTOR
 
             p1_regs = dev.read_registers(REG_POWER_CH1, 2, functioncode=3)
-            p1 = ((p1_regs[0] << 16) | p1_regs[1]) * POWER_FACTOR
+            p1 = registers_to_i32(p1_regs) * POWER_FACTOR
 
             # Номиналы
-            ch1_nom_v = _read_32(0x2048)
-            ch1_nom_i = _read_32(0x204C)
+            ch1_nom_v = _read_u32(0x2048)
+            ch1_nom_i = _read_u32(0x204C)
 
             # --- КАНАЛ 2 ---
             # Энергия
-            ch2_abs = _read_32(0x2002)
-            ch2_pos = _read_32(0x2016)
-            ch2_neg = _read_32(0x202A)
+            ch2_abs = _read_i32(0x2002)
+            ch2_pos = _read_u32(0x2016)
+            ch2_neg = _read_u32(0x202A)
 
             # Текущие параметры (как было)
             v2_regs = dev.read_registers(REG_VOLTAGE_CH2, 2, functioncode=3)
-            v2 = ((v2_regs[0] << 16) | v2_regs[1]) * VOLTAGE_FACTOR
+            v2 = registers_to_i32(v2_regs) * VOLTAGE_FACTOR
 
             i2_regs = dev.read_registers(REG_CURRENT_CH2, 2, functioncode=3)
-            i2 = ((i2_regs[0] << 16) | i2_regs[1]) * CURRENT_FACTOR
+            i2 = registers_to_i32(i2_regs) * CURRENT_FACTOR
 
             p2_regs = dev.read_registers(REG_POWER_CH2, 2, functioncode=3)
-            p2 = ((p2_regs[0] << 16) | p2_regs[1]) * POWER_FACTOR
+            p2 = registers_to_i32(p2_regs) * POWER_FACTOR
 
             # Номиналы
-            ch2_nom_v = _read_32(0x204A)
-            ch2_nom_i = _read_32(0x204E)
-
+            ch2_nom_v = _read_u32(0x204A)
+            ch2_nom_i = _read_u32(0x204E)
             return True, {
                 "ch1": {
                     "voltage": v1, "current": i1, "power": p1,
