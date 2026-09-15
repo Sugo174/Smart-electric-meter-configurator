@@ -1,4 +1,6 @@
 # Smart Meter Configurator
+
+[![Python tests](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml/badge.svg)](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml)
  
 Desktop application for configuration, diagnostics, and commissioning of smart electricity meters.
 
