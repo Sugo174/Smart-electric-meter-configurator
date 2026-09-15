@@ -132,15 +132,24 @@ Desktop.ini
 # =============================================================================
 # Project-specific (Smart Meter Configurator)
 # =============================================================================
-config.json              # User configuration file (created at first run)
-*.log                    # Application logs
-logs/                    # Log directory
-*.tmp                    # Temporary files
-*.bak                    # Backup files
-dist/                    # PyInstaller output
-build/                   # Build artifacts
-__pycache__/             # Python cache
-*.pyc                    # Compiled Python files
+# User configuration file created at first run
+config.json
+
+# Application logs
+*.log
+logs/
+
+# Temporary and backup files
+*.tmp
+*.bak
+
+# Build artifacts
+dist/
+build/
+
+# Python cache
+__pycache__/
+*.pyc
 
 # =============================================================================
 # Sensitive data
