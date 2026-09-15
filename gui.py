@@ -27,7 +27,7 @@ import os
 
 # Сторонние библиотеки
 import sv_ttk  # Современная тема для tkinter
-from tkcalendar import Calendar 
+from tkcalendar import Calendar
 
 # Локальные модули
 from constants import BAUD_VALUES, PARITY_LIST
@@ -73,14 +73,14 @@ TRANSLATIONS = {
         "lang_ru": "Русский",
         "lang_en": "English",
         "lang_zh": "简体中文",
-        
+
         # Вкладки
         "tab_connection": "Соединение",
         "tab_info": "Инфо о приборе",
         "tab_datetime": "Дата и время",
         "tab_params": "Текущие значения",
         "tab_settings": "Настройки прибора",
-        
+
         # Вкладка "Соединение"
         "lbl_com_port": "COM-порт:",
         "lbl_status": "Статус соединения:",
@@ -102,13 +102,14 @@ TRANSLATIONS = {
         "dlg_ports_found": "Найдены порты:\n\n{}",
         "dlg_yes": "Да",
         "dlg_no": "Нет",
-        
+        "btn_writing": "Применение...",
+
         # Вкладка "Дата и время"
         "lbl_current_time": "Текущее время устройства (ГГ-ММ-ДД чч:мм:сс):",
         "btn_time_settings": "Настроить",
         "btn_sync_pc": "Синхронизация с ПК🔄",
         "dlg_time_writing": "Идет запись времени...\nПожалуйста, подождите.",
-                
+
         # Вкладка "Текущие значения" - одноканальный
         "lbl_energy": "Электроэнергия:",
         "lbl_energy_abs": "Абсолютная активная:",
@@ -121,7 +122,7 @@ TRANSLATIONS = {
         "lbl_nominal": "Номинальные параметры:",
         "lbl_nom_voltage": "Номинальное напряжение:",
         "lbl_nom_current": "Номинальный ток:",
-        
+
         # Вкладка "Текущие значения" - двухканальный
         "lbl_channel_a": "Канал A",
         "lbl_channel_b": "Канал B",
@@ -130,7 +131,7 @@ TRANSLATIONS = {
         "lbl_neg": "Обратная:",
         "lbl_nom_v": "Номинальное напр.:",
         "lbl_nom_i": "Номинальный ток:",
-        
+
         # Вкладка "Настройки прибора"
         "lbl_max_current_a": "Максимальный ток канала A:",
         "lbl_max_current_b": "Максимальный ток канала B:",
@@ -140,14 +141,14 @@ TRANSLATIONS = {
         "lbl_tariff": "Тарифных отрезков:",
         "btn_change": "Изменить",
         "btn_clear_energy": "Очистить значения энергии",
-        
+
         # Вкладка "Информация о приборе"
         "lbl_serial": "Серийный номер:",
         "lbl_manufacturer": "Производитель:",
         "lbl_meter_type": "Тип счетчика:",
         "lbl_sw_version": "Версия метрологического ПО:",
         "lbl_release_date": "Дата выпуска:",
-        
+
         # Диалоги
         "dlg_select_type": "Выбор типа счётчика",
         "dlg_select_type_prompt": "Выберите тип подключаемого счётчика:",
@@ -193,7 +194,7 @@ TRANSLATIONS = {
             "Конфигуратор счетчика постоянного тока СКВТ ЭМИС-ЭЛЕКТРА 977 \n\n"
             "*** Алгоритм подключения счетчика ***\n\n"
             "1. Подключите устройство через USB - RS-485 адаптер. \n"
-            "2. Подключите питание к устройству.\n"        
+            "2. Подключите питание к устройству.\n"
             "3. Нажмите кнопку «Обновить», чтобы увидеть доступные COM-порты. \n"
             "3. Выберите необходимый COM-порт.\n"
             "4. Нажмите кнопку «Подключиться» — программа подключится к устройству"
@@ -215,7 +216,7 @@ TRANSLATIONS = {
             " некоторые пороговые значения прибора и ряд других настроек.",
         "dlg_change_type_warning": "Изменение типа счётчика требует переподключения.\nСейчас будет выполнено отключение.",
         "dlg_disconnected": "Устройство отключено. Проверьте питание и подключение.",
-        
+
         # Диалоги изменения настроек
         "dlg_max_current_a": "Максимальный ток канала А",
         "dlg_max_current_a_prompt": "Введите максимальный ток канала А (А):",
@@ -229,19 +230,19 @@ TRANSLATIONS = {
         "dlg_write_failed": "Ошибка записи",
         "dlg_input_error": "Ошибка",
         "dlg_invalid_number": "Введите корректное число",
-        
+
         # Единицы измерения
         "unit_v": "В",
         "unit_a": "А",
         "unit_kw": "кВт",
         "unit_kwh": "кВт·ч",
         "unit_percent": "%",
-        
+
         # Статусы
         "status_disconnected": "—",
         "status_no_ports": "(нет портов)",
     },
-    
+
     "en": {
         # Menu
         "app_title": "Configurator SKVT EMIS-ELECTRA 977 V1.08",
@@ -252,14 +253,14 @@ TRANSLATIONS = {
         "lang_ru": "Русский",
         "lang_en": "English",
         "lang_zh": "简体中文",
-        
+
         # Tabs
         "tab_connection": "Connection",
         "tab_info": "Device Info",
         "tab_datetime": "Date & Time",
         "tab_params": "Current Values",
         "tab_settings": "Device Settings",
-        
+
         # Connection tab
         "lbl_com_port": "COM Port",
         "lbl_status": "Connection Status:",
@@ -281,13 +282,14 @@ TRANSLATIONS = {
         "dlg_ports_found": "Ports found:\n\n{}",
         "dlg_yes": "Yes",
         "dlg_no": "No",
-        
+        "btn_writing": "Applying...",
+
         # Date & Time tab
         "lbl_current_time": "Device Time (YY-MM-DD hh:mm:ss):",
         "btn_time_settings": "Settings",
         "btn_sync_pc": "Sync with PC🔄",
         "dlg_time_writing": "Writing time...\nPlease wait.",
-        
+
         # Current Values - single channel
         "lbl_energy": "Energy:",
         "lbl_energy_abs": "Absolute Active:",
@@ -300,7 +302,7 @@ TRANSLATIONS = {
         "lbl_nominal": "Nominal Parameters:",
         "lbl_nom_voltage": "Nominal Voltage:",
         "lbl_nom_current": "Nominal Current:",
-        
+
         # Current Values - dual channel
         "lbl_channel_a": "Channel A",
         "lbl_channel_b": "Channel B",
@@ -309,7 +311,7 @@ TRANSLATIONS = {
         "lbl_neg": "Negative:",
         "lbl_nom_v": "Nom. Voltage:",
         "lbl_nom_i": "Nom. Current:",
-        
+
         # Device Settings tab
         "lbl_max_current_a": "Max Current Channel A:",
         "lbl_max_current_b": "Max Current Channel B:",
@@ -319,14 +321,14 @@ TRANSLATIONS = {
         "lbl_tariff": "Tariff Periods:",
         "btn_change": "Change",
         "btn_clear_energy": "Clear Energy Values",
-        
+
         # Device Info tab
         "lbl_serial": "Serial Number:",
         "lbl_manufacturer": "Manufacturer:",
         "lbl_meter_type": "Meter Type:",
         "lbl_sw_version": "Metrological SW Version:",
         "lbl_release_date": "Release Date:",
-        
+
         # Dialogs
         "dlg_select_type": "Select Meter Type",
         "dlg_select_type_prompt": "Select meter type to connect:",
@@ -386,7 +388,7 @@ TRANSLATIONS = {
             "5. The 'Device Settings' tab allows modification of: some device threshold values and a number of other settings.",
         "dlg_change_type_warning": "Changing meter type requires reconnection.\nDisconnecting now.",
         "dlg_disconnected": "Device disconnected. Check power and connection.",
-        
+
         # Settings change dialogs
         "dlg_max_current_a": "Max Current Channel A",
         "dlg_max_current_a_prompt": "Enter max current for channel A (A):",
@@ -400,19 +402,19 @@ TRANSLATIONS = {
         "dlg_write_failed": "Write failed",
         "dlg_input_error": "Error",
         "dlg_invalid_number": "Please enter a valid number",
-        
+
         # Units
         "unit_v": "V",
         "unit_a": "A",
         "unit_kw": "kW",
         "unit_kwh": "kWh",
         "unit_percent": "%",
-        
+
         # Status
         "status_disconnected": "—",
         "status_no_ports": "(no ports)",
     },
-    
+
     "zh": {
         # 菜单
         "app_title": "配置器 SKVT EMIS-ELECTRA 977 V1.08",
@@ -423,14 +425,14 @@ TRANSLATIONS = {
         "lang_ru": "Русский",
         "lang_en": "English",
         "lang_zh": "简体中文",
-        
+
         # 选项卡
         "tab_connection": "连接",
         "tab_info": "设备信息",
         "tab_datetime": "日期和时间",
         "tab_params": "当前值",
         "tab_settings": "设备设置",
-        
+
         # 连接选项卡
         "lbl_com_port": "COM端口",
         "lbl_status": "连接状态:",
@@ -452,13 +454,14 @@ TRANSLATIONS = {
         "dlg_ports_found": "找到的端口:\n\n{}",
         "dlg_yes": "是",
         "dlg_no": "否",
-        
+        "btn_writing": "正在应用...",
+
         # 日期时间选项卡
         "lbl_current_time": "设备时间 (年-月-日 时:分:秒):",
         "btn_time_settings": "设置",
         "btn_sync_pc": "与电脑同步🔄",
         "dlg_time_writing": "正在写入时间...\n请稍候。",
-        
+
         # 当前值 - 单通道
         "lbl_energy": "电能:",
         "lbl_energy_abs": "绝对有功:",
@@ -471,7 +474,7 @@ TRANSLATIONS = {
         "lbl_nominal": "额定参数:",
         "lbl_nom_voltage": "额定电压:",
         "lbl_nom_current": "额定电流:",
-        
+
         # 当前值 - 双通道
         "lbl_channel_a": "通道A",
         "lbl_channel_b": "通道B",
@@ -480,7 +483,7 @@ TRANSLATIONS = {
         "lbl_neg": "反向:",
         "lbl_nom_v": "额定电压:",
         "lbl_nom_i": "额定电流:",
-        
+
         # 设备设置选项卡
         "lbl_max_current_a": "通道A最大电流:",
         "lbl_max_current_b": "通道B最大电流:",
@@ -490,14 +493,14 @@ TRANSLATIONS = {
         "lbl_tariff": "费率时段数:",
         "btn_change": "更改",
         "btn_clear_energy": "清除电能值",
-        
+
         # 设备信息选项卡
         "lbl_serial": "序列号:",
         "lbl_manufacturer": "制造商:",
         "lbl_meter_type": "电表类型:",
         "lbl_sw_version": "计量软件版本:",
         "lbl_release_date": "生产日期:",
-        
+
         # 对话框
         "dlg_select_type": "选择电表类型",
         "dlg_select_type_prompt": "选择要连接的电表类型:",
@@ -557,7 +560,7 @@ TRANSLATIONS = {
             "5. '设备设置'选项卡用于修改：部分设备阈值参数及其他设置项。",
         "dlg_change_type_warning": "更改电表类型需要重新连接。\n正在断开连接。",
         "dlg_disconnected": "设备已断开。请检查电源和连接。",
-        
+
         # 设置更改对话框
         "dlg_max_current_a": "通道A最大电流",
         "dlg_max_current_a_prompt": "输入通道A最大电流 (А):",
@@ -571,14 +574,14 @@ TRANSLATIONS = {
         "dlg_write_failed": "写入失败",
         "dlg_input_error": "错误",
         "dlg_invalid_number": "请输入有效数字",
-        
+
         # 单位
         "unit_v": "V",
         "unit_a": "A",
         "unit_kw": "kW",
         "unit_kwh": "kWh",
         "unit_percent": "%",
-        
+
         # 状态
         "status_disconnected": "—",
         "status_no_ports": "(无端口)",
@@ -595,88 +598,88 @@ def set_language(lang_code):
     if lang_code not in TRANSLATIONS:
         return
     current_language = lang_code
-    
+
     # Меняем заголовок главного окна
     root.title(tr("app_title"))
-    
+
     # Загружаем иконки если ещё не загружены
     if not ICONS:
         load_icons()
-    
+
     # 1. Пересоздаём меню с иконками
     menubar = tk.Menu(root)
-    
+
     # Меню настроек
     settings_m = tk.Menu(menubar, tearoff=0)
-    
+
     # Подменю языка с флагами
     lang_menu = tk.Menu(settings_m, tearoff=0)
     lang_menu.add_command(
-        label=tr("lang_ru"), 
+        label=tr("lang_ru"),
         command=lambda: set_language("ru"),
-        image=ICONS.get("flag_ru"),  
-        compound="left"  
+        image=ICONS.get("flag_ru"),
+        compound="left"
     )
     lang_menu.add_command(
-        label=tr("lang_en"), 
+        label=tr("lang_en"),
         command=lambda: set_language("en"),
         image=ICONS.get("flag_en"),
         compound="left"
     )
     lang_menu.add_command(
-        label=tr("lang_zh"), 
+        label=tr("lang_zh"),
         command=lambda: set_language("zh"),
         image=ICONS.get("flag_zh"),
         compound="left"
     )
-    
+
     settings_m.add_cascade(
-        label=tr("menu_language"), 
+        label=tr("menu_language"),
         menu=lang_menu,
-        image=ICONS.get("language"),  
+        image=ICONS.get("language"),
         compound="left"
     )
-    
+
     settings_m.add_separator()
-    
+
     settings_m.add_command(
-        label=tr("menu_help"), 
+        label=tr("menu_help"),
         command=show_help,
         image=ICONS.get("help"),
         compound="left"
     )
     settings_m.add_command(
-        label=tr("menu_exit"), 
+        label=tr("menu_exit"),
         command=lambda: on_closing(),
         image=ICONS.get("exit"),
         compound="left"
     )
-    
+
     menubar.add_cascade(
-        label=tr("menu_settings"), 
+        label=tr("menu_settings"),
         menu=settings_m
     )
-    
+
     root.config(menu=menubar)
-    
+
     # 2. Обновляем названия вкладок
     notebook.tab(tab_conn, text=tr("tab_connection"))
     notebook.tab(tab_info, text=tr("tab_info"))
     notebook.tab(tab_time, text=tr("tab_datetime"))
     notebook.tab(tab_params, text=tr("tab_params"))
     notebook.tab(tab_settings, text=tr("tab_settings"))
-    
+
     # 3. Пересоздаём динамические вкладки
     global ui_rebuild_in_progress
     ui_rebuild_in_progress = True  # Приостанавливаем фоновый опрос
-    
+
     create_parameters_tab()
     create_settings_tab()
     create_info_tab()
 
     ui_rebuild_in_progress = False # Разрешаем опрос снова
-    
-    # 4. Безопасно обновляем статичные элементы 
+
+    # 4. Безопасно обновляем статичные элементы
     try:
         lbl_modbus_title.config(text=tr("lbl_modbus_params"))
         lbl_time_title.config(text=tr("lbl_current_time"))
@@ -712,7 +715,7 @@ def _update_widget_text(widget):
             if key.startswith("btn_") and val == text:
                 widget.config(text=tr(key))
                 break
-    
+
     # Метки
     elif isinstance(widget, tk.Label) and widget.cget("text"):
         text = widget.cget("text")
@@ -720,7 +723,7 @@ def _update_widget_text(widget):
             if key.startswith("lbl_") and val in text:
                 widget.config(text=tr(key))
                 break
-    
+
     # Рекурсивно обрабатываем контейнеры
     elif isinstance(widget, (tk.Frame, ttk.Frame, tk.LabelFrame)):
         for child in widget.winfo_children():
@@ -815,7 +818,7 @@ search_check_id = None
 type_image_label = None
 
 # Флаг: идёт перестройка интерфейса (смена языка/типа)
-ui_rebuild_in_progress = False  
+ui_rebuild_in_progress = False
 
 # =============================================================================
 # 4. Вспомогательные функции
@@ -868,12 +871,12 @@ def load_device_images():
     """Загружает изображения типов счётчиков из папки images/"""
     import os
     base_path = os.path.dirname(os.path.abspath(__file__))
-    
+
     paths = {
         "single": os.path.join(base_path, "images", "meter_single.png"),
         "dual": os.path.join(base_path, "images", "meter_dual.png")
     }
-    
+
     for key, path in paths.items():
         try:
             if os.path.exists(path):
@@ -920,40 +923,60 @@ def set_buttons_state(state):
 
 def start_time_reader():
     """Запускает фоновый поток для чтения времени и параметров."""
-    global time_reader_active, time_reader_thread
+    global time_reader_active, time_reader_thread, disconnect_flag
+
+    # Новый поток не должен использовать старый сигнал об отключении.
+    disconnect_flag = False
     stop_time_reader()
     time_reader_active = True
     time_reader_thread = threading.Thread(target=_time_reader_worker, daemon=True)
     time_reader_thread.start()
 
 
-def stop_time_reader():
-    """Останавливает фоновый поток и гарантирует закрытие порта."""
-    global time_reader_active, time_reader_thread, conn  
+def stop_time_reader() -> bool:
+    """Останавливает фоновое чтение перед операцией с COM-портом.
+
+    Функция сначала запрещает потоку начинать новые операции, а затем
+    ожидает завершения уже выполняющегося обращения к устройству.
+
+    Returns:
+        bool: ``True``, если поток завершился. ``False``, если поток
+        не удалось остановить за отведённое время.
+    """
+    global time_reader_active, time_reader_thread
+
     time_reader_active = False
-    
-    if time_reader_thread:
-        time_reader_thread.join(timeout=1.0)
+
+    thread = time_reader_thread
+
+    if thread is None:
+        return True
+
+    # Не пытаемся ожидать текущий поток из него самого.
+    if thread is threading.current_thread():
         time_reader_thread = None
-    
-    # Принудительно закрываем порт если он открыт
-    if conn and 'port_obj' in conn:
-        try:
-            if conn['port_obj'].is_open:
-                conn['port_obj'].close()
-        except Exception:
-            pass
+        return True
+
+    thread.join(timeout=5.0)
+
+    if thread.is_alive():
+        return False
+
+    time_reader_thread = None
+    return True
 
 
 def _time_reader_worker():
     """Фоновый поток: читает время, параметры и настройки с устройства."""
-    global time_reader_active, conn, disconnect_flag  
-    
+    global time_reader_active, conn, disconnect_flag
+
     next_time_read = time.time() + 1
     next_param_read = time.time() + 1
     next_settings_read = time.time() + 2
-    next_info_read = time.time() + 2  
-    
+    next_info_read = time.time() + 2
+    consecutive_read_errors = 0
+    max_consecutive_read_errors = 3
+
     while time_reader_active:
         if not conn:
             break
@@ -961,19 +984,19 @@ def _time_reader_worker():
         if ui_rebuild_in_progress:
             time.sleep(0.1)
             continue
-        
-        # Блокировка: если идет ручная запись - вообще ничего не делаем        
+
+        # Блокировка: если идет ручная запись - вообще ничего не делаем
         if manual_write_in_progress:
             time.sleep(0.5)
             continue
-        
+
         now = time.time()
 
-        # Пропускаем чтение, если идёт запись или действует защитный период        
+        # Пропускаем чтение, если идёт запись или действует защитный период
         if writing_in_progress or operation_in_progress or now < post_write_cooldown_until:
             time.sleep(0.1)
             continue
-            
+
         try:
             # 1. Время (каждую секунду)
             if now >= next_time_read:
@@ -983,7 +1006,7 @@ def _time_reader_worker():
                 else:
                     raise Exception("Потеряна связь с устройством")
                 next_time_read = now + 1
-                
+
             # 2. Параметры (каждую секунду)
             if now >= next_param_read:
                 if device_type == "single":
@@ -995,7 +1018,7 @@ def _time_reader_worker():
                 else:
                     raise Exception("Потеряна связь при чтении параметров")
                 next_param_read = now + 1
-                
+
             # 3. Настройки прибора (каждые 2 секунды)
             if now >= next_settings_read:
                 success, settings = read_device_settings_params(
@@ -1006,7 +1029,7 @@ def _time_reader_worker():
                 else:
                     raise Exception("Потеряна связь при чтении настроек")
                 next_settings_read = now + 2
-                
+
             # 4. Инфо о приборе (каждые 2 секунды)
             if now >= next_info_read:
                 success, info = read_device_info(
@@ -1017,19 +1040,28 @@ def _time_reader_worker():
                 else:
                     raise Exception("Потеряна связь при чтении информации")
                 next_info_read = now + 2
+                # Полный цикл чтения прошёл успешно.
+                consecutive_read_errors = 0
 
         except Exception:
-            # 1. Останавливаем поток чтения
+            consecutive_read_errors += 1
+
+            # Кратковременная помеха на RS-485 не должна сразу
+            # превращаться в отключение устройства.
+            if consecutive_read_errors < max_consecutive_read_errors:
+                time.sleep(0.5)
+                continue
+
+            # Несколько последовательных ошибок означают потерю связи.
             time_reader_active = False
-            disconnect_flag = True  # Сигнал главному потоку
-            
-            # 2. Очищаем очереди
+            disconnect_flag = True
+
             try:
                 param_update_queue.put(None)
                 settings_update_queue.put(None)
                 time_update_queue.put(tr("status_disconnected"))
                 info_update_queue.put(None)
-            except:
+            except Exception:
                 pass
 
             return
@@ -1044,7 +1076,7 @@ def _check_time_queue():
         disconnect_flag = False
         trigger_disconnect()
         return
-        
+
     try:
         while True:
             time_str = time_update_queue.get_nowait()
@@ -1060,7 +1092,7 @@ def _check_param_queue():
         while True:
             params = param_update_queue.get_nowait()
             status_txt = tr("status_disconnected")
-            
+
             if params is None:
                 # Сброс
                 for lbl in [param_energy_abs_label, param_energy_pos_label, param_energy_neg_label,
@@ -1167,11 +1199,11 @@ def refresh_ports():
 def connect_scan():
     global conn, connect_btn, disconnect_btn, status_canvas, status_indicator, is_device_ready
     global search_window_ref, search_timeout_id, search_check_id
-    
+
     # Отменяем старые таймеры
     if search_timeout_id: root.after_cancel(search_timeout_id); search_timeout_id = None
     if search_check_id: root.after_cancel(search_check_id); search_check_id = None
-    
+
     port = port_var.get().strip()
     if not port or port == tr("status_no_ports"):
         messagebox.showerror(tr("dlg_error"), tr("dlg_no_port"))
@@ -1185,17 +1217,17 @@ def connect_scan():
     search_window_ref.grab_set()
     tk.Label(search_window_ref, text=tr("dlg_searching"), padx=20, pady=20).pack()
     search_window_ref.update_idletasks()
-    
+
     x = root.winfo_rootx() + (root.winfo_width() - search_window_ref.winfo_width()) // 2
     y = root.winfo_rooty() + (root.winfo_height() - search_window_ref.winfo_height()) // 2
     search_window_ref.geometry(f"+{x}+{y}")
-    
+
     root.config(cursor="watch")
     root.update()
 
     scan_result = [None]
     scan_error = [None]
-    
+
     def do_scan():
         try:
             success, result = scan_device(port, int(addr_var.get()), int(speed_var.get()), parity_var.get())
@@ -1203,52 +1235,52 @@ def connect_scan():
             scan_error[0] = None if success else result
         except Exception as e:
             scan_error[0] = str(e)
-    
+
     threading.Thread(target=do_scan, daemon=True).start()
-    
+
     def do_cleanup(success=False, result_data=None, error_msg=None):
         global search_window_ref, search_timeout_id, search_check_id
-        
+
         # Отмена таймеров
         if search_timeout_id: root.after_cancel(search_timeout_id); search_timeout_id = None
         if search_check_id: root.after_cancel(search_check_id); search_check_id = None
-        
+
         if success and result_data:
             global conn, was_ever_connected, is_device_ready
             conn = result_data
             was_ever_connected = True
             is_device_ready = True
-            
+
             # 1. Обновляем комбобоксы (пока окно ещё висит)
             addr_var.set(str(conn["slave"]))
             speed_var.set(str(conn["baud"]))
             parity_var.set(conn["parity"])
             parity_combo.set(conn["parity"])
-            
+
             # 2. Запускаем поток чтения данных (он начнёт заполнять вкладки прямо сейчас)
             start_time_reader()
-            
+
             # 3. Планируем финализацию через 1.5 сек
             def finalize_connection():
                 global is_device_ready, search_window_ref
-                
+
                 # Закрываем окно поиска
                 try:
                     if search_window_ref and search_window_ref.winfo_exists():
                         search_window_ref.grab_release()
                         search_window_ref.destroy()
                 except: pass
-                finally: 
+                finally:
                     search_window_ref = None
-                
+
                 # Сбрасываем курсор
                 root.config(cursor="")
                 root.update_idletasks()
-                
+
                 # Показываем сообщение об успехе
-                messagebox.showinfo(tr("dlg_connected"), 
+                messagebox.showinfo(tr("dlg_connected"),
                     tr("dlg_connected_msg").format(conn['slave'], conn['baud'], conn['parity']))
-                
+
                 # Активируем кнопки и индикатор
                 set_buttons_state("normal")
                 connect_btn.config(state="disabled")
@@ -1259,7 +1291,7 @@ def connect_scan():
 
             # Ждем 6 секунды перед выполнением финализации
             root.after(6000, finalize_connection)
-            
+
         elif error_msg:
             # Обработка ошибки (без изменений)
             try:
@@ -1270,21 +1302,21 @@ def connect_scan():
             finally: search_window_ref = None
             root.config(cursor="")
             root.update_idletasks()
-            
+
             if "could not open port" in error_msg or "FileNotFoundError" in error_msg:
                 messagebox.showerror(tr("dlg_port_unavailable"), tr("dlg_port_unavailable_msg").format(port))
             else:
                 messagebox.showerror(tr("dlg_error"), error_msg)
-    
+
     def on_timeout():
         global search_timeout_id
         search_timeout_id = None
         if scan_result[0] is None and scan_error[0] is None:
             scan_error[0] = "Превышено время ожидания подключения (45 сек)"
             do_cleanup(error_msg=scan_error[0])
-    
+
     search_timeout_id = root.after(45000, on_timeout)
-    
+
     def check_complete():
         global search_check_id
         search_check_id = None
@@ -1294,7 +1326,7 @@ def connect_scan():
             do_cleanup(error_msg=str(scan_error[0]))
         else:
             search_check_id = root.after(100, check_complete)
-    
+
     search_check_id = root.after(100, check_complete)
 
 
@@ -1302,9 +1334,9 @@ def disconnect_device(show_message=False):
     global conn, connect_btn, disconnect_btn, status_canvas, status_indicator, was_ever_connected, is_device_ready
     stop_time_reader()
     conn = None
-    is_device_ready = False  
+    is_device_ready = False
     set_buttons_state("disabled")
-    
+
     if connect_btn:
         connect_btn.config(state="normal")
     if refresh_btn:
@@ -1335,7 +1367,7 @@ def disconnect_device(show_message=False):
 def trigger_disconnect():
     """Безопасный вызов отключения из фонового потока или таймера."""
     global conn, was_ever_connected
-    
+
     # Проверяем, подключены ли мы вообще
     if conn is not None and was_ever_connected:
         disconnect_device(show_message=True)
@@ -1346,75 +1378,153 @@ def trigger_disconnect():
 
 
 def write_settings():
-    """Записывает новые параметры подключения."""
-    global conn
+    """Записывает новые параметры связи и возобновляет чтение.
+
+    Перед записью функция полностью останавливает фоновый поток, чтобы
+    он не использовал COM-порт одновременно с операцией настройки.
+    После успешной записи или ошибки чтение запускается снова.
+    """
+    global conn, writing_in_progress, post_write_cooldown_until
+
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_connect_first"))
+        messagebox.showwarning(
+            tr("dlg_warning"),
+            tr("dlg_connect_first"),
+        )
         return
 
-    if not _show_confirm_dialog(tr("dlg_warning"), tr("dlg_write_params_warning")):
+    if not _show_confirm_dialog(
+        tr("dlg_warning"),
+        tr("dlg_write_params_warning"),
+    ):
         return
 
-    stop_time_reader()
-    time.sleep(0.5)
+    # Сохраняем исходный текст кнопки и сразу показываем начало операции.
+    original_write_button_text = write_btn.cget("text")
+
+    write_btn.config(
+        text=tr("btn_writing"),
+        state="disabled",
+        cursor="watch",
+    )
     root.config(cursor="watch")
+    root.update_idletasks()
     root.update()
+
+    # Не допускаем повторный запуск записи двойным нажатием.
+    if writing_in_progress:
+        return
+
+    # Запрещаем фоновому потоку начинать новые обращения к прибору.
+    writing_in_progress = True
+
+    # Показываем ожидание до начала операций с COM-портом.
+    # update() нужен, чтобы Windows успела отрисовать новый курсор
+    # до возможного ожидания завершения фонового потока.
+    root.config(cursor="watch")
+    write_btn.config(cursor="watch")
+    root.update_idletasks()
+    root.update()
+
+    if not stop_time_reader():
+        writing_in_progress = False
+        root.config(cursor="")
+        write_btn.config(cursor="")
+        root.update_idletasks()
+
+        write_btn.config(
+            text=original_write_button_text,
+            state="normal",
+            cursor="",
+        )
+
+        messagebox.showerror(
+            tr("dlg_write_error"),
+            tr("dlg_port_not_initialized"),
+        )
+        return
+
+    root.config(cursor="watch")
+    root.update_idletasks()
 
     try:
         new_slave = int(addr_var.get())
         new_baud = int(speed_var.get())
         new_parity = parity_var.get()
 
-        global writing_in_progress
-        writing_in_progress = True
-
         success, result = write_device_settings(
-            conn["port"], 
-            conn["slave"], 
-            conn["baud"], 
+            conn["port"],
+            conn["slave"],
+            conn["baud"],
             conn["parity"],
-            new_slave, 
-            new_baud, 
-            new_parity
+            new_slave,
+            new_baud,
+            new_parity,
         )
-        
+
         if not success:
-            messagebox.showerror(tr("dlg_write_error"), result)
+            # Возвращаем в интерфейс последние рабочие параметры.
             addr_var.set(str(conn["slave"]))
             speed_var.set(str(conn["baud"]))
             parity_var.set(conn["parity"])
+            parity_combo.set(conn["parity"])
+
+            messagebox.showerror(
+                tr("dlg_write_error"),
+                result,
+            )
             return
 
-        # Обновляем объект подключения
-        conn.update(slave=result["slave"], baud=result["baud"], parity=result["parity"])
-        
-        # Обновляем комбобоксы СРАЗУ (пока курсор ещё watch)
+        # write_device_settings() уже дождалась перезапуска UART
+        # и проверила связь по новым параметрам.
+        conn.update(
+            slave=result["slave"],
+            baud=result["baud"],
+            parity=result["parity"],
+        )
+
         addr_var.set(str(conn["slave"]))
         speed_var.set(str(conn["baud"]))
         parity_var.set(conn["parity"])
         parity_combo.set(conn["parity"])
-        
-        # Даём прибору время на применение настроек UART
-        time.sleep(8.0)
-        
-        # Сбрасываем курсор
-        root.config(cursor="")
-        root.update_idletasks()
-        
-        # Показываем сообщение об успехе
+
+        # Короткая защита перед первым фоновым чтением.
+        post_write_cooldown_until = time.time() + 1.0
+
         messagebox.showinfo(
             tr("dlg_write_success"),
-            tr("dlg_write_success_msg").format(result['slave'], result['baud'], result['parity'])
+            tr("dlg_write_success_msg").format(
+                result["slave"],
+                result["baud"],
+                result["parity"],
+            ),
         )
-        
-        # Перезапускаем поток чтения
-        global post_write_cooldown_until
-        post_write_cooldown_until = time.time() + 3.0
-        start_time_reader()
+
+    except (TypeError, ValueError, KeyError) as error:
+        messagebox.showerror(
+            tr("dlg_write_error"),
+            str(error),
+        )
+
+    except Exception as error:
+        messagebox.showerror(
+            tr("dlg_write_error"),
+            str(error),
+        )
 
     finally:
-        writing_in_progress = False  
+        writing_in_progress = False
         root.config(cursor="")
+        write_btn.config(
+            text=original_write_button_text,
+            state="normal" if conn and is_device_ready else "disabled",
+            cursor="",
+        )
+        root.update_idletasks()
+
+        # Чтение возобновляется как после успеха, так и после ошибки.
+        if conn:
+            start_time_reader()
 
 
 def _write_time_to_device(year=None, month=None, day=None, hour=None, minute=None, second=None, parent_win=None):
@@ -1435,7 +1545,7 @@ def _write_time_to_device(year=None, month=None, day=None, hour=None, minute=Non
     global conn
     if not conn:
         return False, tr("dlg_no_connection")
-    
+
     # Читаем текущее время устройства
     success, result = read_device_time(conn["port"], conn["slave"], conn["baud"], conn["parity"])
     if success:
@@ -1461,42 +1571,6 @@ def _write_time_to_device(year=None, month=None, day=None, hour=None, minute=Non
     messagebox.showinfo(tr("dlg_write_success"), tr("dlg_time_written"), parent=parent_win)
     start_time_reader()
     return True, "OK"
-
-
-def write_time():
-    """Записывает только часы и/или минуты, оставляя дату без изменений."""
-    hour_str = hour_var.get().strip()
-    minute_str = minute_var.get().strip()
-
-    if not hour_str and not minute_str:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_optional_time"))
-        return
-
-    success, result = read_device_time(
-        conn["port"], conn["slave"], conn["baud"], conn["parity"]
-    )
-    if success:
-        cur = result["data"]
-    else:
-        cur = {"year": 2025, "month": 1, "day": 1, "hour": 0, "minute": 0, "second": 0}
-
-    Y = cur["year"]
-    M = cur["month"]
-    D = cur["day"]
-    H = int(hour_str) if hour_str else cur["hour"]
-    m = int(minute_str) if minute_str else cur["minute"]
-    S = cur["second"]
-
-    success, msg = write_device_time(
-        conn["port"], conn["slave"], conn["baud"], conn["parity"],
-        Y, M, D, H, m, S
-    )
-    if not success:
-        messagebox.showerror(tr("dlg_time_write_error"), msg)
-        return
-
-    messagebox.showinfo(tr("dlg_write_success"), tr("dlg_time_written"))
-    start_time_reader()
 
 
 def open_time_settings():
@@ -1560,17 +1634,17 @@ def open_time_settings():
         try:
             root.config(cursor="watch")
             root.update_idletasks()
-            
+
             wait_win = tk.Toplevel(root)
             wait_win.title(tr("dlg_time_settings"))
             wait_win.resizable(False, False)
             wait_win.transient(root)
             wait_win.grab_set()
             wait_win.config(cursor="watch")
-            
+
             tk.Label(wait_win, text=tr("dlg_time_writing"), padx=25, pady=20,
                      font=("Segoe UI", 11)).pack()
-            
+
             wait_win.update_idletasks()
             wait_win.lift()
             wait_win.focus_force()
@@ -1578,7 +1652,7 @@ def open_time_settings():
             wy = root.winfo_rooty() + (root.winfo_height() - wait_win.winfo_height()) // 2
             wait_win.geometry(f"+{wx}+{wy}")
             wait_win.update()
-            
+
             root.attributes('-disabled', True)
             root.update()
 
@@ -1619,7 +1693,7 @@ def open_time_settings():
                 current_time_value.config(text=new_time_str)
                 time_update_queue.put(new_time_str)
                 root.after(0, _check_time_queue)
-                
+
                 messagebox.showinfo(tr("dlg_write_success"), tr("dlg_time_written"), parent=win)
                 win.destroy()
 
@@ -1658,7 +1732,7 @@ def sync_pc_time():
 
     stop_time_reader()
     time.sleep(0.8)
-    
+
     root.config(cursor="watch")
     root.update()
 
@@ -1669,7 +1743,7 @@ def sync_pc_time():
         if not success:
             # Проверяем на ошибку дескриптора
             if "Неверный дескриптор" in result or "Bad file descriptor" in result:
-                messagebox.showerror(tr("dlg_write_error"), 
+                messagebox.showerror(tr("dlg_write_error"),
                     tr("dlg_port_unavailable_msg").format(conn["port"]))
             else:
                 messagebox.showerror(tr("dlg_sync_error"), result)
@@ -1679,7 +1753,7 @@ def sync_pc_time():
         current_time_value.config(text=result)
         # Принудительно обновляем очередь времени
         time_update_queue.put(result)
-        root.after(0, _check_time_queue)   
+        root.after(0, _check_time_queue)
         start_time_reader()
 
     except Exception as e:
@@ -1804,13 +1878,13 @@ def create_parameters_tab():
     for widget in tab_params.winfo_children():
         widget.destroy()
 
-    if device_type == "single": 
+    if device_type == "single":
         center_frame = tk.Frame(tab_params)
         center_frame.pack(pady=20)
 
         # --- Блок 1: Энергия ---
         tk.Label(center_frame, text=tr("lbl_energy"), font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(0, 4))
-        
+
         row_e1 = tk.Frame(center_frame)
         row_e1.pack(anchor="w", pady=2)
         tk.Label(row_e1, text=tr("lbl_energy_abs")).pack(side="left")
@@ -1880,7 +1954,7 @@ def create_parameters_tab():
 
         # Блок 1: Энергия
         tk.Label(col1, text=tr("lbl_energy"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-        
+
         r1 = tk.Frame(col1); r1.pack(anchor="w", pady=1)
         tk.Label(r1, text=tr("lbl_abs")).pack(side="left")
         param_ch1_energy_abs_label = tk.Label(r1, text=tr("status_disconnected"), font=("Consolas", 11))
@@ -1897,7 +1971,7 @@ def create_parameters_tab():
         param_ch1_energy_neg_label.pack(side="left", padx=(5, 0))
 
         tk.Frame(col1, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
-        
+
         # Блок 2: Текущие параметры
         tk.Label(col1, text=tr("lbl_current_params"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
 
@@ -1917,7 +1991,7 @@ def create_parameters_tab():
         param_p1_label.pack(side="left", padx=(10, 0))
 
         tk.Frame(col1, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
-        
+
         # Блок 3: Номиналы
         tk.Label(col1, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
 
@@ -1933,7 +2007,7 @@ def create_parameters_tab():
 
         separator = tk.Frame(main_frame, width=2, bg="gray")
         separator.pack(side="left", fill="y", padx=10)
-        
+
         # --- ПРАВАЯ КОЛОНКА: КАНАЛ B ---
         col2 = tk.Frame(main_frame)
         col2.pack(side="left", padx=20, pady=5)
@@ -1941,7 +2015,7 @@ def create_parameters_tab():
 
         # Блок 1: Энергия
         tk.Label(col2, text=tr("lbl_energy"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-        
+
         r1b = tk.Frame(col2); r1b.pack(anchor="w", pady=1)
         tk.Label(r1b, text=tr("lbl_abs")).pack(side="left")
         param_ch2_energy_abs_label = tk.Label(r1b, text=tr("status_disconnected"), font=("Consolas", 11))
@@ -1998,7 +2072,7 @@ def on_close_attempt(win):
     if messagebox.askyesno(tr("dlg_exit"), tr("dlg_exit_confirm")):
         win.destroy()
         root.destroy()
-        sys.exit()  
+        sys.exit()
 
 
 def choose_device_type_on_start():
@@ -2008,12 +2082,12 @@ def choose_device_type_on_start():
     win.title(tr("dlg_select_type"))
     win.grab_set()
     win.resizable(False, False)
-    
+
     def on_close():
         if messagebox.askyesno(tr("dlg_exit"), tr("dlg_exit_confirm")):
             win.destroy()
-            root.quit()  
-       
+            root.quit()
+
     win.protocol("WM_DELETE_WINDOW", on_close)
 
     tk.Label(win, text=tr("dlg_select_type_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 10))
@@ -2048,11 +2122,11 @@ def choose_device_type_on_start():
     win.geometry(f"+{x}+{y}")
 
     win.wait_window()
-    
+
     # ПОСЛЕ ВЫБОРА ТИПА - ОБНОВЛЯЕМ ОТОБРАЖЕНИЕ
     if user_has_chosen_device_type:
         update_device_type_display()
-        
+
 
 def create_settings_tab():
     """Создаёт вкладку «Настройки прибора»."""
@@ -2131,7 +2205,7 @@ def create_info_tab():
     # Очищаем старое содержимое
     for widget in tab_info.winfo_children():
         widget.destroy()
-        
+
     # 1. Контейнер на всю площадь вкладки (распорка)
     main_container = tk.Frame(tab_info)
     main_container.pack(expand=True, fill="both")
@@ -2158,7 +2232,7 @@ def create_info_tab():
     info_meter_type_label = _add_row(2, "lbl_meter_type", None)
     info_sw_version_label = _add_row(3, "lbl_sw_version", None)
     info_release_date_label = _add_row(4, "lbl_release_date", None)
-      
+
 
 def widget_exists(w):
     """Проверяет, существует ли виджет в Tkinter."""
@@ -2180,14 +2254,14 @@ def _check_settings_queue():
                 if settings_sens_i_label: settings_sens_i_label.config(text=tr("status_disconnected"))
             else:
                 if settings_max_i_a_label: settings_max_i_a_label.config(text=f"{settings['max_current_a']:.2f} {tr('unit_a')}")
-                if settings_max_i_b_label: 
+                if settings_max_i_b_label:
                     if 'max_current_b' in settings:
                         settings_max_i_b_label.config(text=f"{settings['max_current_b']:.2f} {tr('unit_a')}")
                     else:
                         settings_max_i_b_label.config(text=tr("status_disconnected"))
                 if settings_sens_v_label: settings_sens_v_label.config(text=f"{settings['sens_voltage']:.1f} {tr('unit_percent')}")
                 if settings_sens_i_label: settings_sens_i_label.config(text=f"{settings['sens_current']:.1f} {tr('unit_percent')}")
-                
+
                 # Безопасное обновление Combobox (избегаем ошибки 'popdown')
                 try:
                     if settings_decimal_combo and settings_decimal_combo.focus_get() != settings_decimal_combo:
@@ -2227,20 +2301,20 @@ def _check_info_queue():
 def _show_numeric_input_dialog(title, prompt, current_value, write_func=None):
     """Показывает диалог ввода числового значения."""
     global settings_dialog_open
-    
+
     dialog = tk.Toplevel(root)
     dialog.title(title)
     dialog.grab_set()
     dialog.resizable(False, False)
-    
+
     tk.Label(dialog, text=prompt, font=("Segoe UI", 10)).pack(pady=(15, 5), padx=20)
-    
+
     value_var = tk.StringVar(value=f"{current_value:.2f}" if current_value != tr("status_disconnected") and current_value is not None else "")
     entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15)
     entry.pack(pady=5)
     entry.focus()
     entry.select_range(0, 'end')
-    
+
     def on_ok():
         global settings_dialog_open
         try:
@@ -2248,7 +2322,7 @@ def _show_numeric_input_dialog(title, prompt, current_value, write_func=None):
             if not conn:
                 messagebox.showerror(tr("dlg_input_error"), tr("dlg_no_connection"), parent=dialog)
                 return
-            
+
             if write_func:
                 success, msg = write_func(conn["port"], conn["slave"], conn["baud"], conn["parity"], new_value)
                 if success:
@@ -2260,20 +2334,20 @@ def _show_numeric_input_dialog(title, prompt, current_value, write_func=None):
             start_time_reader()
         except Exception as e:
             messagebox.showerror(tr("dlg_input_error"), str(e), parent=dialog)
-    
+
     def on_cancel():
         global settings_dialog_open
         settings_dialog_open = False
         dialog.destroy()
         start_time_reader()
-    
+
     entry.bind('<Return>', lambda e: on_ok())
-    
+
     btn_frame = tk.Frame(dialog)
     btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
     ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, width=10).pack(side="left", padx=5)
-    
+
     dialog.update_idletasks()
     x = root.winfo_rootx() + (root.winfo_width() - dialog.winfo_width()) // 2
     y = root.winfo_rooty() + (root.winfo_height() - dialog.winfo_height()) // 2
@@ -2322,7 +2396,7 @@ def _on_change_max_current_a():
     settings_dialog_open = True
     stop_time_reader()
     time.sleep(0.3)
-    
+
     current_text = settings_max_i_a_label.cget("text")
     try: current_val = float(current_text.replace(" " + tr("unit_a"), "").replace(",", "."))
     except: current_val = 0
@@ -2374,18 +2448,18 @@ def _on_change_max_current_a():
 
 def _on_change_max_current_b():
     global settings_dialog_open
-    if device_type != "dual": 
+    if device_type != "dual":
         return
     if not conn:
         messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
         return
-    if settings_dialog_open: 
+    if settings_dialog_open:
         return
     settings_dialog_open = True
-    
+
     stop_time_reader()
     time.sleep(0.3)
-    
+
     current_text = settings_max_i_b_label.cget("text")
     try: current_val = float(current_text.replace(" " + tr("unit_a"), "").replace(",", "."))
     except: current_val = 0
@@ -2400,7 +2474,7 @@ def _on_change_max_current_b():
         global settings_dialog_open
         settings_dialog_open = False
         start_time_reader()
-        if dialog.winfo_exists(): 
+        if dialog.winfo_exists():
             dialog.destroy()
 
     # Перехват нажатия на крестик
@@ -2429,11 +2503,11 @@ def _on_change_max_current_b():
         finally:
             cleanup_and_close()
 
-    def on_cancel(): 
+    def on_cancel():
         cleanup_and_close()
 
     entry.bind('<Return>', lambda e: on_ok())
-    
+
     btn_frame = tk.Frame(dialog)
     btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
@@ -2450,13 +2524,13 @@ def _on_change_sens_voltage():
     if not conn:
         messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
         return
-    if settings_dialog_open: 
+    if settings_dialog_open:
         return
     settings_dialog_open = True
-    
+
     stop_time_reader()
     time.sleep(0.3)
-    
+
     current_text = settings_sens_v_label.cget("text")
     try: current_val = float(current_text.replace(" " + tr("unit_percent"), "").replace(",", "."))
     except: current_val = 0
@@ -2471,7 +2545,7 @@ def _on_change_sens_voltage():
         global settings_dialog_open
         settings_dialog_open = False
         start_time_reader()
-        if dialog.winfo_exists(): 
+        if dialog.winfo_exists():
             dialog.destroy()
 
     dialog.protocol("WM_DELETE_WINDOW", cleanup_and_close)
@@ -2499,11 +2573,11 @@ def _on_change_sens_voltage():
         finally:
             cleanup_and_close()
 
-    def on_cancel(): 
+    def on_cancel():
         cleanup_and_close()
 
     entry.bind('<Return>', lambda e: on_ok())
-    
+
     btn_frame = tk.Frame(dialog)
     btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
@@ -2520,13 +2594,13 @@ def _on_change_sens_current():
     if not conn:
         messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
         return
-    if settings_dialog_open: 
+    if settings_dialog_open:
         return
     settings_dialog_open = True
-    
+
     stop_time_reader()
     time.sleep(0.3)
-    
+
     current_text = settings_sens_i_label.cget("text")
     try: current_val = float(current_text.replace(" " + tr("unit_percent"), "").replace(",", "."))
     except: current_val = 0
@@ -2541,7 +2615,7 @@ def _on_change_sens_current():
         global settings_dialog_open
         settings_dialog_open = False
         start_time_reader()
-        if dialog.winfo_exists(): 
+        if dialog.winfo_exists():
             dialog.destroy()
 
     dialog.protocol("WM_DELETE_WINDOW", cleanup_and_close)
@@ -2569,11 +2643,11 @@ def _on_change_sens_current():
         finally:
             cleanup_and_close()
 
-    def on_cancel(): 
+    def on_cancel():
         cleanup_and_close()
 
     entry.bind('<Return>', lambda e: on_ok())
-    
+
     btn_frame = tk.Frame(dialog)
     btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
@@ -2594,11 +2668,11 @@ def _on_change_decimal_places(event=None):
     if settings_dialog_open:
         return
     settings_dialog_open = True
-    
-    # Останавливаем поток перед записью  
+
+    # Останавливаем поток перед записью
     stop_time_reader()
     time.sleep(0.3)
-    
+
     try:
         value = int(settings_decimal_combo.get())
         success, msg = write_decimal_places(conn["port"], conn["slave"], conn["baud"], conn["parity"], value)
@@ -2630,7 +2704,7 @@ def _on_change_tariff_periods(event=None):
     # Останавливаем поток перед записью
     stop_time_reader()
     time.sleep(0.3)
-    
+
     try:
         value = int(settings_tariff_combo.get())
         success, msg = write_tariff_periods(conn["port"], conn["slave"], conn["baud"], conn["parity"], value)
@@ -2652,7 +2726,7 @@ def _on_change_tariff_periods(event=None):
 def update_device_type_display():
     global type_image_label
     device_name = tr("device_name")  # "СКВТ ЭМИС-ЭЛЕКТРА 977"
-    
+
     # Если тип ещё не выбран — показываем прочерк
     if device_type is None:
         type_text = tr("status_disconnected")
@@ -2666,14 +2740,14 @@ def update_device_type_display():
     else:
         type_text = tr("status_disconnected")
         img = None
-    
+
     type_label.config(text=type_text)
-    
+
     if img:
         type_image_label.config(image=img)
     else:
         type_image_label.config(image="")
-        
+
     if settings_max_i_b_label:
         if device_type == "single":
             settings_max_i_b_label.config(text=tr("status_disconnected") + " (N/A)")
@@ -2682,21 +2756,21 @@ def update_device_type_display():
 def resize_window_to_content():
     """Автоматически подстраивает размер окна под контент после смены языка."""
     root.update_idletasks()
-    
+
     # Получаем требуемый размер контента
     required_width = root.winfo_reqwidth()
     required_height = root.winfo_reqheight()
-    
+
     # Ограничиваем высоту 90% экрана, ширина — по контенту
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     max_height = int(screen_height * 0.9)
     actual_height = min(required_height, max_height)
-    
+
     # Центрируем окно на экране
     x = (screen_width - required_width) // 2
     y = (screen_height - actual_height) // 2
-    
+
     # Применяем новый размер
     root.geometry(f"{required_width}x{actual_height}+{x}+{y}")
     root.resizable(False, True)  # По ширине фикс, по высоте можно тянуть
@@ -2705,7 +2779,7 @@ def resize_window_to_content():
 def choose_device_type_from_menu():
     """Позволяет изменить тип счётчика через меню (с картинками)."""
     global device_type
-    
+
     if conn:
         messagebox.showwarning(tr("dlg_warning"), tr("dlg_change_type_warning"))
         disconnect_device()
@@ -2719,15 +2793,15 @@ def choose_device_type_from_menu():
         global device_type
         stop_time_reader()
         device_type = t
-        
+
         # Пересоздаём вкладки под новый тип
         create_parameters_tab()
         create_settings_tab()
         create_info_tab()
-        
+
         # Обновляем отображение типа (картинка + текст)
         update_device_type_display()
-        
+
         win.destroy()
 
     tk.Label(win, text=tr("dlg_select_type_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 10))
@@ -2764,7 +2838,7 @@ load_config()
 
 root = tk.Tk()
 root.title(tr("app_title"))
-# 1. Иконка для главного окна 
+# 1. Иконка для главного окна
 try:
     root.iconbitmap(resource_path("app.ico"))
 except Exception:
@@ -2776,7 +2850,7 @@ try:
     icon_png_path = resource_path("app.png")
     if os.path.exists(icon_png_path):
         app_icon_img = tk.PhotoImage(file=icon_png_path)
-        root.iconphoto(True, app_icon_img) 
+        root.iconphoto(True, app_icon_img)
 except Exception:
     # Если PNG нет, программа не упадет, просто на окнах будет перышко
     pass
@@ -2917,7 +2991,7 @@ set_language(current_language)
 # 7. Завершение и запуск
 # =============================================================================
 
-root.update_idletasks()  
+root.update_idletasks()
 width = root.winfo_reqwidth()
 height = root.winfo_reqheight()
 screen_width = root.winfo_screenwidth()
