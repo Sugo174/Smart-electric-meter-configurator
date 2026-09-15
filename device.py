@@ -706,76 +706,149 @@ def read_device_info(port, slave, baud, parity):
 
 
 def write_max_current(port, slave, baud, parity, channel, value):
-    """Запись максимального тока."""
+    """Записывает максимальный ток выбранного канала."""
+    dev = None
+
     try:
-        addr = 0xA007 if channel == 'a' else 0xA009
+        addr = 0xA007 if channel == "a" else 0xA009
         raw_value = int(value / 0.01)
-        
+
         dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+
         dev.write_register(0xA000, 0x5AA5, functioncode=6)
         time.sleep(0.2)
-        dev.write_registers(addr, [(raw_value >> 16) & 0xFFFF, raw_value & 0xFFFF])
+
+        dev.write_registers(
+            addr,
+            [
+                (raw_value >> 16) & 0xFFFF,
+                raw_value & 0xFFFF,
+            ],
+        )
         time.sleep(0.2)
-        dev.serial.close()
+
         return True, "OK"
-    except Exception as e:
-        return False, str(e)
+
+    except Exception as error:
+        return False, str(error)
+
+    finally:
+        if dev is not None:
+            try:
+                dev.serial.close()
+            except Exception:
+                pass
+
 
 def write_sensitivity_voltage(port, slave, baud, parity, value):
-    """Запись порога чувствительности напряжения."""
+    """Записывает порог чувствительности напряжения."""
+    dev = None
+
     try:
         raw_value = int(value / 0.1)
+
         dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+
         dev.write_register(0xA000, 0x5AA5, functioncode=6)
         time.sleep(0.2)
+
         dev.write_register(0xA00D, raw_value, functioncode=6)
         time.sleep(0.2)
-        dev.serial.close()
+
         return True, "OK"
-    except Exception as e:
-        return False, str(e)
+
+    except Exception as error:
+        return False, str(error)
+
+    finally:
+        if dev is not None:
+            try:
+                dev.serial.close()
+            except Exception:
+                pass
+
 
 def write_sensitivity_current(port, slave, baud, parity, value):
-    """Запись порога чувствительности тока."""
+    """Записывает порог чувствительности тока."""
+    dev = None
+
     try:
         raw_value = int(value / 0.1)
+
         dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+
         dev.write_register(0xA000, 0x5AA5, functioncode=6)
         time.sleep(0.2)
+
         dev.write_register(0xA00E, raw_value, functioncode=6)
         time.sleep(0.2)
-        dev.serial.close()
+
         return True, "OK"
-    except Exception as e:
-        return False, str(e)
+
+    except Exception as error:
+        return False, str(error)
+
+    finally:
+        if dev is not None:
+            try:
+                dev.serial.close()
+            except Exception:
+                pass
+
 
 def write_decimal_places(port, slave, baud, parity, value):
-    """Запись количества десятичных знаков."""
+    """Записывает количество знаков после запятой для энергии."""
     if value not in (2, 3):
         return False, (
             "Unsupported number of energy decimal places. "
             "Supported values: 2 or 3."
         )
+
+    dev = None
+
     try:
         dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+
         dev.write_register(0xA000, 0x5AA5, functioncode=6)
         time.sleep(0.2)
+
         dev.write_register(0xA011, value, functioncode=6)
         time.sleep(0.2)
-        dev.serial.close()
+
         return True, "OK"
-    except Exception as e:
-        return False, str(e)
+
+    except Exception as error:
+        return False, str(error)
+
+    finally:
+        if dev is not None:
+            try:
+                dev.serial.close()
+            except Exception:
+                pass
+
 
 def write_tariff_periods(port, slave, baud, parity, value):
-    """Запись количества тарифных отрезков."""
+    """Записывает количество тарифных периодов."""
+    dev = None
+
     try:
         dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+
         dev.write_register(0xA000, 0x5AA5, functioncode=6)
         time.sleep(0.2)
+
         dev.write_register(0xA012, value, functioncode=6)
         time.sleep(0.2)
-        dev.serial.close()
+
         return True, "OK"
-    except Exception as e:
-        return False, str(e)
+
+    except Exception as error:
+        return False, str(error)
+
+    finally:
+        if dev is not None:
+            try:
+                dev.serial.close()
+            except Exception:
+                pass

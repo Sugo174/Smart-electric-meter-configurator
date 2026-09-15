@@ -1,6 +1,7 @@
 """Тесты вспомогательной логики взаимодействия со счётчиком."""
 
 import unittest
+from unittest.mock import patch
 
 from constants import (
     BAUD_CODE_FROM_VAL,
@@ -15,6 +16,10 @@ from device import (
     int_to_bcd,
     registers_to_i32,
     write_decimal_places,
+    write_max_current,
+    write_sensitivity_current,
+    write_sensitivity_voltage,
+    write_tariff_periods,
 )
 
 
@@ -154,6 +159,70 @@ class DecimalPlacesValidationTests(unittest.TestCase):
 
                 self.assertFalse(success)
                 self.assertIn("Supported values: 2 or 3", message)
+
+
+class PortCleanupTests(unittest.TestCase):
+    """Проверяет освобождение COM-порта после ошибки записи."""
+
+    def test_write_functions_close_port_after_error(self) -> None:
+        """Каждая функция записи должна закрывать порт при ошибке связи."""
+
+        class FakeSerial:
+            """Минимальная имитация последовательного порта."""
+
+            def __init__(self):
+                self.closed = False
+
+            def close(self):
+                self.closed = True
+
+        class FailingInstrument:
+            """Имитация прибора, который не отвечает на команду."""
+
+            def __init__(self):
+                self.serial = FakeSerial()
+
+            def write_register(self, *args, **kwargs):
+                raise RuntimeError("Communication error")
+
+            def write_registers(self, *args, **kwargs):
+                raise RuntimeError("Communication error")
+
+        test_cases = [
+            (
+                write_max_current,
+                ("unused-port", 1, 9600, "Even", "a", 100.0),
+            ),
+            (
+                write_sensitivity_voltage,
+                ("unused-port", 1, 9600, "Even", 10.0),
+            ),
+            (
+                write_sensitivity_current,
+                ("unused-port", 1, 9600, "Even", 2.0),
+            ),
+            (
+                write_decimal_places,
+                ("unused-port", 1, 9600, "Even", 2),
+            ),
+            (
+                write_tariff_periods,
+                ("unused-port", 1, 9600, "Even", 14),
+            ),
+        ]
+
+        for function, arguments in test_cases:
+            with self.subTest(function=function.__name__):
+                instrument = FailingInstrument()
+
+                with patch(
+                    "device.make_instrument",
+                    return_value=instrument,
+                ):
+                    success, _ = function(*arguments)
+
+                self.assertFalse(success)
+                self.assertTrue(instrument.serial.closed)
 
 
 if __name__ == "__main__":
