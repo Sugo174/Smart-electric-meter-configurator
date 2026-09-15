@@ -2181,7 +2181,12 @@ def create_settings_tab():
     # --- Строка 5 ---
     tk.Label(grid_frame, text=tr("lbl_decimal"),
              anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=4, column=0, sticky="e", pady=5, padx=(0, 12))
-    settings_decimal_combo = ttk.Combobox(grid_frame, values=[str(i) for i in range(1, 4)], state="readonly", width=8)
+    settings_decimal_combo = ttk.Combobox(
+        grid_frame,
+        values=["2", "3"],
+        state="readonly",
+        width=8,
+    )
     settings_decimal_combo.grid(row=4, column=1, sticky="w", pady=5)
     settings_decimal_combo.bind('<<ComboboxSelected>>', _on_change_decimal_places)
 

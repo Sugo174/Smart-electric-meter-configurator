@@ -720,6 +720,11 @@ def write_sensitivity_current(port, slave, baud, parity, value):
 
 def write_decimal_places(port, slave, baud, parity, value):
     """Запись количества десятичных знаков."""
+    if value not in (2, 3):
+        return False, (
+            "Unsupported number of energy decimal places. "
+            "Supported values: 2 or 3."
+        )
     try:
         dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
         dev.write_register(0xA000, 0x5AA5, functioncode=6)

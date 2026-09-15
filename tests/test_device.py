@@ -10,7 +10,7 @@ from constants import (
     PARITY_STR_TO_VAL,
     PARITY_VAL_TO_STR,
 )
-from device import bcd_to_int, int_to_bcd
+from device import bcd_to_int, int_to_bcd, write_decimal_places
 
 
 class BCDConversionTests(unittest.TestCase):
@@ -109,6 +109,25 @@ class CommunicationConstantTests(unittest.TestCase):
                 "None": "N",
             },
         )
+
+
+class DecimalPlacesValidationTests(unittest.TestCase):
+    """Проверяет допустимые значения точности отображения энергии."""
+
+    def test_unsupported_decimal_places_are_rejected(self) -> None:
+        """Значения 1 и 4 не должны отправляться в прибор."""
+        for value in (1, 4):
+            with self.subTest(value=value):
+                success, message = write_decimal_places(
+                    "unused-port",
+                    1,
+                    9600,
+                    "Even",
+                    value,
+                )
+
+                self.assertFalse(success)
+                self.assertIn("Supported values: 2 or 3", message)
 
 
 if __name__ == "__main__":
