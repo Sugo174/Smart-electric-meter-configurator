@@ -64,7 +64,7 @@ current_language = "ru"
 TRANSLATIONS = {
     "ru": {
         # Меню
-        "app_title": "Конфигуратор СКВТ ЭМИС-ЭЛЕКТРА 977 V1.08",
+        "app_title": "Конфигуратор СКВТ ЭМИС-ЭЛЕКТРА 977 V1.09",
         "menu_settings": "☰ Настройки программы",
         "menu_help": "Справка",
         "menu_exit": "Выход",
@@ -244,7 +244,7 @@ TRANSLATIONS = {
 
     "en": {
         # Menu
-        "app_title": "Configurator SKVT EMIS-ELECTRA 977 V1.08",
+        "app_title": "Configurator SKVT EMIS-ELECTRA 977 V1.09",
         "menu_settings": "☰ Program Settings",
         "menu_help": "Help",
         "menu_exit": "Exit",
@@ -416,7 +416,7 @@ TRANSLATIONS = {
 
     "zh": {
         # 菜单
-        "app_title": "配置器 SKVT EMIS-ELECTRA 977 V1.08",
+        "app_title": "配置器 SKVT EMIS-ELECTRA 977 V1.09",
         "menu_settings": "☰ 程序设置",
         "menu_help": "帮助",
         "menu_exit": "退出",
