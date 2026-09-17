@@ -41,6 +41,10 @@ from constants import (
     BAUD_VAL_FROM_CODE,
     PARITY_MAP,
     REG_PARITY,
+    REG_TARIFF_SCHEDULE_START,
+    TARIFF_SCHEDULE_RECORD_COUNT,
+    TARIFF_NUMBER_MIN,
+    TARIFF_NUMBER_MAX,
     PARITY_VAL_TO_STR,
     PARITY_STR_TO_VAL,
     ENERGY_FACTOR,
@@ -631,15 +635,11 @@ def read_device_settings_params(port, slave, baud, parity, device_type):
             # Отображение десятичных знаков (0xA011)
             decimal_places = dev.read_register(0xA011, functioncode=3)
 
-            # Количество тарифных отрезков (0xA012)
-            tariff_periods = dev.read_register(0xA012, functioncode=3)
-
             result = {
                 "max_current_a": max_i_a,
                 "sens_voltage": sens_v,
                 "sens_current": sens_i,
-                "decimal_places": decimal_places,
-                "tariff_periods": tariff_periods
+                "decimal_places": decimal_places
             }
             
             if device_type == "dual":
@@ -828,27 +828,217 @@ def write_decimal_places(port, slave, baud, parity, value):
                 pass
 
 
-def write_tariff_periods(port, slave, baud, parity, value):
-    """Записывает количество тарифных периодов."""
-    dev = None
+def build_tariff_schedule_registers(periods):
+    """Формирует 28 регистров для записи тарифного расписания.
+
+    Каждый период задаётся кортежем:
+    (час начала, минута начала, номер тарифа).
+
+    Прибор всегда ожидает 14 записей. Если реальных периодов меньше,
+    последняя запись повторяется до полного массива.
+    """
+    if not 1 <= len(periods) <= TARIFF_SCHEDULE_RECORD_COUNT:
+        raise ValueError(
+            "Количество тарифных периодов должно быть от 1 до 14."
+        )
+
+    registers = []
+    previous_minutes = -1
+
+    for index, (hour, minute, tariff_number) in enumerate(periods):
+        if not 0 <= hour <= 23:
+            raise ValueError(
+                f"Некорректный час в периоде {index + 1}: {hour}"
+            )
+
+        if not 0 <= minute <= 59:
+            raise ValueError(
+                f"Некорректная минута в периоде {index + 1}: {minute}"
+            )
+
+        if not TARIFF_NUMBER_MIN <= tariff_number <= TARIFF_NUMBER_MAX:
+            raise ValueError(
+                f"Номер тарифа в периоде {index + 1} должен быть "
+                f"от {TARIFF_NUMBER_MIN} до {TARIFF_NUMBER_MAX}."
+            )
+
+        start_minutes = hour * 60 + minute
+
+        if index == 0 and start_minutes != 0:
+            raise ValueError(
+                "Первый тарифный период должен начинаться в 00:00."
+            )
+
+        if start_minutes <= previous_minutes:
+            raise ValueError(
+                "Время начала периодов должно строго возрастать."
+            )
+
+        time_word = (
+            int_to_bcd(hour) << 8
+        ) | int_to_bcd(minute)
+
+        registers.extend([
+            time_word,
+            tariff_number,
+        ])
+
+        previous_minutes = start_minutes
+
+    last_record = registers[-2:]
+
+    while len(registers) < TARIFF_SCHEDULE_RECORD_COUNT * 2:
+        registers.extend(last_record)
+
+    return registers
+
+
+def write_tariff_schedule(port, slave, baud, parity, periods):
+    """Записывает тарифное расписание и проверяет записанные регистры.
+
+    Регистр A012 намеренно не изменяется: разработчик подтвердил,
+    что для настройки расписания достаточно разблокировки A000
+    и записи блока A013–A02E.
+    """
+    device = None
 
     try:
-        dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+        registers = build_tariff_schedule_registers(periods)
 
-        dev.write_register(0xA000, 0x5AA5, functioncode=6)
+        device = make_instrument(
+            port,
+            slave,
+            baud,
+            PARITY_MAP[parity],
+        )
+
+        # Разблокировка программирования: A000 = 0x5AA5.
+        device.write_register(
+            REG_EN_PROG,
+            0x5AA5,
+            functioncode=6,
+        )
+
+        time.sleep(0.1)
+
+        # Функция Modbus 16: 28 регистров, A013–A02E.
+        device.write_registers(
+            REG_TARIFF_SCHEDULE_START,
+            registers,
+        )
+
         time.sleep(0.2)
 
-        dev.write_register(0xA012, value, functioncode=6)
-        time.sleep(0.2)
+        written_registers = device.read_registers(
+            REG_TARIFF_SCHEDULE_START,
+            len(registers),
+            functioncode=3,
+        )
 
-        return True, "OK"
+        if written_registers != registers:
+            return (
+                False,
+                "Счётчик вернул данные, отличающиеся от отправленного "
+                "тарифного расписания.",
+            )
+
+        return True, "Тарифное расписание записано и проверено."
 
     except Exception as error:
         return False, str(error)
 
     finally:
-        if dev is not None:
+        if device is not None:
             try:
-                dev.serial.close()
+                device.serial.close()
+            except Exception:
+                pass
+
+
+def parse_tariff_schedule_registers(registers):
+    """Преобразует 28 регистров счётчика в список тарифных периодов."""
+    expected_length = TARIFF_SCHEDULE_RECORD_COUNT * 2
+
+    if len(registers) != expected_length:
+        raise ValueError(
+            f"Ожидалось {expected_length} регистров, "
+            f"получено {len(registers)}."
+        )
+
+    periods = []
+    previous_start_minutes = -1
+
+    for index in range(TARIFF_SCHEDULE_RECORD_COUNT):
+        time_word = registers[index * 2]
+        tariff_number = registers[index * 2 + 1]
+
+        # Пустые регистры означают не настроенное расписание.
+        if time_word == 0 and tariff_number == 0:
+            continue
+
+        hour = bcd_to_int((time_word >> 8) & 0xFF)
+        minute = bcd_to_int(time_word & 0xFF)
+
+        if not 0 <= hour <= 23 or not 0 <= minute <= 59:
+            raise ValueError(
+                f"Некорректное время в записи {index + 1}."
+            )
+
+        if not TARIFF_NUMBER_MIN <= tariff_number <= TARIFF_NUMBER_MAX:
+            raise ValueError(
+                f"Некорректный тариф в записи {index + 1}: "
+                f"{tariff_number}"
+            )
+
+        start_minutes = hour * 60 + minute
+        period = (hour, minute, tariff_number)
+
+        # Повтор последней записи — техническое заполнение до 14 строк.
+        if periods and start_minutes == previous_start_minutes:
+            if period != periods[-1]:
+                raise ValueError(
+                    "Повторяющиеся периоды содержат разные тарифы."
+                )
+
+            continue
+
+        if start_minutes <= previous_start_minutes:
+            raise ValueError(
+                "Время начала периодов должно строго возрастать."
+            )
+
+        periods.append(period)
+        previous_start_minutes = start_minutes
+
+    return periods
+
+
+def read_tariff_schedule(port, slave, baud, parity):
+    """Читает и расшифровывает тарифное расписание счётчика."""
+    device = None
+
+    try:
+        device = make_instrument(
+            port,
+            slave,
+            baud,
+            PARITY_MAP[parity],
+        )
+
+        registers = device.read_registers(
+            REG_TARIFF_SCHEDULE_START,
+            TARIFF_SCHEDULE_RECORD_COUNT * 2,
+            functioncode=3,
+        )
+
+        return True, parse_tariff_schedule_registers(registers)
+
+    except Exception as error:
+        return False, str(error)
+
+    finally:
+        if device is not None:
+            try:
+                device.serial.close()
             except Exception:
                 pass

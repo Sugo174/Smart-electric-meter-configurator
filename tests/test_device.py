@@ -19,7 +19,7 @@ from device import (
     write_max_current,
     write_sensitivity_current,
     write_sensitivity_voltage,
-    write_tariff_periods,
+    write_tariff_schedule,
 )
 
 
@@ -206,8 +206,14 @@ class PortCleanupTests(unittest.TestCase):
                 ("unused-port", 1, 9600, "Even", 2),
             ),
             (
-                write_tariff_periods,
-                ("unused-port", 1, 9600, "Even", 14),
+                write_tariff_schedule,
+                (
+                    "unused-port",
+                    1,
+                    9600,
+                    "Even",
+                    [(0, 0, 1)],
+                ),
             ),
         ]
 

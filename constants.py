@@ -26,6 +26,19 @@ REG_BAUD_CODE = 0xA002
 
 # Регистр и маппинг четности (программная настройка)
 REG_PARITY = 0xA003  # U16: 0=None, 1=Odd, 2=Even
+
+# Начальный адрес блока тарифного расписания.
+# 14 записей занимают регистры 0xA013–0xA02E.
+REG_TARIFF_SCHEDULE_START = 0xA013
+
+# Прибор всегда ожидает 14 записей расписания.
+# Если реальных периодов меньше, последняя запись повторяется.
+TARIFF_SCHEDULE_RECORD_COUNT = 14
+
+# Допустимые номера тарифов согласно карте регистров.
+TARIFF_NUMBER_MIN = 1
+TARIFF_NUMBER_MAX = 4
+
 PARITY_VAL_TO_STR = {0: "None", 1: "Odd", 2: "Even"}
 PARITY_STR_TO_VAL = {"None": 0, "Odd": 1, "Even": 2}
 

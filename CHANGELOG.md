@@ -2,6 +2,17 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Daily tariff schedule editor with support for 1 to 14 tariff periods.
+- Reading, validation, writing, and post-write verification of tariff schedules.
+- Automated tests for tariff schedule construction and validation.
+
+### Changed
+- Replaced the legacy tariff-period count setting with a full tariff schedule editor.
+- Removed obsolete write operations for register `A012`.
+
 ## [V1.08]
 ### Changed
 - Tab layout restructured to match the official "EMIS Integrator" workflow.

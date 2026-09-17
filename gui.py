@@ -45,7 +45,8 @@ from device import (
     write_sensitivity_voltage,
     write_sensitivity_current,
     write_decimal_places,
-    write_tariff_periods,
+    read_tariff_schedule,
+    write_tariff_schedule,
     read_device_info
 )
 
@@ -140,6 +141,20 @@ TRANSLATIONS = {
         "lbl_tariff": "Тарифных отрезков:",
         "btn_change": "Изменить",
         "btn_clear_energy": "Очистить значения энергии",
+
+        # Тарифное расписание
+        "lbl_tariff_schedule": "Тарифное расписание:",
+        "btn_tariff_schedule": "Настроить расписание",
+        "dlg_tariff_schedule": "Настройка тарифного расписания",
+        "lbl_tariff_start_time": "Время начала",
+        "lbl_tariff_number": "Тариф",
+        "btn_add_period": "Добавить период",
+        "btn_remove_period": "Удалить",
+        "btn_save_schedule": "Записать расписание",
+        "dlg_schedule_saved": "Тарифное расписание успешно записано.",
+        "err_schedule_time": "Время периода {row} должно иметь формат ЧЧ:ММ.",
+        "err_schedule_empty": "Добавьте хотя бы один тарифный период.",
+        "err_schedule_limit": "Можно добавить не более 14 тарифных периодов.",
 
         # Вкладка "Информация о приборе"
         "lbl_serial": "Серийный номер:",
@@ -321,6 +336,20 @@ TRANSLATIONS = {
         "btn_change": "Change",
         "btn_clear_energy": "Clear Energy Values",
 
+        # Tariff schedule
+        "lbl_tariff_schedule": "Tariff schedule:",
+        "btn_tariff_schedule": "Configure schedule",
+        "dlg_tariff_schedule": "Tariff Schedule",
+        "lbl_tariff_start_time": "Start time",
+        "lbl_tariff_number": "Tariff",
+        "btn_add_period": "Add period",
+        "btn_remove_period": "Remove",
+        "btn_save_schedule": "Write schedule",
+        "dlg_schedule_saved": "Tariff schedule was written successfully.",
+        "err_schedule_time": "Period {row} time must use the HH:MM format.",
+        "err_schedule_empty": "Add at least one tariff period.",
+        "err_schedule_limit": "A maximum of 14 tariff periods is allowed.",
+
         # Device Info tab
         "lbl_serial": "Serial Number:",
         "lbl_manufacturer": "Manufacturer:",
@@ -492,6 +521,20 @@ TRANSLATIONS = {
         "lbl_tariff": "费率时段数:",
         "btn_change": "更改",
         "btn_clear_energy": "清除电能值",
+
+        # 费率时段表
+        "lbl_tariff_schedule": "费率时段表：",
+        "btn_tariff_schedule": "设置费率时段",
+        "dlg_tariff_schedule": "费率时段设置",
+        "lbl_tariff_start_time": "开始时间",
+        "lbl_tariff_number": "费率",
+        "btn_add_period": "添加时段",
+        "btn_remove_period": "删除",
+        "btn_save_schedule": "写入时段表",
+        "dlg_schedule_saved": "费率时段表已成功写入。",
+        "err_schedule_time": "第 {row} 个时段的时间必须使用 HH:MM 格式。",
+        "err_schedule_empty": "请至少添加一个费率时段。",
+        "err_schedule_limit": "最多允许 14 个费率时段。",
 
         # 设备信息选项卡
         "lbl_serial": "序列号:",
@@ -776,7 +819,7 @@ settings_max_i_b_label = None
 settings_sens_v_label = None
 settings_sens_i_label = None
 settings_decimal_combo = None
-settings_tariff_combo = None
+settings_tariff_button = None
 
 # Метки информации о приборе
 info_serial_label = None
@@ -2181,7 +2224,7 @@ def create_settings_tab():
     """Создаёт вкладку «Настройки прибора»."""
     global settings_max_i_a_label, settings_max_i_b_label
     global settings_sens_v_label, settings_sens_i_label
-    global settings_decimal_combo, settings_tariff_combo
+    global settings_decimal_combo, settings_tariff_button
 
     # Очищаем старое содержимое
     for widget in tab_settings.winfo_children():
@@ -2240,11 +2283,33 @@ def create_settings_tab():
     settings_decimal_combo.bind('<<ComboboxSelected>>', _on_change_decimal_places)
 
     # --- Строка 6 ---
-    tk.Label(grid_frame, text=tr("lbl_tariff"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=5, column=0, sticky="e", pady=5, padx=(0, 12))
-    settings_tariff_combo = ttk.Combobox(grid_frame, values=[str(i) for i in range(1, 15)], state="readonly", width=8)
-    settings_tariff_combo.grid(row=5, column=1, sticky="w", pady=5)
-    settings_tariff_combo.bind('<<ComboboxSelected>>', _on_change_tariff_periods)
+    tk.Label(
+        grid_frame,
+        text=tr("lbl_tariff_schedule"),
+        anchor="e",
+        width=34,
+        font=("TkDefaultFont", 10),
+    ).grid(
+        row=5,
+        column=0,
+        sticky="e",
+        pady=5,
+        padx=(0, 12),
+    )
+
+    settings_tariff_button = ttk.Button(
+        grid_frame,
+        text=tr("btn_tariff_schedule"),
+        command=show_tariff_schedule_dialog,
+        width=22,
+    )
+    settings_tariff_button.grid(
+        row=5,
+        column=1,
+        columnspan=2,
+        sticky="w",
+        pady=5,
+    )
 
     # Разделитель и кнопка очистки (в том же центральном блоке, выравниваются по ширине сетки)
     tk.Frame(center_block, height=2, bd=1, relief="sunken").pack(fill="x", pady=15)
@@ -2320,8 +2385,6 @@ def _check_settings_queue():
                 try:
                     if settings_decimal_combo and settings_decimal_combo.focus_get() != settings_decimal_combo:
                         settings_decimal_combo.set(str(settings['decimal_places']))
-                    if settings_tariff_combo and settings_tariff_combo.focus_get() != settings_tariff_combo:
-                        settings_tariff_combo.set(str(settings['tariff_periods']))
                 except Exception:
                     # Если фокус не удалось определить (например, при пересоздании), пропускаем обновление
                     pass
@@ -2745,36 +2808,370 @@ def _on_change_decimal_places(event=None):
         start_time_reader() # Запускаем поток обратно
 
 
-def _on_change_tariff_periods(event=None):
+def show_tariff_schedule_dialog():
+    """Открывает редактор тарифного расписания счётчика."""
     global settings_dialog_open
+
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
-        settings_tariff_combo.set("1")
+        messagebox.showwarning(
+            tr("dlg_warning"),
+            tr("dlg_no_connection"),
+        )
         return
+
     if settings_dialog_open:
         return
-    settings_dialog_open = True
 
-    # Останавливаем поток перед записью
+    settings_dialog_open = True
     stop_time_reader()
-    time.sleep(0.3)
 
     try:
-        value = int(settings_tariff_combo.get())
-        success, msg = write_tariff_periods(conn["port"], conn["slave"], conn["baud"], conn["parity"], value)
-        if success:
-            _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
-            settings_update_queue.put(new_settings)
-            root.after(0, _check_settings_queue)
-        else:
-            messagebox.showerror(tr("dlg_write_error"), msg)
-            settings_tariff_combo.set("1") # Сброс при ошибке
-    except Exception as e:
-        messagebox.showerror(tr("dlg_input_error"), str(e))
-        settings_tariff_combo.set("1")
+        root.config(cursor="watch")
+        root.update_idletasks()
+        time.sleep(0.3)
+
+        success, result = read_tariff_schedule(
+            conn["port"],
+            conn["slave"],
+            conn["baud"],
+            conn["parity"],
+        )
     finally:
+        root.config(cursor="")
+
+    if not success:
         settings_dialog_open = False
-        start_time_reader() # Запускаем поток обратно
+        start_time_reader()
+
+        messagebox.showerror(
+            tr("dlg_write_error"),
+            result,
+        )
+        return
+
+    # Для полностью пустого расписания показываем один начальный период.
+    periods = result or [(0, 0, 1)]
+
+    dialog = tk.Toplevel(root)
+    dialog.title(tr("dlg_tariff_schedule"))
+    dialog.resizable(False, False)
+    dialog.grab_set()
+
+    def cleanup_and_close():
+        """Закрывает окно и возобновляет фоновое чтение прибора."""
+        global settings_dialog_open
+
+        settings_dialog_open = False
+        start_time_reader()
+
+        if dialog.winfo_exists():
+            dialog.destroy()
+
+    dialog.protocol("WM_DELETE_WINDOW", cleanup_and_close)
+
+    tk.Label(
+        dialog,
+        text=tr("dlg_tariff_schedule"),
+        font=("Segoe UI", 11, "bold"),
+    ).pack(
+        pady=(15, 10),
+        padx=20,
+    )
+
+    table_frame = tk.Frame(dialog)
+    table_frame.pack(
+        padx=20,
+        pady=(0, 10),
+    )
+
+    # Здесь храним поля строк, чтобы затем получить введённые значения.
+    period_rows = []
+
+    def get_row_values():
+        """Возвращает текущие значения всех строк редактора."""
+        return [
+            (
+                time_entry.get().strip(),
+                tariff_combo.get(),
+            )
+            for time_entry, tariff_combo in period_rows
+        ]
+
+    def redraw_rows(row_values):
+        """Перерисовывает строки таблицы после добавления или удаления."""
+        nonlocal period_rows
+
+        for widget in table_frame.winfo_children():
+            widget.destroy()
+
+        period_rows = []
+
+        tk.Label(
+            table_frame,
+            text="№",
+            width=4,
+            anchor="center",
+        ).grid(
+            row=0,
+            column=0,
+            padx=5,
+            pady=(0, 5),
+        )
+
+        tk.Label(
+            table_frame,
+            text=tr("lbl_tariff_start_time"),
+            width=14,
+            anchor="center",
+        ).grid(
+            row=0,
+            column=1,
+            padx=5,
+            pady=(0, 5),
+        )
+
+        tk.Label(
+            table_frame,
+            text=tr("lbl_tariff_number"),
+            width=10,
+            anchor="center",
+        ).grid(
+            row=0,
+            column=2,
+            padx=5,
+            pady=(0, 5),
+        )
+
+        for index, (time_value, tariff_value) in enumerate(
+            row_values,
+            start=1,
+        ):
+            tk.Label(
+                table_frame,
+                text=str(index),
+                width=4,
+                anchor="center",
+            ).grid(
+                row=index,
+                column=0,
+                padx=5,
+                pady=3,
+            )
+
+            time_entry = ttk.Entry(
+                table_frame,
+                width=14,
+                justify="center",
+                font=("Consolas", 10),
+            )
+            time_entry.insert(0, time_value)
+            time_entry.grid(
+                row=index,
+                column=1,
+                padx=5,
+                pady=3,
+            )
+
+            tariff_combo = ttk.Combobox(
+                table_frame,
+                values=["1", "2", "3", "4"],
+                state="readonly",
+                width=8,
+                justify="center",
+            )
+            tariff_combo.set(tariff_value)
+            tariff_combo.grid(
+                row=index,
+                column=2,
+                padx=5,
+                pady=3,
+            )
+
+            ttk.Button(
+                table_frame,
+                text=tr("btn_remove_period"),
+                command=lambda row_index=index - 1: remove_row(
+                    row_index,
+                ),
+                width=10,
+            ).grid(
+                row=index,
+                column=3,
+                padx=(5, 0),
+                pady=3,
+            )
+
+            period_rows.append(
+                (
+                    time_entry,
+                    tariff_combo,
+                )
+            )
+
+    def add_row():
+        """Добавляет пустой тарифный период в конец таблицы."""
+        row_values = get_row_values()
+
+        if len(row_values) >= 14:
+            messagebox.showwarning(
+                tr("dlg_warning"),
+                tr("err_schedule_limit"),
+                parent=dialog,
+            )
+            return
+
+        row_values.append(("", "1"))
+        redraw_rows(row_values)
+
+    def remove_row(row_index):
+        """Удаляет выбранный тарифный период."""
+        row_values = get_row_values()
+
+        if len(row_values) <= 1:
+            return
+
+        del row_values[row_index]
+        redraw_rows(row_values)
+
+    def get_periods_to_write():
+        """Преобразует поля окна в периоды для записи в прибор."""
+        row_values = get_row_values()
+
+        if not row_values:
+            raise ValueError(tr("err_schedule_empty"))
+
+        parsed_periods = []
+
+        for index, (time_value, tariff_value) in enumerate(
+            row_values,
+            start=1,
+        ):
+            time_parts = time_value.split(":")
+
+            if len(time_parts) != 2:
+                raise ValueError(
+                    tr("err_schedule_time").format(row=index)
+                )
+
+            try:
+                hour = int(time_parts[0])
+                minute = int(time_parts[1])
+            except ValueError as error:
+                raise ValueError(
+                    tr("err_schedule_time").format(row=index)
+                ) from error
+
+            if not 0 <= hour <= 23 or not 0 <= minute <= 59:
+                raise ValueError(
+                    tr("err_schedule_time").format(row=index)
+                )
+
+            parsed_periods.append(
+                (
+                    hour,
+                    minute,
+                    int(tariff_value),
+                )
+            )
+
+        return parsed_periods
+
+    def save_schedule():
+        """Проверяет и записывает тарифное расписание в счётчик."""
+        try:
+            periods_to_write = get_periods_to_write()
+        except ValueError as error:
+            messagebox.showerror(
+                tr("dlg_input_error"),
+                str(error),
+                parent=dialog,
+            )
+            return
+
+        try:
+            root.config(cursor="watch")
+            root.update_idletasks()
+
+            success, result = write_tariff_schedule(
+                conn["port"],
+                conn["slave"],
+                conn["baud"],
+                conn["parity"],
+                periods_to_write,
+            )
+        finally:
+            root.config(cursor="")
+
+        if not success:
+            messagebox.showerror(
+                tr("dlg_write_error"),
+                result,
+                parent=dialog,
+            )
+            return
+
+        messagebox.showinfo(
+            tr("dlg_write_success"),
+            tr("dlg_schedule_saved"),
+            parent=dialog,
+        )
+
+        cleanup_and_close()
+
+    initial_rows = [
+        (
+            f"{hour:02d}:{minute:02d}",
+            str(tariff_number),
+        )
+        for hour, minute, tariff_number in periods
+    ]
+
+    redraw_rows(initial_rows)
+
+    ttk.Button(
+        dialog,
+        text=tr("btn_add_period"),
+        command=add_row,
+        width=18,
+    ).pack(
+        pady=(0, 5),
+    )
+
+    button_frame = tk.Frame(dialog)
+    button_frame.pack(
+        pady=(5, 15),
+    )
+
+    ttk.Button(
+        button_frame,
+        text=tr("dlg_cancel"),
+        command=cleanup_and_close,
+        width=14,
+    ).pack(
+        side="left",
+        padx=5,
+    )
+
+    ttk.Button(
+        button_frame,
+        text=tr("btn_save_schedule"),
+        command=save_schedule,
+        width=18,
+    ).pack(
+        side="left",
+        padx=5,
+    )
+
+    dialog.update_idletasks()
+
+    x = root.winfo_rootx() + (
+        root.winfo_width() - dialog.winfo_width()
+    ) // 2
+    y = root.winfo_rooty() + (
+        root.winfo_height() - dialog.winfo_height()
+    ) // 2
+
+    dialog.geometry(f"+{x}+{y}")
 
 
 def update_device_type_display():

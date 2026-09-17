@@ -82,6 +82,18 @@ This allows engineers to establish communication with a meter without prior know
  
 - Manual date and time configuration
 - Synchronization with PC system time
+
+### Tariff Schedule Configuration
+
+The application can read, edit, validate, and write daily tariff schedules directly to the meter.
+
+- Supports from 1 to 14 tariff periods
+- Supports tariff numbers from 1 to 4
+- Requires the first period to start at `00:00`
+- Validates strictly increasing start times before writing
+- Reads the schedule back from the meter after a successful write
+
+The meter stores 14 schedule records. When fewer periods are configured, the application automatically repeats the final period to fill the required register block.
  
 ### Real-Time Monitoring
  
