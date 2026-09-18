@@ -20,6 +20,7 @@ from device import (
     write_sensitivity_current,
     write_sensitivity_voltage,
     write_tariff_schedule,
+    decode_meter_serial_number,
 )
 
 
@@ -84,6 +85,32 @@ class BCDConversionTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
                     bcd_to_int(value)
+
+
+class SerialNumberDecodingTests(unittest.TestCase):
+    """Проверяет расшифровку серийных номеров приборов серии 977."""
+
+    def test_decodes_valid_serial_number(self):
+        """Корректно разбирает номер по формату изготовителя."""
+        result = decode_meter_serial_number("977122505027")
+
+        self.assertEqual(
+            result,
+            {
+                "series": "977",
+                "channel_code": "1",
+                "power_code": "2",
+                "year": 2025,
+                "month": 5,
+                "sequence_number": "027",
+            },
+        )
+
+    def test_rejects_unknown_serial_number_format(self):
+        """Не расшифровывает номера, не соответствующие серии 977."""
+        result = decode_meter_serial_number("123456789012")
+
+        self.assertIsNone(result)
 
 
 class SignedIntegerConversionTests(unittest.TestCase):

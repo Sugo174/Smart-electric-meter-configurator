@@ -1,7 +1,6 @@
 """
 Модуль работы с конфигуратором ЭМИС ModBus СКВТ.
 
-Версия: 1.09  
 Назначение: Низкоуровневое взаимодействие с устройством по протоколу ModBus RTU.  
 Все функции возвращают кортеж (успех: bool, результат_или_ошибка: str/dict).
 
@@ -97,6 +96,52 @@ def make_instrument(port, slave, baud, parity_letter):
 # 3. Работа с BCD (двоично-десятичный код)
 # Устройство хранит дату/время в формате BCD: 1 байт = 2 десятичные цифры.
 # =============================================================================
+
+def decode_meter_serial_number(serial_number):
+    """Расшифровывает серийный номер счётчика серии 977.
+
+    Формат номера:
+    977 C P YY MM SSS
+
+    C   — число измерительных каналов: 1 или 2.
+    P   — питание: 1 — DC, 2 — AC.
+    YY  — последние две цифры года выпуска.
+    MM  — месяц выпуска.
+    SSS — номер счётчика в серии.
+    """
+    digits = "".join(
+        character
+        for character in str(serial_number)
+        if character.isdigit()
+    )
+
+    if len(digits) != 12 or not digits.startswith("977"):
+        return None
+
+    channel_code = digits[3]
+    power_code = digits[4]
+    year = 2000 + int(digits[5:7])
+    month = int(digits[7:9])
+    sequence_number = digits[9:12]
+
+    if channel_code not in ("1", "2"):
+        return None
+
+    if power_code not in ("1", "2"):
+        return None
+
+    if not 1 <= month <= 12:
+        return None
+
+    return {
+        "series": digits[:3],
+        "channel_code": channel_code,
+        "power_code": power_code,
+        "year": year,
+        "month": month,
+        "sequence_number": sequence_number,
+    }
+
 
 def bcd_to_int(b):
     """Преобразует байт из BCD-формата в целое число.

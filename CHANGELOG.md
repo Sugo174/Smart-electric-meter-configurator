@@ -8,10 +8,18 @@ All notable changes to the Smart Meter Configurator will be documented in this f
 - Daily tariff schedule editor with support for 1 to 14 tariff periods.
 - Reading, validation, writing, and post-write verification of tariff schedules.
 - Automated tests for tariff schedule construction and validation.
+- Serial number decoding for EMIS-ELECTRA 977 meters, including channels, power supply, manufacturing date, and number in series.
+- Automatic startup checks for newer GitHub Releases.
+- Manual update check in the Program Settings menu.
+- Download dialog that opens the corresponding GitHub Release page.
+- Update icon for the Program Settings menu.
+- Automated tests for GitHub Release version comparison and response handling.
 
 ### Changed
 - Replaced the legacy tariff-period count setting with a full tariff schedule editor.
 - Removed obsolete write operations for register `A012`.
+- Centralized the application version in `constants.py`.
+- Updated the in-app Help text in Russian, English, and Simplified Chinese.
 
 ## [V1.08]
 ### Changed

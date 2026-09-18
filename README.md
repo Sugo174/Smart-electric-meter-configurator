@@ -83,6 +83,16 @@ This allows engineers to establish communication with a meter without prior know
 - Manual date and time configuration
 - Synchronization with PC system time
 
+### Serial Number Decoding
+
+The Device Information tab decodes valid 12-digit serial numbers for EMIS-ELECTRA 977 meters.
+
+- Meter series
+- Single-channel or dual-channel configuration
+- DC or AC power supply
+- Manufacturing month and year
+- Number in series
+
 ### Tariff Schedule Configuration
 
 The application can read, edit, validate, and write daily tariff schedules directly to the meter.
@@ -94,6 +104,15 @@ The application can read, edit, validate, and write daily tariff schedules direc
 - Reads the schedule back from the meter after a successful write
 
 The meter stores 14 schedule records. When fewer periods are configured, the application automatically repeats the final period to fill the required register block.
+
+### Update Checks
+
+The application checks the latest published GitHub Release after startup.
+
+- Shows an update dialog only when a newer version is available
+- Opens the corresponding GitHub Release page for downloading
+- Provides a manual update check through the Program Settings menu
+- Does not interrupt startup when the internet connection or GitHub is unavailable
  
 ### Real-Time Monitoring
  

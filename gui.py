@@ -1,7 +1,6 @@
 """
 Конфигуратор счётчика постоянной энергии СКВТ ЭМИС-ЭЛЕКТРА 977
 
-Версия: 1.09
 Назначение: Контроль и настройка параметров счётчика постоянной энергии
 СКВТ ЭМИС-ЭЛЕКТРА 977 по протоколу ModBus RTU через COM-порт.
 Автор: Boris Svistunov
@@ -23,13 +22,24 @@ import serial
 import sys
 import json
 import os
+import webbrowser
 
 # Сторонние библиотеки
 import sv_ttk  # Современная тема для tkinter
 from tkcalendar import Calendar
 
 # Локальные модули
-from constants import BAUD_VALUES, PARITY_LIST
+from constants import (
+    APP_VERSION,
+    BAUD_VALUES,
+    PARITY_LIST,
+)
+
+from update_checker import (
+    get_latest_release,
+    is_version_newer,
+)
+
 from device import (
     list_com_ports,
     scan_device,
@@ -47,7 +57,8 @@ from device import (
     write_decimal_places,
     read_tariff_schedule,
     write_tariff_schedule,
-    read_device_info
+    read_device_info,
+    decode_meter_serial_number,
 )
 
 # Словарь для хранения ссылок на иконки (чтобы не удалялись сборщиком мусора)
@@ -65,7 +76,7 @@ current_language = "ru"
 TRANSLATIONS = {
     "ru": {
         # Меню
-        "app_title": "Конфигуратор СКВТ ЭМИС-ЭЛЕКТРА 977 V1.09",
+        "app_title": f"Конфигуратор СКВТ ЭМИС-ЭЛЕКТРА 977 V{APP_VERSION}",
         "menu_settings": "☰ Настройки программы",
         "menu_help": "Справка",
         "menu_exit": "Выход",
@@ -163,6 +174,18 @@ TRANSLATIONS = {
         "lbl_sw_version": "Версия метрологического ПО:",
         "lbl_release_date": "Дата выпуска:",
 
+        # Расшифровка серийного номера
+        "lbl_serial_decoding": "Расшифровка серийного номера:",
+        "lbl_meter_series": "Серия:",
+        "lbl_channel_configuration": "Измерительные каналы:",
+        "lbl_power_supply": "Питание:",
+        "lbl_manufacture_date": "Дата выпуска:",
+        "lbl_sequence_number": "Номер в серии:",
+        "serial_single_channel": "1 канал",
+        "serial_dual_channel": "2 канала",
+        "serial_power_dc": "DC",
+        "serial_power_ac": "AC (85–265 В)",
+
         # Диалоги
         "dlg_select_type": "Выбор типа счётчика",
         "dlg_select_type_prompt": "Выберите тип подключаемого счётчика:",
@@ -205,29 +228,38 @@ TRANSLATIONS = {
         "dlg_wrong_password": "Неверный пароль.",
         "dlg_help": "Справка о программе",
         "dlg_help_text":
-            "Конфигуратор счетчика постоянного тока СКВТ ЭМИС-ЭЛЕКТРА 977 \n\n"
-            "*** Алгоритм подключения счетчика ***\n\n"
-            "1. Подключите устройство через USB - RS-485 адаптер. \n"
-            "2. Подключите питание к устройству.\n"
-            "3. Нажмите кнопку «Обновить», чтобы увидеть доступные COM-порты. \n"
-            "3. Выберите необходимый COM-порт.\n"
-            "4. Нажмите кнопку «Подключиться» — программа подключится к устройству"
-            " с любыми настройками соедения, определив их автоматически.\n"
-            "5. Для изменения настроек соединения устройства - выберите необходимую"
-            " скорость и/или адрес и/или четность и нажмите кнопку «Записать»,"
-            " чтобы применить новые параметры соединения устройства. \n\n"
-            "ВАЖНО: для корректной работы рекомендуется использвать"
-            " только чётность ModBus соединения - EVEN \n\n\n"
-            "*** Работа с программой после подключения счётчика ***\n\n"
-            "1. Во вкладке «Соединение» доступна кнопка смены типа счётчика. \n"
-            "2. Во вкладке «Инфо о приборе» информация о ПО и дате выпуска. \n"
-            "3. Во вкладке «Дата и время» доступна ручная настройка даты и"
-            " времени устройства, а так же синхронизация этих параметров с ПК. \n"
-            "4. Во вкладке «Текущие значения» доступны для визуального контроля:"
-            "все виды электроэнергии, напряжение, ток и мощность в зависимости"
-            "от выбранного типа устройства. \n"
-            "5. Во вкладке «Настройки прибора» доступны для изменения:"
-            " некоторые пороговые значения прибора и ряд других настроек.",
+            "Конфигуратор счётчика постоянного тока "
+            "СКВТ ЭМИС-ЭЛЕКТРА 977\n\n"
+            "*** Подключение счётчика ***\n\n"
+            "1. Подключите устройство через USB–RS-485 адаптер.\n"
+            "2. Подайте питание на счётчик.\n"
+            "3. Нажмите «Обновить», чтобы увидеть доступные COM-порты.\n"
+            "4. Выберите нужный COM-порт.\n"
+            "5. Нажмите «Подключиться». Программа автоматически определит "
+            "адрес, скорость и чётность соединения.\n"
+            "6. Чтобы изменить параметры Modbus, выберите адрес, скорость "
+            "и/или чётность, затем нажмите «Записать».\n\n"
+            "ВАЖНО: для стабильной работы рекомендуется использовать "
+            "чётность Modbus RTU EVEN.\n\n"
+            "*** Работа с программой после подключения ***\n\n"
+            "1. На вкладке «Соединение» можно изменить тип счётчика.\n"
+            "2. На вкладке «Информация о приборе» отображаются серийный "
+            "номер, сведения о ПО и дата выпуска. Для номеров серии 977 "
+            "дополнительно показывается расшифровка каналов, питания, "
+            "даты выпуска и номера в серии.\n"
+            "3. На вкладке «Дата и время» доступны ручная настройка "
+            "даты и времени, а также синхронизация с ПК.\n"
+            "4. На вкладке «Текущие значения» доступны напряжение, ток, "
+            "мощность и показания энергии в соответствии с типом счётчика.\n"
+            "5. На вкладке «Настройки прибора» можно изменять пороговые "
+            "значения, формат отображения энергии и другие параметры.\n"
+            "6. В этом же разделе доступен редактор тарифного расписания. "
+            "Он читает, проверяет и записывает периоды тарифов 1–4.\n"
+            "7. В меню «Настройки программы» доступна ручная проверка "
+            "обновлений. При запуске программа также сама предложит "
+            "скачать новую опубликованную версию.\n\n"
+            "Не отключайте питание счётчика или RS-485 адаптер во время "
+            "записи параметров.\n",
         "dlg_change_type_warning": "Изменение типа счётчика требует переподключения.\nСейчас будет выполнено отключение.",
         "dlg_disconnected": "Устройство отключено. Проверьте питание и подключение.",
 
@@ -255,11 +287,29 @@ TRANSLATIONS = {
         # Статусы
         "status_disconnected": "—",
         "status_no_ports": "(нет портов)",
+
+        # Обновление
+        "menu_check_updates": "Проверить обновления",
+        "dlg_update_check": "Проверка обновлений",
+        "msg_update_current": "Установлена актуальная версия {current_version}.",
+        "msg_update_available": (
+            "Доступна новая версия {latest_version}.\n"
+            "Установлена версия: {current_version}.\n\n"
+        ),
+        "msg_update_network_error": (
+            "Не удалось проверить обновления. Проверьте подключение "
+            "к интернету и повторите попытку."
+        ),
+        "msg_update_invalid_data": (
+        "GitHub вернул некорректные данные о последнем релизе."
+        ),
+        "btn_download_update": "Скачать",
+        "btn_close": "Закрыть",
     },
 
     "en": {
         # Menu
-        "app_title": "Configurator SKVT EMIS-ELECTRA 977 V1.09",
+        "app_title": f"Configurator SKVT EMIS-ELECTRA 977 V{APP_VERSION}",
         "menu_settings": "☰ Program Settings",
         "menu_help": "Help",
         "menu_exit": "Exit",
@@ -357,6 +407,18 @@ TRANSLATIONS = {
         "lbl_sw_version": "Metrological SW Version:",
         "lbl_release_date": "Release Date:",
 
+        # Serial number decoding
+        "lbl_serial_decoding": "Serial Number Decoding:",
+        "lbl_meter_series": "Series:",
+        "lbl_channel_configuration": "Measurement Channels:",
+        "lbl_power_supply": "Power Supply:",
+        "lbl_manufacture_date": "Manufacturing Date:",
+        "lbl_sequence_number": "Number in Series:",
+        "serial_single_channel": "1 channel",
+        "serial_dual_channel": "2 channels",
+        "serial_power_dc": "DC",
+        "serial_power_ac": "AC (85–265 V)",
+        
         # Dialogs
         "dlg_select_type": "Select Meter Type",
         "dlg_select_type_prompt": "Select meter type to connect:",
@@ -400,21 +462,36 @@ TRANSLATIONS = {
         "dlg_help": "Program Help",
         "dlg_help_text":
             "SKVT EMIS-ELECTRA 977 DC Energy Meter Configurator\n\n"
-            "*** Meter Connection Procedure ***\n\n"
-            "1. Connect the device via a USB-RS485 adapter. \n"
-            "2. Power on the device.\n"
-            "3. Click 'Refresh' to see available COM ports. \n"
+            "*** Meter Connection ***\n\n"
+            "1. Connect the device through a USB–RS-485 adapter.\n"
+            "2. Power on the meter.\n"
+            "3. Click 'Refresh' to view available COM ports.\n"
             "4. Select the required COM port.\n"
-            "5. Click 'Connect' - the program will connect to the device with any connection settings, automatically detecting them.\n"
-            "6. To change device connection settings - select the required speed and/or address and/or parity and click 'Write' to apply the new connection parameters. \n\n"
-            "IMPORTANT: for correct operation, it is recommended to use only EVEN ModBus connection parity. \n\n\n"
-            "*** Working with the program after connecting the meter ***\n\n"
-            "1. The 'Connection' tab contains the button to change the meter type. \n"
-            "2. The 'Device Info' tab displays information about the metrological software and manufacturing date. \n"
-            "3. The 'Date & Time' tab allows manual setting of the device date and time, as well as synchronization with the PC. \n"
-            "4. The 'Current Values' tab provides visual monitoring: all energy types, voltage, current, and power depending on the selected device type. \n"
-            "5. The 'Device Settings' tab allows modification of: some device threshold values and a number of other settings.",
-        "dlg_change_type_warning": "Changing meter type requires reconnection.\nDisconnecting now.",
+            "5. Click 'Connect'. The application automatically detects "
+            "the device address, baud rate, and parity.\n"
+            "6. To change Modbus settings, select the address, baud rate "
+            "and/or parity, then click 'Write'.\n\n"
+            "IMPORTANT: EVEN Modbus RTU parity is recommended for stable "
+            "operation.\n\n"
+            "*** Using the Application After Connection ***\n\n"
+            "1. The 'Connection' tab lets you change the meter type.\n"
+            "2. The 'Device Information' tab displays the serial number, "
+            "software information, and manufacturing date. For 977-series "
+            "numbers, it also decodes the channels, power supply, "
+            "manufacturing date, and number in series.\n"
+            "3. The 'Date & Time' tab supports manual date and time "
+            "configuration and synchronization with the PC.\n"
+            "4. The 'Current Values' tab displays voltage, current, power, "
+            "and energy values according to the selected meter type.\n"
+            "5. The 'Device Settings' tab lets you change thresholds, "
+            "energy display format, and other parameters.\n"
+            "6. The same tab includes the tariff schedule editor. It reads, "
+            "validates, and writes tariff periods 1–4.\n"
+            "7. The 'Program Settings' menu provides a manual update check. "
+            "On startup, the application also offers to download a newer "
+            "published version when one is available.\n\n"
+            "Do not disconnect meter power or the RS-485 adapter while "
+            "parameters are being written.\n",
         "dlg_disconnected": "Device disconnected. Check power and connection.",
 
         # Settings change dialogs
@@ -441,11 +518,29 @@ TRANSLATIONS = {
         # Status
         "status_disconnected": "—",
         "status_no_ports": "(no ports)",
+
+        # Update
+        "menu_check_updates": "Check for Updates",
+        "dlg_update_check": "Update Check",
+        "msg_update_current": "Version {current_version} is up to date.",
+        "msg_update_available": (
+            "A new version {latest_version} is available.\n"
+            "Installed version: {current_version}.\n\n"
+        ),
+        "msg_update_network_error": (
+            "Could not check for updates. Check your internet connection "
+            "and try again."
+        ),
+        "msg_update_invalid_data": (
+            "GitHub returned invalid data for the latest release."
+        ),
+        "btn_download_update": "Download",
+        "btn_close": "Close",
     },
 
     "zh": {
         # 菜单
-        "app_title": "配置器 SKVT EMIS-ELECTRA 977 V1.09",
+        "app_title": f"配置器 SKVT EMIS-ELECTRA 977 V{APP_VERSION}",
         "menu_settings": "☰ 程序设置",
         "menu_help": "帮助",
         "menu_exit": "退出",
@@ -543,6 +638,18 @@ TRANSLATIONS = {
         "lbl_sw_version": "计量软件版本:",
         "lbl_release_date": "生产日期:",
 
+        # 序列号解析
+        "lbl_serial_decoding": "序列号解析：",
+        "lbl_meter_series": "系列：",
+        "lbl_channel_configuration": "测量通道：",
+        "lbl_power_supply": "供电：",
+        "lbl_manufacture_date": "生产日期：",
+        "lbl_sequence_number": "系列编号：",
+        "serial_single_channel": "1 个通道",
+        "serial_dual_channel": "2 个通道",
+        "serial_power_dc": "直流电源",
+        "serial_power_ac": "交流电源 (85–265 V)",       
+
         # 对话框
         "dlg_select_type": "选择电表类型",
         "dlg_select_type_prompt": "选择要连接的电表类型:",
@@ -586,20 +693,30 @@ TRANSLATIONS = {
         "dlg_help": "程序帮助",
         "dlg_help_text":
             "SKVT EMIS-ELECTRA 977 直流电能表配置器\n\n"
-            "*** 电表连接步骤 ***\n\n"
-            "1. 通过 USB-RS485 适配器连接设备。\n"
-            "2. 给设备上电。\n"
-            "3. 点击'刷新'查看可用 COM 端口。\n"
+            "*** 电表连接 ***\n\n"
+            "1. 通过 USB–RS-485 适配器连接设备。\n"
+            "2. 给电表上电。\n"
+            "3. 点击“刷新”查看可用的 COM 端口。\n"
             "4. 选择所需的 COM 端口。\n"
-            "5. 点击'连接' - 程序将连接设备并自动检测任何连接设置。\n"
-            "6. 要更改设备连接设置 - 选择所需的波特率和/或地址和/或校验位，然后点击'写入'应用新参数。\n\n"
-            "重要：为确保正常工作，建议 ModBus 连接仅使用 EVEN (偶) 校验位。\n\n\n"
-            "*** 连接电表后的软件操作 ***\n\n"
-            "1. 在'连接'选项卡中可以更改电表类型。\n"
-            "2. '设备信息'选项卡显示计量软件和生产日期信息。\n"
-            "3. '日期和时间'选项卡支持手动设置设备日期和时间，以及与电脑同步。\n"
-            "4. '当前值'选项卡用于直观监控：根据所选设备类型显示各类电能、电压、电流及功率。\n"
-            "5. '设备设置'选项卡用于修改：部分设备阈值参数及其他设置项。",
+            "5. 点击“连接”。程序会自动识别设备地址、波特率和校验位。\n"
+            "6. 如需更改 Modbus 参数，请选择地址、波特率和/或校验位，"
+            "然后点击“写入”。\n\n"
+            "重要：为确保稳定运行，建议使用 EVEN（偶）Modbus RTU 校验。\n\n"
+            "*** 连接后的软件使用说明 ***\n\n"
+            "1. “连接”选项卡可用于更改电表类型。\n"
+            "2. “设备信息”选项卡显示序列号、软件信息和生产日期。"
+            "对于 977 系列序列号，还会显示通道数、供电方式、"
+            "生产日期和系列编号的解析结果。\n"
+            "3. “日期和时间”选项卡支持手动设置日期和时间，"
+            "以及与电脑同步。\n"
+            "4. “当前值”选项卡根据所选电表类型显示电压、电流、"
+            "功率和电能数据。\n"
+            "5. “设备设置”选项卡可修改阈值、电能显示格式和其他参数。\n"
+            "6. 同一选项卡还提供费率时段编辑器，可读取、验证并写入 "
+            "1–4 号费率时段。\n"
+            "7. “程序设置”菜单提供手动检查更新功能。启动时，如有新的"
+            "已发布版本，程序也会自动提示下载。\n\n"
+            "写入参数时，请勿断开电表电源或 RS-485 适配器。\n",
         "dlg_change_type_warning": "更改电表类型需要重新连接。\n正在断开连接。",
         "dlg_disconnected": "设备已断开。请检查电源和连接。",
 
@@ -627,6 +744,23 @@ TRANSLATIONS = {
         # 状态
         "status_disconnected": "—",
         "status_no_ports": "(无端口)",
+
+        # 更新
+        "menu_check_updates": "检查更新",
+        "dlg_update_check": "检查更新",
+        "msg_update_current": "当前已安装最新版本 {current_version}。",
+        "msg_update_available": (
+            "有新版本 {latest_version} 可用。\n"
+            "当前安装版本：{current_version}。\n\n"
+        ),
+        "msg_update_network_error": (
+            "无法检查更新。请检查网络连接后重试。"
+        ),
+        "msg_update_invalid_data": (
+            "GitHub 返回了无效的最新发布版本数据。"
+        ),
+        "btn_download_update": "下载",
+        "btn_close": "关闭",
     }
 }
 
@@ -682,6 +816,13 @@ def set_language(lang_code):
         compound="left"
     )
 
+    settings_m.add_command(
+        label=tr("menu_check_updates"),
+        command=check_for_updates,
+        image=ICONS.get("update"),
+        compound="left",
+    )
+
     settings_m.add_separator()
 
     settings_m.add_command(
@@ -719,7 +860,7 @@ def set_language(lang_code):
     create_settings_tab()
     create_info_tab()
 
-    ui_rebuild_in_progress = False # Разрешаем опрос снова
+    ui_rebuild_in_progress = False  # Разрешаем опрос снова
 
     # 4. Безопасно обновляем статичные элементы
     try:
@@ -828,6 +969,13 @@ info_meter_type_label = None
 info_sw_version_label = None
 info_release_date_label = None
 
+# Метки расшифровки серийного номера
+info_series_label = None
+info_channels_label = None
+info_power_supply_label = None
+info_manufacture_date_label = None
+info_sequence_number_label = None
+
 # Очереди
 time_update_queue = queue.Queue()
 param_update_queue = queue.Queue()
@@ -862,6 +1010,9 @@ type_image_label = None
 # Флаг: идёт перестройка интерфейса (смена языка/типа)
 ui_rebuild_in_progress = False
 
+# Не допускает одновременный запуск нескольких проверок обновлений.
+update_check_in_progress = False
+
 # =============================================================================
 # 4. Вспомогательные функции
 # =============================================================================
@@ -883,6 +1034,7 @@ def resource_path(relative_path):
 def load_icons():
     icon_files = {
         "language": resource_path("icons/language.png"),
+        "update": resource_path("icons/update.png"),
         "help": resource_path("icons/help.png"),
         "exit": resource_path("icons/exit.png"),
         "flag_ru": resource_path("icons/flag_ru.png"),
@@ -1954,6 +2106,188 @@ def show_help():
     messagebox.showinfo(tr("dlg_help"), help_text)
 
 
+def show_update_available_dialog(latest_version, release_url):
+    """Показывает окно с предложением скачать новую версию."""
+    dialog = tk.Toplevel(root)
+    dialog.title(tr("dlg_update_check"))
+    dialog.resizable(False, False)
+    dialog.transient(root)
+    dialog.grab_set()
+
+    def close_dialog():
+        """Закрывает окно обновления."""
+        if dialog.winfo_exists():
+            dialog.destroy()
+
+    def download_update():
+        """Открывает страницу опубликованного GitHub Release."""
+        webbrowser.open(release_url)
+        close_dialog()
+
+    dialog.protocol(
+        "WM_DELETE_WINDOW",
+        close_dialog,
+    )
+
+    tk.Label(
+        dialog,
+        text=tr("dlg_update_check"),
+        font=("Segoe UI", 11, "bold"),
+    ).pack(
+        padx=25,
+        pady=(18, 10),
+    )
+
+    tk.Label(
+        dialog,
+        text=tr("msg_update_available").format(
+            latest_version=latest_version,
+            current_version=APP_VERSION,
+        ),
+        justify="left",
+        wraplength=380,
+    ).pack(
+        padx=25,
+        pady=(0, 15),
+    )
+
+    button_frame = tk.Frame(dialog)
+    button_frame.pack(
+        pady=(0, 18),
+    )
+
+    ttk.Button(
+        button_frame,
+        text=tr("btn_close"),
+        command=close_dialog,
+        width=14,
+    ).pack(
+        side="left",
+        padx=5,
+    )
+
+    ttk.Button(
+        button_frame,
+        text=tr("btn_download_update"),
+        command=download_update,
+        width=14,
+    ).pack(
+        side="left",
+        padx=5,
+    )
+
+    dialog.update_idletasks()
+
+    x = root.winfo_rootx() + (
+        root.winfo_width() - dialog.winfo_width()
+    ) // 2
+    y = root.winfo_rooty() + (
+        root.winfo_height() - dialog.winfo_height()
+    ) // 2
+
+    dialog.geometry(f"+{x}+{y}")
+
+
+def check_for_updates(show_messages=True):
+    """Проверяет наличие новой опубликованной версии на GitHub."""
+    global update_check_in_progress
+
+    if update_check_in_progress:
+        return
+
+    update_check_in_progress = True
+    result_queue = queue.Queue()
+
+    root.config(cursor="watch")
+    root.update_idletasks()
+
+    def finish_check(success, result):
+        """Показывает результат проверки в основном потоке Tkinter."""
+        global update_check_in_progress
+
+        update_check_in_progress = False
+        root.config(cursor="")
+
+        if not success:
+            if show_messages:
+                message_key = (
+                    "msg_update_network_error"
+                    if result == "network_error"
+                    else "msg_update_invalid_data"
+                )
+
+                messagebox.showerror(
+                    tr("dlg_update_check"),
+                    tr(message_key),
+                )
+
+            return
+
+        latest_version = result["version"]
+        release_url = result["release_url"]
+
+        try:
+            update_available = is_version_newer(
+                latest_version,
+                APP_VERSION,
+            )
+        except ValueError:
+            if show_messages:
+                messagebox.showerror(
+                    tr("dlg_update_check"),
+                    tr("msg_update_invalid_data"),
+                )
+
+            return
+
+        if update_available:
+            show_update_available_dialog(
+                latest_version,
+                release_url,
+            )
+            return
+
+        if show_messages:
+            messagebox.showinfo(
+                tr("dlg_update_check"),
+                tr("msg_update_current").format(
+                    current_version=APP_VERSION,
+                ),
+            )
+
+    def wait_for_result():
+        """Проверяет очередь из главного потока Tkinter."""
+        try:
+            success, result = result_queue.get_nowait()
+        except queue.Empty:
+            root.after(100, wait_for_result)
+            return
+
+        finish_check(success, result)
+
+    def check_in_background():
+        """Выполняет сетевой запрос без блокировки интерфейса."""
+        try:
+            success, result = get_latest_release()
+        except Exception:
+            success = False
+            result = "network_error"
+
+        result_queue.put(
+            (
+                success,
+                result,
+            )
+        )
+
+    threading.Thread(
+        target=check_in_background,
+        daemon=True,
+    ).start()
+
+    root.after(100, wait_for_result)
+
+
 def create_parameters_tab():
     """Создаёт вкладку «Параметры» в зависимости от типа счётчика."""
     global param_voltage_label, param_current_label, param_power_label
@@ -2320,6 +2654,9 @@ def create_info_tab():
     """Создаёт вкладку «Информация о приборе»."""
     global info_serial_label, info_manufacturer_label, info_meter_type_label
     global info_sw_version_label, info_release_date_label
+    global info_series_label, info_channels_label
+    global info_power_supply_label, info_manufacture_date_label
+    global info_sequence_number_label
 
     # Очищаем старое содержимое
     for widget in tab_info.winfo_children():
@@ -2351,6 +2688,53 @@ def create_info_tab():
     info_meter_type_label = _add_row(2, "lbl_meter_type", None)
     info_sw_version_label = _add_row(3, "lbl_sw_version", None)
     info_release_date_label = _add_row(4, "lbl_release_date", None)
+
+    # Разделитель перед расшифровкой номера прибора.
+    ttk.Separator(
+        grid_frame,
+        orient="horizontal",
+    ).grid(
+        row=5,
+        column=0,
+        columnspan=2,
+        sticky="ew",
+        pady=(12, 8),
+    )
+
+    tk.Label(
+        grid_frame,
+        text=tr("lbl_serial_decoding"),
+        font=("TkDefaultFont", 10, "bold"),
+        anchor="w",
+    ).grid(
+        row=6,
+        column=0,
+        columnspan=2,
+        sticky="w",
+        pady=(0, 5),
+    )
+
+    info_series_label = _add_row(7, "lbl_meter_series", None)
+    info_channels_label = _add_row(
+        8,
+        "lbl_channel_configuration",
+        None,
+    )
+    info_power_supply_label = _add_row(
+        9,
+        "lbl_power_supply",
+        None,
+    )
+    info_manufacture_date_label = _add_row(
+        10,
+        "lbl_manufacture_date",
+        None,
+    )
+    info_sequence_number_label = _add_row(
+        11,
+        "lbl_sequence_number",
+        None,
+    )
 
 
 def widget_exists(w):
@@ -2404,8 +2788,71 @@ def _check_info_queue():
                 if info_meter_type_label: info_meter_type_label.config(text=tr("status_disconnected"))
                 if info_sw_version_label: info_sw_version_label.config(text=tr("status_disconnected"))
                 if info_release_date_label: info_release_date_label.config(text=tr("status_disconnected"))
+                if info_series_label: info_series_label.config(text=tr("status_disconnected"))
+                if info_channels_label: info_channels_label.config(text=tr("status_disconnected"))
+                if info_power_supply_label: info_power_supply_label.config(text=tr("status_disconnected"))
+                if info_manufacture_date_label: info_manufacture_date_label.config(text=tr("status_disconnected"))
+                if info_sequence_number_label: info_sequence_number_label.config(text=tr("status_disconnected"))
             else:
                 if info_serial_label: info_serial_label.config(text=info.get('serial_number', tr("status_disconnected")))
+                serial_details = decode_meter_serial_number(
+                    info.get("serial_number", "")
+                )
+
+                if serial_details is None:
+                    decoded_values = {
+                        "series": "—",
+                        "channels": "—",
+                        "power_supply": "—",
+                        "manufacture_date": "—",
+                        "sequence_number": "—",
+                    }
+                else:
+                    decoded_values = {
+                        "series": serial_details["series"],
+                        "channels": tr(
+                            "serial_single_channel"
+                            if serial_details["channel_code"] == "1"
+                            else "serial_dual_channel"
+                        ),
+                        "power_supply": tr(
+                            "serial_power_dc"
+                            if serial_details["power_code"] == "1"
+                            else "serial_power_ac"
+                        ),
+                        "manufacture_date": (
+                            f"{serial_details['month']:02d}."
+                            f"{serial_details['year']}"
+                        ),
+                        "sequence_number": (
+                            serial_details["sequence_number"]
+                        ),
+                    }
+
+                if info_series_label:
+                    info_series_label.config(
+                        text=decoded_values["series"],
+                    )
+
+                if info_channels_label:
+                    info_channels_label.config(
+                        text=decoded_values["channels"],
+                    )
+
+                if info_power_supply_label:
+                    info_power_supply_label.config(
+                        text=decoded_values["power_supply"],
+                    )
+
+                if info_manufacture_date_label:
+                    info_manufacture_date_label.config(
+                        text=decoded_values["manufacture_date"],
+                    )
+
+                if info_sequence_number_label:
+                    info_sequence_number_label.config(
+                        text=decoded_values["sequence_number"],
+                    )
                 if info_manufacturer_label: info_manufacturer_label.config(text=info.get('manufacturer', tr("status_disconnected")))
                 if info_meter_type_label: info_meter_type_label.config(text=info.get('meter_type', tr("status_disconnected")))
                 if info_sw_version_label: info_sw_version_label.config(text=info.get('sw_version', tr("status_disconnected")))
@@ -3495,5 +3942,12 @@ actual_height = min(required_height, max_height)
 
 root.geometry(f"{required_width}x{actual_height}")
 root.resizable(False, True)
+
+# Тихо проверяем обновления после полной инициализации интерфейса.
+# Сообщение появится только при наличии новой версии.
+root.after(
+    500,
+    lambda: check_for_updates(show_messages=False),
+)
 
 root.mainloop()
