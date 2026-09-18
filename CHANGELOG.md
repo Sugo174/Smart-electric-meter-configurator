@@ -2,8 +2,7 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
-## [Unreleased]
-
+## [V1.10] - 2026-09-18
 ### Added
 - Daily tariff schedule editor with support for 1 to 14 tariff periods.
 - Reading, validation, writing, and post-write verification of tariff schedules.
@@ -21,7 +20,17 @@ All notable changes to the Smart Meter Configurator will be documented in this f
 - Centralized the application version in `constants.py`.
 - Updated the in-app Help text in Russian, English, and Simplified Chinese.
 
-## [V1.08]
+## [V1.09] - 2026-09-16
+### Changed
+- Improved Modbus connection parameter updates and communication reliability.
+- Improved connection feedback and added the ability to cancel an automatic device search.
+- Restricted energy display precision to values supported by the meter.
+- Added correct handling of signed Modbus measurement values.
+
+### Fixed
+- Ensured serial ports are released after successful and failed write operations.
+
+## [V1.08] - 2026-06-16
 ### Changed
 - Tab layout restructured to match the official "EMIS Integrator" workflow.
 - Complete implementation of read/write functionality for all required meter parameters.

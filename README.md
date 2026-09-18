@@ -25,10 +25,10 @@ It provides automatic communication parameter detection, real-time monitoring, d
 
 ### Ready-to-Use Windows Version
 
-1. Download [Smart-Meter-Configurator-v1.08.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v.1.08/Smart-Meter-Configurator-v1.08.zip).
+1. Download [Smart-Meter-Configurator-v1.10.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.10/Smart-Meter-Configurator-v1.10.zip).
 2. Extract the entire archive to a folder.
 3. Connect the smart meter through an RS-485 adapter.
-4. Run `Smart-Meter-Configurator-v1.08.exe`.
+4. Run `Smart-Meter-Configurator-v1.10.exe`.
 
 Keep the executable and the `_internal` folder together. Installation of Python is not required for this version.
 
