@@ -9,6 +9,8 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+dist-win7/
+build-win7/
 downloads/
 eggs/
 .eggs/
@@ -101,6 +103,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-win7/
 .env.bak
 .env.backup
 
