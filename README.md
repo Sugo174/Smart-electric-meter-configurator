@@ -23,14 +23,28 @@ It provides automatic communication parameter detection, real-time monitoring, d
 
 ## Download and Run
 
-### Ready-to-Use Windows Version
+### Ready-to-Use Windows Versions
+
+Choose the build for your operating system:
+
+- **Windows 10:** use `Smart-Meter-Configurator-v1.10.zip`.
+- **Windows 7 (64-bit):** use [Smart-Meter-Configurator-v1.10-Windows-7.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.10/Smart-Meter-Configurator-v1.10-Windows-7.zip).
+
+The Windows 7 build has been verified to launch on Windows 7 (64-bit).
+Both builds use application version **1.10**.
 
 1. Download [Smart-Meter-Configurator-v1.10.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.10/Smart-Meter-Configurator-v1.10.zip).
 2. Extract the entire archive to a folder.
 3. Connect the smart meter through an RS-485 adapter.
 4. Run `Smart-Meter-Configurator-v1.10.exe`.
 
-Keep the executable and the `_internal` folder together. Installation of Python is not required for this version.
+For the standard build, keep the executable and the `_internal` folder together.
+
+For the Windows 7 build, extract the entire archive and run
+`Smart-Meter-Configurator-v1.10-Windows-7.exe`.
+Keep all extracted files and folders together.
+
+Python installation is not required for either packaged build.
 
 See the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest) for available downloads and release notes.
 

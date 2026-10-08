@@ -3,6 +3,12 @@
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
 ## [V1.10] - 2026-09-18
+### Compatibility update - 2026-10-08
+
+- Added a separate Windows 7 (64-bit) build.
+- Verified application launch on Windows 7 (64-bit).
+- Updated download instructions for both Windows builds.
+- Kept application version 1.10; the Windows 7 build is an additional asset in the existing release.
 ### Added
 - Daily tariff schedule editor with support for 1 to 14 tariff periods.
 - Reading, validation, writing, and post-write verification of tariff schedules.
