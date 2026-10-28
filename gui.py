@@ -33,6 +33,8 @@ from constants import (
     APP_VERSION,
     BAUD_VALUES,
     PARITY_LIST,
+    PULSE_CONSTANT_VALUES,
+    DEVICE_INFO_REGISTER_COUNT,
 )
 
 from update_checker import (
@@ -52,12 +54,15 @@ from device import (
     clear_device_energy,
     read_device_settings_params,
     write_max_current,
+    write_pulse_constant,
     write_sensitivity_voltage,
     write_sensitivity_current,
     write_decimal_places,
     read_tariff_schedule,
     write_tariff_schedule,
     read_device_info,
+    write_device_info_field,
+    validate_meter_serial_number,
     decode_meter_serial_number,
 )
 
@@ -148,6 +153,9 @@ TRANSLATIONS = {
         "lbl_max_current_b": "Максимальный ток канала B:",
         "lbl_sens_voltage": "Порог чувствительности напряжения:",
         "lbl_sens_current": "Порог чувствительности тока:",
+        "lbl_pulse_constant_ch1": "Постоянная имп. выхода, канал A:",
+        "lbl_pulse_constant_ch2": "Постоянная имп. выхода, канал B:",
+        "unit_imp_kwh": "имп/кВт·ч",
         "lbl_decimal": "Десятичных знаков энергии:",
         "lbl_tariff": "Тарифных отрезков:",
         "btn_change": "Изменить",
@@ -172,7 +180,9 @@ TRANSLATIONS = {
         "lbl_manufacturer": "Производитель:",
         "lbl_meter_type": "Тип счетчика:",
         "lbl_sw_version": "Версия метрологического ПО:",
-        "lbl_release_date": "Дата выпуска:",
+        "lbl_release_date": "Дата:",
+        "info_serial_prompt": "Введите ровно 12 цифр (0–9).",
+        "info_ascii_prompt": "Введите от 1 до 16 печатных символов ASCII: латиница, цифры и знаки.",
 
         # Расшифровка серийного номера
         "lbl_serial_decoding": "Расшифровка серийного номера:",
@@ -381,6 +391,9 @@ TRANSLATIONS = {
         "lbl_max_current_b": "Max Current Channel B:",
         "lbl_sens_voltage": "Voltage Sensitivity Threshold:",
         "lbl_sens_current": "Current Sensitivity Threshold:",
+        "lbl_pulse_constant_ch1": "Pulse constant, channel A:",
+        "lbl_pulse_constant_ch2": "Pulse constant, channel B:",
+        "unit_imp_kwh": "imp/kWh",
         "lbl_decimal": "Energy Decimal Places:",
         "lbl_tariff": "Tariff Periods:",
         "btn_change": "Change",
@@ -405,7 +418,9 @@ TRANSLATIONS = {
         "lbl_manufacturer": "Manufacturer:",
         "lbl_meter_type": "Meter Type:",
         "lbl_sw_version": "Metrological SW Version:",
-        "lbl_release_date": "Release Date:",
+        "lbl_release_date": "Date:",
+        "info_serial_prompt": "Enter exactly 12 digits (0–9).",
+        "info_ascii_prompt": "Enter 1–16 printable ASCII characters: Latin letters, digits and symbols.",
 
         # Serial number decoding
         "lbl_serial_decoding": "Serial Number Decoding:",
@@ -612,6 +627,9 @@ TRANSLATIONS = {
         "lbl_max_current_b": "通道B最大电流:",
         "lbl_sens_voltage": "电压灵敏度阈值:",
         "lbl_sens_current": "电流灵敏度阈值:",
+        "lbl_pulse_constant_ch1": "通道A脉冲常数:",
+        "lbl_pulse_constant_ch2": "通道B脉冲常数:",
+        "unit_imp_kwh": "imp/kWh",
         "lbl_decimal": "电能小数位数:",
         "lbl_tariff": "费率时段数:",
         "btn_change": "更改",
@@ -636,7 +654,9 @@ TRANSLATIONS = {
         "lbl_manufacturer": "制造商:",
         "lbl_meter_type": "电表类型:",
         "lbl_sw_version": "计量软件版本:",
-        "lbl_release_date": "生产日期:",
+        "lbl_release_date": "日期:",
+        "info_serial_prompt": "请输入恰好12位数字（0–9）。",
+        "info_ascii_prompt": "请输入1至16个可打印ASCII字符：拉丁字母、数字或符号。",
 
         # 序列号解析
         "lbl_serial_decoding": "序列号解析：",
@@ -961,6 +981,9 @@ settings_sens_v_label = None
 settings_sens_i_label = None
 settings_decimal_combo = None
 settings_tariff_button = None
+
+# Выпадающие списки постоянной импульсного выхода по каналам.
+settings_pulse_combos = {}
 
 # Метки информации о приборе
 info_serial_label = None
@@ -2559,6 +2582,7 @@ def create_settings_tab():
     global settings_max_i_a_label, settings_max_i_b_label
     global settings_sens_v_label, settings_sens_i_label
     global settings_decimal_combo, settings_tariff_button
+    global settings_pulse_combos
 
     # Очищаем старое содержимое
     for widget in tab_settings.winfo_children():
@@ -2645,6 +2669,47 @@ def create_settings_tab():
         pady=5,
     )
 
+    # Постоянная импульсного выхода: один или два канала.
+    settings_pulse_combos = {}
+
+    channels = [("a", "lbl_pulse_constant_ch1")]
+    if device_type == "dual":
+        channels.append(("b", "lbl_pulse_constant_ch2"))
+
+    for row, (channel, label_key) in enumerate(channels, start=6):
+        tk.Label(
+            grid_frame,
+            text=tr(label_key),
+            anchor="e",
+            width=34,
+            font=("TkDefaultFont", 10),
+        ).grid(
+            row=row, column=0, sticky="e",
+            pady=5, padx=(0, 12),
+        )
+
+        combo = ttk.Combobox(
+            grid_frame,
+            values=[str(value) for value in PULSE_CONSTANT_VALUES],
+            state="disabled",
+            width=8,
+        )
+        combo.grid(row=row, column=1, sticky="w", pady=5)
+        settings_pulse_combos[channel] = combo
+        combo.bind(
+            "<<ComboboxSelected>>",
+            lambda event, selected_channel=channel:
+                _on_change_pulse_constant(selected_channel),
+        )
+
+        tk.Label(
+            grid_frame,
+            text=tr("unit_imp_kwh"),
+        ).grid(
+            row=row, column=2, sticky="w",
+            pady=5, padx=(10, 0),
+        )
+
     # Разделитель и кнопка очистки (в том же центральном блоке, выравниваются по ширине сетки)
     tk.Frame(center_block, height=2, bd=1, relief="sunken").pack(fill="x", pady=15)
     ttk.Button(center_block, text=tr("btn_clear_energy"), command=clear_energy_values).pack(pady=(0, 10))
@@ -2678,7 +2743,7 @@ def create_info_tab():
     def _add_row(row, label_key, label_ref):
         tk.Label(grid_frame, text=tr(label_key),
                  anchor="e", width=35, font=("TkDefaultFont", 10)).grid(row=row, column=0, sticky="e", pady=6, padx=(0, 15))
-        lbl = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=35, anchor="w")
+        lbl = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=20, anchor="w")
         lbl.grid(row=row, column=1, sticky="w", pady=6)
         return lbl
 
@@ -2688,6 +2753,29 @@ def create_info_tab():
     info_meter_type_label = _add_row(2, "lbl_meter_type", None)
     info_sw_version_label = _add_row(3, "lbl_sw_version", None)
     info_release_date_label = _add_row(4, "lbl_release_date", None)
+    # Кнопки редактирования только для верхних информационных полей.
+    editable_fields = (
+        ("serial_number", "lbl_serial", info_serial_label),
+        ("manufacturer", "lbl_manufacturer", info_manufacturer_label),
+        ("meter_type", "lbl_meter_type", info_meter_type_label),
+        ("sw_version", "lbl_sw_version", info_sw_version_label),
+        ("release_date", "lbl_release_date", info_release_date_label),
+    )
+
+    for row, (field, label_key, value_label) in enumerate(editable_fields):
+        ttk.Button(
+            grid_frame,
+            text=tr("btn_change"),
+            command=lambda field=field, key=label_key, label=value_label:
+                _on_change_device_info(field, key, label),
+            width=10,
+        ).grid(
+            row=row,
+            column=2,
+            sticky="w",
+            pady=6,
+            padx=(10, 0),
+        )
 
     # Разделитель перед расшифровкой номера прибора.
     ttk.Separator(
@@ -2696,7 +2784,7 @@ def create_info_tab():
     ).grid(
         row=5,
         column=0,
-        columnspan=2,
+        columnspan=3,
         sticky="ew",
         pady=(12, 8),
     )
@@ -2709,7 +2797,7 @@ def create_info_tab():
     ).grid(
         row=6,
         column=0,
-        columnspan=2,
+        columnspan=3,
         sticky="w",
         pady=(0, 5),
     )
@@ -2750,6 +2838,36 @@ def _check_settings_queue():
     try:
         while True:
             settings = settings_update_queue.get_nowait()
+            # Обновляем постоянную импульсного выхода по каналам.
+            for channel, combo in settings_pulse_combos.items():
+                key = (
+                    "pulse_constant_ch1"
+                    if channel == "a"
+                    else "pulse_constant_ch2"
+                )
+                value = settings.get(key) if settings is not None else None
+
+                if value is None:
+                    combo.set("")
+                    combo.configure(state="disabled")
+                else:
+                    # Получаем путь фокуса Tk без поиска Python-виджета.
+                    focus_path = str(combo.tk.call("focus"))
+                    combo_path = str(combo)
+                    selecting = (
+                        focus_path == combo_path
+                        or focus_path.startswith(combo_path + ".")
+                    )
+
+                    if combo.instate(["disabled"]) or not selecting:
+                        combo.set(str(value))
+
+                    # Во время операции выбор остаётся заблокированным.
+                    combo.configure(
+                        state="disabled"
+                        if settings_dialog_open or operation_in_progress
+                        else "readonly"
+                    )
             if settings is None:
                 if settings_max_i_a_label: settings_max_i_a_label.config(text=tr("status_disconnected"))
                 if settings_max_i_b_label: settings_max_i_b_label.config(text=tr("status_disconnected"))
@@ -3221,6 +3339,319 @@ def _on_change_sens_current():
     x = root.winfo_rootx() + (root.winfo_width() - dialog.winfo_width()) // 2
     y = root.winfo_rooty() + (root.winfo_height() - dialog.winfo_height()) // 2
     dialog.geometry(f"+{x}+{y}")
+
+
+def _on_change_device_info(field, label_key, value_label):
+    """Открывает окно изменения информационного поля."""
+    global settings_dialog_open
+
+    if settings_dialog_open or operation_in_progress:
+        return
+
+    if not conn:
+        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        return
+
+    settings_dialog_open = True
+
+    win = tk.Toplevel(root)
+    win.title(tr("btn_change") + " — " + tr(label_key).rstrip(":："))
+    win.transient(root)
+    win.resizable(False, False)
+    win.grab_set()
+
+    prompt_key = (
+        "info_serial_prompt"
+        if field == "serial_number"
+        else "info_ascii_prompt"
+    )
+
+    tk.Label(
+        win,
+        text=tr(prompt_key),
+        wraplength=400,
+        justify="left",
+    ).pack(padx=20, pady=(15, 8))
+
+    entry = ttk.Entry(win, width=38, font=("Consolas", 11))
+    entry.pack(padx=20, pady=5)
+
+    current_value = value_label.cget("text")
+    if current_value != tr("status_disconnected"):
+        entry.insert(0, current_value)
+
+    def close_dialog():
+        global settings_dialog_open
+
+        if operation_in_progress:
+            return
+
+        settings_dialog_open = False
+        win.destroy()
+
+    def set_busy(busy):
+        state = "disabled" if busy else "normal"
+        for widget in (entry, apply_button, cancel_button):
+            widget.configure(state=state)
+
+    def show_error(message):
+        set_busy(False)
+        messagebox.showerror(
+            tr("dlg_input_error"),
+            message,
+            parent=win,
+        )
+        entry.focus_set()
+
+    def on_apply():
+        if operation_in_progress:
+            return
+
+        value = entry.get().strip()
+
+        if field == "serial_number":
+            valid, result = validate_meter_serial_number(value)
+            if not valid:
+                show_error(tr("info_serial_prompt"))
+                return
+            value = result
+        else:
+            max_length = DEVICE_INFO_REGISTER_COUNT * 2
+            if (
+                not value
+                or len(value) > max_length
+                or any(not 32 <= ord(char) <= 126 for char in value)
+            ):
+                show_error(tr("info_ascii_prompt"))
+                return
+
+        set_busy(True)
+
+        started = _write_device_info_async(
+            field,
+            value,
+            on_success=close_dialog,
+            on_error=show_error,
+        )
+        if not started:
+            set_busy(False)
+
+    buttons = tk.Frame(win)
+    buttons.pack(pady=(10, 15))
+
+    cancel_button = ttk.Button(
+        buttons, text=tr("dlg_cancel"), command=close_dialog,
+    )
+    cancel_button.pack(side="left", padx=5)
+
+    apply_button = ttk.Button(
+        buttons, text=tr("dlg_apply"), command=on_apply,
+    )
+    apply_button.pack(side="left", padx=5)
+
+    win.protocol("WM_DELETE_WINDOW", close_dialog)
+    win.bind("<Return>", lambda event: on_apply())
+    win.bind("<Escape>", lambda event: close_dialog())
+
+    win.update_idletasks()
+    x = root.winfo_rootx() + (root.winfo_width() - win.winfo_width()) // 2
+    y = root.winfo_rooty() + (root.winfo_height() - win.winfo_height()) // 2
+    win.geometry(f"+{x}+{y}")
+
+    entry.focus_set()
+    entry.selection_range(0, tk.END)
+
+
+def _write_device_info_async(field, value, on_success, on_error):
+    """Записывает информационное поле в фоновом потоке."""
+    global operation_in_progress
+
+    if operation_in_progress:
+        return False
+
+    if not conn:
+        on_error(tr("dlg_no_connection"))
+        return False
+
+    connection = conn.copy()
+    selected_type = device_type
+    operation_in_progress = True
+
+    def finish(success, message, info, stopped):
+        """Возвращает результат в основной поток интерфейса."""
+        global operation_in_progress
+
+        operation_in_progress = False
+
+        if conn == connection and device_type == selected_type:
+            if info is not None:
+                info_update_queue.put(info)
+            if stopped:
+                start_time_reader()
+
+        if success:
+            on_success()
+        else:
+            on_error(message)
+
+    def worker():
+        stopped = False
+        success = False
+        message = ""
+        info = None
+
+        try:
+            stopped = stop_time_reader()
+            if not stopped:
+                raise RuntimeError(
+                    "Не удалось остановить опрос. Запись отменена. "
+                    "Переподключитесь к прибору."
+                )
+
+            if conn != connection or device_type != selected_type:
+                raise RuntimeError("Подключение к прибору изменилось.")
+
+            success, message = write_device_info_field(
+                connection["port"],
+                connection["slave"],
+                connection["baud"],
+                connection["parity"],
+                field,
+                value,
+            )
+
+            if success:
+                read_ok, read_result = read_device_info(
+                    connection["port"],
+                    connection["slave"],
+                    connection["baud"],
+                    connection["parity"],
+                )
+
+                if read_ok:
+                    info = read_result
+                else:
+                    success = False
+                    message = (
+                        "Запись проверена, но обновить информацию "
+                        "о приборе не удалось: " + str(read_result)
+                    )
+
+        except Exception as error:
+            success = False
+            message = str(error)
+
+        finally:
+            root.after(0, finish, success, message, info, stopped)
+
+    threading.Thread(target=worker, daemon=True).start()
+    return True
+
+
+def _on_change_pulse_constant(channel):
+    """Записывает выбранное значение без блокировки интерфейса."""
+    global settings_dialog_open, operation_in_progress
+
+    if settings_dialog_open or operation_in_progress:
+        return
+
+    if not conn:
+        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        return
+
+    if channel == "b" and device_type != "dual":
+        return
+
+    combo = settings_pulse_combos.get(channel)
+    if combo is None:
+        return
+
+    try:
+        value = int(combo.get())
+    except ValueError:
+        return
+
+    connection = conn.copy()
+    selected_type = device_type
+    settings_dialog_open = True
+    operation_in_progress = True
+
+    for field in settings_pulse_combos.values():
+        field.configure(state="disabled")
+
+    def finish(success, message, settings, stopped):
+        """Обновляет интерфейс в основном потоке."""
+        global settings_dialog_open, operation_in_progress
+
+        settings_dialog_open = False
+        operation_in_progress = False
+
+        # Убираем выбранное значение до подтверждения чтением.
+        for field in settings_pulse_combos.values():
+            field.set("")
+            field.configure(state="disabled")
+
+        if conn == connection and device_type == selected_type:
+            if settings is not None:
+                settings_update_queue.put(settings)
+            if stopped:
+                start_time_reader()
+
+        if not success:
+            messagebox.showerror(tr("dlg_write_error"), message)
+
+    def worker():
+        """Останавливает опрос, записывает и перечитывает настройки."""
+        stopped = False
+        success = False
+        message = ""
+        settings = None
+
+        try:
+            stopped = stop_time_reader()
+            if not stopped:
+                raise RuntimeError(
+                    "Не удалось остановить опрос. Запись отменена. "
+                    "Переподключитесь к прибору."
+                )
+
+            if conn != connection or device_type != selected_type:
+                raise RuntimeError("Подключение к прибору изменилось.")
+
+            success, message = write_pulse_constant(
+                connection["port"],
+                connection["slave"],
+                connection["baud"],
+                connection["parity"],
+                channel,
+                value,
+            )
+
+            read_ok, read_result = read_device_settings_params(
+                connection["port"],
+                connection["slave"],
+                connection["baud"],
+                connection["parity"],
+                selected_type,
+            )
+
+            if read_ok:
+                settings = read_result
+            elif success:
+                success = False
+                message = (
+                    "Запись проверена, но обновить настройки не удалось: "
+                    + str(read_result)
+                )
+
+        except Exception as error:
+            success = False
+            message = str(error)
+
+        finally:
+            root.after(0, finish, success, message, settings, stopped)
+
+    threading.Thread(target=worker, daemon=True).start()
 
 
 def _on_change_decimal_places(event=None):

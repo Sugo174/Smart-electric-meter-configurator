@@ -23,6 +23,11 @@ from constants import (
     REG_LOCAL_ADDR,
     REG_BAUD_CODE,
     REG_TIME_START,
+    REG_PULSE_CONSTANT_CH1,
+    REG_PULSE_CONSTANT_CH2,
+    PULSE_CONSTANT_VALUES,
+    DEVICE_INFO_REGISTERS,
+    DEVICE_INFO_REGISTER_COUNT,
     REG_VOLTAGE,
     REG_CURRENT,
     REG_POWER,
@@ -96,6 +101,16 @@ def make_instrument(port, slave, baud, parity_letter):
 # 3. Работа с BCD (двоично-десятичный код)
 # Устройство хранит дату/время в формате BCD: 1 байт = 2 десятичные цифры.
 # =============================================================================
+
+def validate_meter_serial_number(serial_number):
+    """Проверяет номер перед сохранением: ровно 12 цифр 0–9."""
+    value = str(serial_number).strip()
+
+    if len(value) != 12 or not value.isascii() or not value.isdigit():
+        return False, "Серийный номер должен содержать ровно 12 цифр (0–9)."
+
+    return True, value
+
 
 def decode_meter_serial_number(serial_number):
     """Расшифровывает серийный номер счётчика серии 977.
@@ -690,6 +705,27 @@ def read_device_settings_params(port, slave, baud, parity, device_type):
             if device_type == "dual":
                 result["max_current_b"] = max_i_b
 
+            # Постоянная импульсного выхода первого канала, U32.
+            pulse_regs = dev.read_registers(
+                REG_PULSE_CONSTANT_CH1,
+                2,
+                functioncode=3,
+            )
+            result["pulse_constant_ch1"] = (
+                (pulse_regs[0] << 16) | pulse_regs[1]
+            )
+
+            # Второй канал читаем только у двухканального прибора.
+            if device_type == "dual":
+                pulse_regs = dev.read_registers(
+                    REG_PULSE_CONSTANT_CH2,
+                    2,
+                    functioncode=3,
+                )
+                result["pulse_constant_ch2"] = (
+                    (pulse_regs[0] << 16) | pulse_regs[1]
+                )
+
             return True, result
         finally:
             dev.serial.close()
@@ -750,6 +786,78 @@ def read_device_info(port, slave, baud, parity):
         return False, str(e)
 
 
+def write_device_info_field(port, slave, baud, parity, field, value):
+    """Записывает информационное поле и проверяет результат."""
+    if field not in DEVICE_INFO_REGISTERS:
+        return False, "Неизвестное информационное поле."
+
+    if not isinstance(value, str):
+        return False, "Значение должно быть строкой."
+
+    text = value.strip()
+
+    if field == "serial_number":
+        valid, result = validate_meter_serial_number(text)
+        if not valid:
+            return False, result
+        text = result
+
+    # Разрешаем только печатные ASCII-символы.
+    if not text or any(not 32 <= ord(char) <= 126 for char in text):
+        return False, "Введите непустое значение латиницей, цифрами и знаками ASCII."
+
+    byte_count = DEVICE_INFO_REGISTER_COUNT * 2
+    if len(text) > byte_count:
+        return False, f"Допускается не более {byte_count} символов."
+
+    # Заполняем остаток поля нулями, убирая хвост прежней строки.
+    data = text.encode("ascii").ljust(byte_count, b"\x00")
+    registers = [
+        int.from_bytes(data[index:index + 2], "big")
+        for index in range(0, byte_count, 2)
+    ]
+    address = DEVICE_INFO_REGISTERS[field]
+    dev = None
+
+    try:
+        dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+
+        dev.write_register(REG_EN_PROG, 0x5AA5, functioncode=6)
+        time.sleep(0.2)
+
+        dev.write_registers(address, registers)
+        time.sleep(0.2)
+
+        actual_registers = dev.read_registers(
+            address,
+            DEVICE_INFO_REGISTER_COUNT,
+            functioncode=3,
+        )
+        actual_data = b"".join(
+            register.to_bytes(2, "big")
+            for register in actual_registers
+        )
+        actual_text = actual_data.split(b"\x00", 1)[0].decode("ascii").rstrip()
+
+        if actual_text != text:
+            return False, (
+                f"Проверка записи: ожидалось '{text}', "
+                f"прибор вернул '{actual_text}'."
+            )
+
+        return True, "OK"
+
+    except Exception as error:
+        return False, str(error)
+
+    finally:
+        if dev is not None:
+            try:
+                dev.serial.close()
+            except Exception:
+                pass
+
+
 def write_max_current(port, slave, baud, parity, channel, value):
     """Записывает максимальный ток выбранного канала."""
     dev = None
@@ -771,6 +879,59 @@ def write_max_current(port, slave, baud, parity, channel, value):
             ],
         )
         time.sleep(0.2)
+
+        return True, "OK"
+
+    except Exception as error:
+        return False, str(error)
+
+    finally:
+        if dev is not None:
+            try:
+                dev.serial.close()
+            except Exception:
+                pass
+
+
+def write_pulse_constant(port, slave, baud, parity, channel, value):
+    """Записывает и проверяет постоянную импульсного выхода."""
+    if channel not in ("a", "b"):
+        return False, "Неизвестный канал."
+
+    if not isinstance(value, int) or value not in PULSE_CONSTANT_VALUES:
+        return False, "Недопустимое значение постоянной импульсного выхода."
+
+    address = (
+        REG_PULSE_CONSTANT_CH1
+        if channel == "a"
+        else REG_PULSE_CONSTANT_CH2
+    )
+
+    dev = None
+
+    try:
+        dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+
+        # Разрешаем программирование, как при записи других настроек.
+        dev.write_register(REG_EN_PROG, 0x5AA5, functioncode=6)
+        time.sleep(0.2)
+
+        # U32: сначала старшие 16 бит, затем младшие.
+        dev.write_registers(
+            address,
+            [(value >> 16) & 0xFFFF, value & 0xFFFF],
+        )
+        time.sleep(0.2)
+
+        # Проверяем, что прибор действительно сохранил значение.
+        registers = dev.read_registers(address, 2, functioncode=3)
+        actual_value = (registers[0] << 16) | registers[1]
+
+        if actual_value != value:
+            return False, (
+                f"Проверка записи: ожидалось {value}, "
+                f"прибор вернул {actual_value}."
+            )
 
         return True, "OK"
 
