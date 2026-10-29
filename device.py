@@ -28,6 +28,8 @@ from constants import (
     PULSE_CONSTANT_VALUES,
     DEVICE_INFO_REGISTERS,
     DEVICE_INFO_REGISTER_COUNT,
+    DEVICE_INFO_AUTOFILL_DEFAULTS,
+    DEVICE_INFO_AUTOFILL_DATE_FORMAT,
     REG_VOLTAGE,
     REG_CURRENT,
     REG_POWER,
@@ -156,6 +158,22 @@ def decode_meter_serial_number(serial_number):
         "month": month,
         "sequence_number": sequence_number,
     }
+
+
+def validate_scanned_serial_number(serial_number):
+    """Проверяет отсканированный номер перед автозаполнением."""
+    valid, result = validate_meter_serial_number(serial_number)
+    if not valid:
+        return False, result
+
+    details = decode_meter_serial_number(result)
+    if details is None:
+        return False, (
+            "Номер не соответствует формату 977 C P YY MM SSS. "
+            "Проверьте серию, коды каналов и питания, месяц выпуска."
+        )
+
+    return True, result
 
 
 def bcd_to_int(b):
@@ -856,6 +874,77 @@ def write_device_info_field(port, slave, baud, parity, field, value):
                 dev.serial.close()
             except Exception:
                 pass
+
+
+def autofill_device_info(
+    port, slave, baud, parity, serial_number, scanned_at=None
+):
+    """Синхронизирует часы и заполняет информацию по номеру прибора."""
+    valid, result = validate_scanned_serial_number(serial_number)
+    if not valid:
+        return False, result
+
+    number = result
+
+    try:
+        # Фиксируем дату принятого сканирования до начала записи.
+        if scanned_at is None:
+            scanned_at = datetime.datetime.now()
+
+        fields = (
+            ("serial_number", number),
+            ("manufacturer", DEVICE_INFO_AUTOFILL_DEFAULTS["manufacturer"]),
+            ("meter_type", DEVICE_INFO_AUTOFILL_DEFAULTS["meter_type"]),
+            ("sw_version", DEVICE_INFO_AUTOFILL_DEFAULTS["sw_version"]),
+            (
+                "release_date",
+                scanned_at.strftime(DEVICE_INFO_AUTOFILL_DATE_FORMAT),
+            ),
+        )
+
+        # Проверяем все подготовленные значения до обращения к прибору.
+        max_length = DEVICE_INFO_REGISTER_COUNT * 2
+        for field, value in fields:
+            if (
+                not isinstance(value, str)
+                or not value
+                or len(value) > max_length
+                or any(not 32 <= ord(char) <= 126 for char in value)
+            ):
+                return False, f"Некорректное значение поля: {field}."
+
+        # Синхронизация выполняется без отдельных окон интерфейса.
+        success, result = sync_device_with_pc_time(
+            port, slave, baud, parity,
+        )
+        if not success:
+            return False, (
+                "Автозаполнение остановлено на синхронизации часов: "
+                + str(result)
+            )
+
+        # Каждая функция записи сама проверяет результат чтением.
+        for field, value in fields:
+            success, result = write_device_info_field(
+                port, slave, baud, parity, field, value,
+            )
+            if not success:
+                return False, (
+                    f"Не удалось записать поле {field}: {result}. "
+                    "Автозаполнение выполнено не полностью."
+                )
+
+        success, info = read_device_info(port, slave, baud, parity)
+        if not success:
+            return False, (
+                "Поля записаны, но прочитать информацию о приборе "
+                "не удалось: " + str(info)
+            )
+
+        return True, info
+
+    except Exception as error:
+        return False, "Автозаполнение прервано: " + str(error)
 
 
 def write_max_current(port, slave, baud, parity, channel, value):

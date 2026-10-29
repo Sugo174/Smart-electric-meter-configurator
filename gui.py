@@ -16,6 +16,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import time
+import datetime
 import queue
 import threading
 import serial
@@ -63,6 +64,8 @@ from device import (
     read_device_info,
     write_device_info_field,
     validate_meter_serial_number,
+    validate_scanned_serial_number,
+    autofill_device_info,
     decode_meter_serial_number,
 )
 
@@ -183,6 +186,17 @@ TRANSLATIONS = {
         "lbl_release_date": "Дата:",
         "info_serial_prompt": "Введите ровно 12 цифр (0–9).",
         "info_ascii_prompt": "Введите от 1 до 16 печатных символов ASCII: латиница, цифры и знаки.",
+        "btn_info_autofill": "Автозаполнение",
+        "info_autofill_prompt": (
+            "Используйте сканер штрихкодов, чтобы считать серийный номер "
+            "с заводской наклейки или гравировки прибора."
+        ),
+        "info_autofill_invalid": (
+            "Номер не соответствует формату 977 C P YY MM SSS. "
+            "Нужны 12 цифр, серия 977, допустимые коды каналов "
+            "и питания, месяц от 01 до 12."
+        ),
+        "info_autofill_busy": "Заполнение данных прибора…",
 
         # Расшифровка серийного номера
         "lbl_serial_decoding": "Расшифровка серийного номера:",
@@ -421,6 +435,17 @@ TRANSLATIONS = {
         "lbl_release_date": "Date:",
         "info_serial_prompt": "Enter exactly 12 digits (0–9).",
         "info_ascii_prompt": "Enter 1–16 printable ASCII characters: Latin letters, digits and symbols.",
+        "btn_info_autofill": "Auto-fill",
+        "info_autofill_prompt": (
+            "Use a barcode scanner to read the serial number "
+            "from the meter's factory label or engraving."
+        ),
+        "info_autofill_invalid": (
+            "The number must match 977 C P YY MM SSS: "
+            "12 digits, series 977, valid channel and power codes, "
+            "and a month from 01 to 12."
+        ),
+        "info_autofill_busy": "Filling in meter information…",
 
         # Serial number decoding
         "lbl_serial_decoding": "Serial Number Decoding:",
@@ -657,6 +682,13 @@ TRANSLATIONS = {
         "lbl_release_date": "日期:",
         "info_serial_prompt": "请输入恰好12位数字（0–9）。",
         "info_ascii_prompt": "请输入1至16个可打印ASCII字符：拉丁字母、数字或符号。",
+        "btn_info_autofill": "自动填写",
+        "info_autofill_prompt": "请使用条码扫描器读取电表出厂标签或刻印上的序列号。",
+        "info_autofill_invalid": (
+            "序列号须符合977 C P YY MM SSS格式：共12位数字，"
+            "系列为977，通道和电源代码有效，月份为01至12。"
+        ),
+        "info_autofill_busy": "正在填写电表信息…",
 
         # 序列号解析
         "lbl_serial_decoding": "序列号解析：",
@@ -2777,12 +2809,25 @@ def create_info_tab():
             padx=(10, 0),
         )
 
+    # Автозаполнение по отсканированному серийному номеру.
+    ttk.Button(
+        grid_frame,
+        text=tr("btn_info_autofill"),
+        command=_show_device_info_autofill_dialog,
+        width=24,
+    ).grid(
+        row=5,
+        column=0,
+        columnspan=3,
+        pady=(12, 5),
+    )
+
     # Разделитель перед расшифровкой номера прибора.
     ttk.Separator(
         grid_frame,
         orient="horizontal",
     ).grid(
-        row=5,
+        row=6,
         column=0,
         columnspan=3,
         sticky="ew",
@@ -2795,31 +2840,31 @@ def create_info_tab():
         font=("TkDefaultFont", 10, "bold"),
         anchor="w",
     ).grid(
-        row=6,
+        row=7,
         column=0,
         columnspan=3,
         sticky="w",
         pady=(0, 5),
     )
 
-    info_series_label = _add_row(7, "lbl_meter_series", None)
+    info_series_label = _add_row(8, "lbl_meter_series", None)
     info_channels_label = _add_row(
-        8,
+        9,
         "lbl_channel_configuration",
         None,
     )
     info_power_supply_label = _add_row(
-        9,
+        10,
         "lbl_power_supply",
         None,
     )
     info_manufacture_date_label = _add_row(
-        10,
+        11,
         "lbl_manufacture_date",
         None,
     )
     info_sequence_number_label = _add_row(
-        11,
+        12,
         "lbl_sequence_number",
         None,
     )
@@ -3460,6 +3505,191 @@ def _on_change_device_info(field, label_key, value_label):
 
     entry.focus_set()
     entry.selection_range(0, tk.END)
+
+
+def _show_device_info_autofill_dialog():
+    """Открывает окно сканирования номера для автозаполнения."""
+    global settings_dialog_open
+
+    if settings_dialog_open or operation_in_progress:
+        return
+
+    if not conn:
+        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        return
+
+    settings_dialog_open = True
+
+    win = tk.Toplevel(root)
+    win.title(tr("btn_info_autofill"))
+    win.transient(root)
+    win.resizable(False, False)
+    win.grab_set()
+
+    tk.Label(
+        win,
+        text=tr("info_autofill_prompt"),
+        wraplength=440,
+        justify="left",
+    ).pack(padx=20, pady=(15, 10))
+
+    entry = ttk.Entry(win, width=28, font=("Consolas", 13))
+    entry.pack(padx=20, pady=5)
+
+    status_label = tk.Label(win, text="")
+    status_label.pack(padx=20, pady=5)
+
+    def close_dialog():
+        global settings_dialog_open
+
+        if operation_in_progress:
+            return
+
+        settings_dialog_open = False
+        win.destroy()
+
+    def set_busy(busy):
+        state = "disabled" if busy else "normal"
+        for widget in (entry, apply_button, cancel_button):
+            widget.configure(state=state)
+
+        status_label.configure(
+            text=tr("info_autofill_busy") if busy else ""
+        )
+
+    def show_error(message, title_key="dlg_write_error"):
+        set_busy(False)
+        messagebox.showerror(tr(title_key), message, parent=win)
+        entry.focus_set()
+        entry.selection_range(0, tk.END)
+
+    def on_apply():
+        if operation_in_progress:
+            return
+
+        valid, result = validate_scanned_serial_number(entry.get())
+        if not valid:
+            show_error(
+                tr("info_autofill_invalid"),
+                "dlg_input_error",
+            )
+            return
+
+        # Фиксируем момент принятия корректного номера.
+        scanned_at = datetime.datetime.now()
+        set_busy(True)
+
+        started = _autofill_device_info_async(
+            result,
+            scanned_at,
+            on_success=close_dialog,
+            on_error=show_error,
+        )
+        if not started:
+            set_busy(False)
+
+    buttons = tk.Frame(win)
+    buttons.pack(pady=(5, 15))
+
+    cancel_button = ttk.Button(
+        buttons,
+        text=tr("dlg_cancel"),
+        command=close_dialog,
+    )
+    cancel_button.pack(side="left", padx=5)
+
+    apply_button = ttk.Button(
+        buttons,
+        text=tr("dlg_apply"),
+        command=on_apply,
+    )
+    apply_button.pack(side="left", padx=5)
+
+    win.protocol("WM_DELETE_WINDOW", close_dialog)
+    win.bind("<Return>", lambda event: on_apply())
+    win.bind("<Escape>", lambda event: close_dialog())
+
+    win.update_idletasks()
+    x = root.winfo_rootx() + (root.winfo_width() - win.winfo_width()) // 2
+    y = root.winfo_rooty() + (root.winfo_height() - win.winfo_height()) // 2
+    win.geometry(f"+{x}+{y}")
+
+    entry.focus_set()
+
+
+def _autofill_device_info_async(
+    serial_number, scanned_at, on_success, on_error
+):
+    """Выполняет автозаполнение без блокировки интерфейса."""
+    global operation_in_progress
+
+    if operation_in_progress:
+        return False
+
+    if not conn:
+        on_error(tr("dlg_no_connection"))
+        return False
+
+    connection = conn.copy()
+    selected_type = device_type
+    operation_in_progress = True
+
+    def finish(success, message, info, stopped):
+        global operation_in_progress
+
+        operation_in_progress = False
+
+        if conn == connection and device_type == selected_type:
+            if info is not None:
+                info_update_queue.put(info)
+            if stopped:
+                start_time_reader()
+
+        if success:
+            on_success()
+        else:
+            on_error(message)
+
+    def worker():
+        stopped = False
+        success = False
+        message = ""
+        info = None
+
+        try:
+            stopped = stop_time_reader()
+            if not stopped:
+                raise RuntimeError(
+                    "Не удалось остановить опрос. Заполнение отменено. "
+                    "Переподключитесь к прибору."
+                )
+
+            if conn != connection or device_type != selected_type:
+                raise RuntimeError("Подключение к прибору изменилось.")
+
+            success, result = autofill_device_info(
+                connection["port"],
+                connection["slave"],
+                connection["baud"],
+                connection["parity"],
+                serial_number,
+                scanned_at,
+            )
+
+            if success:
+                info = result
+            else:
+                message = str(result)
+
+        except Exception as error:
+            success = False
+            message = str(error)
+
+        finally:
+            root.after(0, finish, success, message, info, stopped)
+
+    threading.Thread(target=worker, daemon=True).start()
+    return True
 
 
 def _write_device_info_async(field, value, on_success, on_error):
