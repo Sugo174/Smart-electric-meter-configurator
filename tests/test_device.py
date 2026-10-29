@@ -1,6 +1,7 @@
 """Тесты вспомогательной логики взаимодействия со счётчиком."""
 
 import unittest
+from datetime import datetime
 from unittest.mock import patch
 
 from constants import (
@@ -12,6 +13,7 @@ from constants import (
     PARITY_VAL_TO_STR,
 )
 from device import (
+    autofill_device_info,
     bcd_to_int,
     int_to_bcd,
     registers_to_i32,
@@ -111,6 +113,86 @@ class SerialNumberDecodingTests(unittest.TestCase):
         result = decode_meter_serial_number("123456789012")
 
         self.assertIsNone(result)
+
+
+class AutofillTests(unittest.TestCase):
+    """Проверяет автозаполнение без подключения к счётчику."""
+
+    @patch("device.read_device_info")
+    @patch("device.write_device_info_field")
+    @patch("device.sync_device_with_pc_time")
+    def test_invalid_number_does_not_touch_device(
+        self, sync_time, write_field, read_info
+    ):
+        invalid_numbers = (
+            "97721261001",   # 11 цифр
+            "977251000001",  # неверные коды и месяц
+            "97721261000A",  # буква вместо цифры
+        )
+
+        for number in invalid_numbers:
+            with self.subTest(number=number):
+                success, _ = autofill_device_info(
+                    "COM_TEST", 1, 9600, "Even", number
+                )
+                self.assertFalse(success)
+
+        sync_time.assert_not_called()
+        write_field.assert_not_called()
+        read_info.assert_not_called()
+
+    @patch("device.read_device_info")
+    @patch("device.write_device_info_field")
+    @patch("device.sync_device_with_pc_time")
+    def test_fills_fields_and_uses_scan_date(
+        self, sync_time, write_field, read_info
+    ):
+        sync_time.return_value = (True, "OK")
+        write_field.return_value = (True, "OK")
+        read_info.return_value = (True, {"serial_number": "977212610001"})
+
+        scanned_at = datetime(2026, 10, 28, 23, 59, 59)
+        success, info = autofill_device_info(
+            "COM_TEST", 1, 9600, "Even", "977212610001", scanned_at
+        )
+
+        self.assertTrue(success)
+        self.assertEqual(info["serial_number"], "977212610001")
+
+        written = [
+            (item.args[-2], item.args[-1])
+            for item in write_field.call_args_list
+        ]
+        self.assertEqual(
+            written,
+            [
+                ("serial_number", "977212610001"),
+                ("manufacturer", "EMIS"),
+                ("meter_type", "EE977"),
+                ("sw_version", "EE977 v.1.01.00"),
+                ("release_date", "2026-10-28"),
+            ],
+        )
+
+    @patch("device.read_device_info")
+    @patch("device.write_device_info_field")
+    @patch("device.sync_device_with_pc_time")
+    def test_stops_after_write_error(
+        self, sync_time, write_field, read_info
+    ):
+        sync_time.return_value = (True, "OK")
+        write_field.side_effect = [
+            (True, "OK"),
+            (False, "Ошибка записи"),
+        ]
+
+        success, _ = autofill_device_info(
+            "COM_TEST", 1, 9600, "Even", "977212610001"
+        )
+
+        self.assertFalse(success)
+        self.assertEqual(write_field.call_count, 2)
+        read_info.assert_not_called()
 
 
 class SignedIntegerConversionTests(unittest.TestCase):

@@ -2,6 +2,22 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
+## [V1.11] - 2026-10-29
+
+### Added
+
+- Pulse output constant settings for channels A and B, with read-back verification.
+- Editing of serial number, manufacturer, meter type, metrological software version and date.
+- Serial number validation requiring exactly 12 digits.
+- Barcode-based auto-fill of device information with meter clock synchronization.
+- Automated tests for serial number validation and auto-fill error handling.
+
+### Changed
+
+- Updated the built-in Help in Russian, English and Simplified Chinese.
+- Updated the README with the new features and Windows download instructions.
+
+
 ## [V1.10] - 2026-09-18
 ### Compatibility update - 2026-10-08
 

@@ -27,26 +27,20 @@ It provides automatic communication parameter detection, real-time monitoring, d
 
 Choose the build for your operating system:
 
-- **Windows 10:** use `Smart-Meter-Configurator-v1.10.zip`.
-- **Windows 7 (64-bit):** use [Smart-Meter-Configurator-v1.10-Windows-7.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.10/Smart-Meter-Configurator-v1.10-Windows-7.zip).
+- **Windows 10/11:** [Smart-Meter-Configurator-v1.11.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.11/Smart-Meter-Configurator-v1.11.zip)
+- **Windows 7 (64-bit):** [Smart-Meter-Configurator-v1.11-Windows-7.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.11/Smart-Meter-Configurator-v1.11-Windows-7.zip)
 
-The Windows 7 build has been verified to launch on Windows 7 (64-bit).
-Both builds use application version **1.10**.
+1. Download and extract the entire archive.
+2. Connect the smart meter through an RS-485 adapter.
+3. Run the executable from the extracted folder.
 
-1. Download [Smart-Meter-Configurator-v1.10.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.10/Smart-Meter-Configurator-v1.10.zip).
-2. Extract the entire archive to a folder.
-3. Connect the smart meter through an RS-485 adapter.
-4. Run `Smart-Meter-Configurator-v1.10.exe`.
+Keep all extracted files and folders together. The Windows 10/11 build
+requires the `_internal` folder. Python installation is not required
+for either packaged build.
 
-For the standard build, keep the executable and the `_internal` folder together.
+See the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest)
+for release notes and downloads.
 
-For the Windows 7 build, extract the entire archive and run
-`Smart-Meter-Configurator-v1.10-Windows-7.exe`.
-Keep all extracted files and folders together.
-
-Python installation is not required for either packaged build.
-
-See the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest) for available downloads and release notes.
 
 ### Running from Source
 
@@ -91,7 +85,34 @@ This allows engineers to establish communication with a meter without prior know
 - Device address configuration
 - Sensitivity adjustment
 - Threshold configuration
- 
+
+### Pulse Output Constant
+
+- Select the pulse output constant from the supported values:
+  1000, 500, 200, 100, 50, 25, 20, 10 or 5 imp/kWh.
+- A single-channel meter uses channel A. A dual-channel meter has
+  independent settings for channels A and B.
+- Selecting a value writes it to the meter and checks it by reading it back.
+
+### Device Information and Barcode Auto-fill
+
+The Device Information tab lets users edit the serial number,
+manufacturer, meter type, metrological software version and date.
+A manually entered serial number must contain exactly 12 digits.
+
+Auto-fill accepts a scanned or manually entered serial number in the
+`977 C P YY MM SSS` format. Press Enter or select **Apply** to start.
+The application synchronizes the meter clock with the PC and fills in:
+
+- The entered serial number.
+- Manufacturer: `EMIS`.
+- Meter type: `EE977`.
+- Metrological software version: `EE977 v.1.01.00`.
+- Date: the date the serial number was entered or scanned.
+
+The fields are written and checked one at a time. If an error occurs,
+some fields may already have been written.
+
 ### Time Management
  
 - Manual date and time configuration
