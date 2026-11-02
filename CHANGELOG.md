@@ -2,6 +2,17 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
+## [V1.11.1] - 2026-11-02
+
+### Fixed
+
+- Prevented a new polling thread from starting before the previous thread has stopped.
+- Prevented the interface from confirming disconnection while polling is still stopping.
+- Removed a background-thread update of interface buttons.
+- Kept detected COM ports visible even when they are busy.
+- Used a single port scan when refreshing the COM port list and preserved the selected port when available.
+
+
 ## [V1.11] - 2026-10-29
 
 ### Added

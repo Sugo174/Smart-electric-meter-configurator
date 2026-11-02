@@ -33,7 +33,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Smart-Meter-Configurator-v1.11-Windows-7',
+    name='Smart-Meter-Configurator-v1.11.1-Windows-7',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -54,5 +54,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Smart-Meter-Configurator-v1.11-Windows-7',
+    name='Smart-Meter-Configurator-v1.11.1-Windows-7',
 )

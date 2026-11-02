@@ -27,8 +27,8 @@ It provides automatic communication parameter detection, real-time monitoring, d
 
 Choose the build for your operating system:
 
-- **Windows 10/11:** [Smart-Meter-Configurator-v1.11.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.11/Smart-Meter-Configurator-v1.11.zip)
-- **Windows 7 (64-bit):** [Smart-Meter-Configurator-v1.11-Windows-7.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.11/Smart-Meter-Configurator-v1.11-Windows-7.zip)
+- **Windows 10/11:** [Smart-Meter-Configurator-v1.11.1.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.11.1/Smart-Meter-Configurator-v1.11.1.zip)
+- **Windows 7 (64-bit):** [Smart-Meter-Configurator-v1.11.1-Windows-7.zip](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.11.1/Smart-Meter-Configurator-v1.11.1-Windows-7.zip)
 
 1. Download and extract the entire archive.
 2. Connect the smart meter through an RS-485 adapter.
