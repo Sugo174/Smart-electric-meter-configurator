@@ -63,19 +63,13 @@ from constants import (
 # =============================================================================
 
 def list_com_ports():
-    """Возвращает только те COM-порты, которые реально можно открыть."""
-    import serial.tools.list_ports # Импорт портов на время вызова функции
-    available = [] # Создаем пустой список для списка портов
-    for p in serial.tools.list_ports.comports(): 
-        try:
-            with serial.Serial(p.device, timeout=0.1):
-                # Открываем порт на 0,1с, что бы проверить работает ли он
-                pass
-            available.append(p.device)
-        except (OSError, serial.SerialException):
-            # Порт есть, но не открывается — пропускаем
-            pass
-    return available # Возвращаем список имён портов, которые удалось открыть
+    """Возвращает обнаруженные COM-порты, включая занятые."""
+    import serial.tools.list_ports
+
+    return sorted(
+        port.device
+        for port in serial.tools.list_ports.comports()
+    )
 
 
 def make_instrument(port, slave, baud, parity_letter):

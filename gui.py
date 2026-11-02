@@ -121,6 +121,7 @@ TRANSLATIONS = {
         "dlg_ports_found": "Найдены порты:\n\n{}",
         "dlg_yes": "Да",
         "dlg_no": "Нет",
+        "dlg_poll_stop_pending": "Опрос ещё завершается. Подождите немного и повторите отключение.",
         "btn_writing": "Применение...",
 
         # Вкладка "Дата и время"
@@ -377,6 +378,7 @@ TRANSLATIONS = {
         "dlg_yes": "Yes",
         "dlg_no": "No",
         "btn_writing": "Applying...",
+        "dlg_poll_stop_pending": "Polling is still stopping. Please wait a moment and disconnect again.",
 
         # Date & Time tab
         "lbl_current_time": "Device Time (YY-MM-DD hh:mm:ss):",
@@ -631,6 +633,7 @@ TRANSLATIONS = {
         "dlg_yes": "是",
         "dlg_no": "否",
         "btn_writing": "正在应用...",
+        "dlg_poll_stop_pending": "正在停止轮询。请稍候，然后再次断开连接。",
 
         # 日期时间选项卡
         "lbl_current_time": "设备时间 (年-月-日 时:分:秒):",
@@ -1188,16 +1191,24 @@ def set_buttons_state(state):
     sync_pc_btn.config(state=state)
 
 
-def start_time_reader():
-    """Запускает фоновый поток для чтения времени и параметров."""
+def start_time_reader() -> bool:
+    """Запускает опрос только после завершения предыдущего потока."""
     global time_reader_active, time_reader_thread, disconnect_flag
 
-    # Новый поток не должен использовать старый сигнал об отключении.
+    if not stop_time_reader():
+        return False
+
+    if not conn:
+        return False
+
     disconnect_flag = False
-    stop_time_reader()
     time_reader_active = True
-    time_reader_thread = threading.Thread(target=_time_reader_worker, daemon=True)
+    time_reader_thread = threading.Thread(
+        target=_time_reader_worker,
+        daemon=True,
+    )
     time_reader_thread.start()
+    return True
 
 
 def stop_time_reader() -> bool:
@@ -1219,10 +1230,10 @@ def stop_time_reader() -> bool:
     if thread is None:
         return True
 
-    # Не пытаемся ожидать текущий поток из него самого.
+    # Поток не может ждать собственного завершения.
+    # Сигнал остановки уже установлен, но завершение ещё не подтверждено.
     if thread is threading.current_thread():
-        time_reader_thread = None
-        return True
+        return False
 
     thread.join(timeout=5.0)
 
@@ -1266,7 +1277,7 @@ def _time_reader_worker():
 
         try:
             # 1. Время (каждую секунду)
-            if now >= next_time_read:
+            if time_reader_active and now >= next_time_read:
                 success, result = read_device_time(conn["port"], conn["slave"], conn["baud"], conn["parity"])
                 if success:
                     time_update_queue.put(result["formatted"])
@@ -1275,7 +1286,7 @@ def _time_reader_worker():
                 next_time_read = now + 1
 
             # 2. Параметры (каждую секунду)
-            if now >= next_param_read:
+            if time_reader_active and now >= next_param_read:
                 if device_type == "single":
                     success, params = read_device_parameters(conn["port"], conn["slave"], conn["baud"], conn["parity"])
                 else:
@@ -1287,7 +1298,7 @@ def _time_reader_worker():
                 next_param_read = now + 1
 
             # 3. Настройки прибора (каждые 2 секунды)
-            if now >= next_settings_read:
+            if time_reader_active and now >= next_settings_read:
                 success, settings = read_device_settings_params(
                     conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type
                 )
@@ -1298,7 +1309,7 @@ def _time_reader_worker():
                 next_settings_read = now + 2
 
             # 4. Инфо о приборе (каждые 2 секунды)
-            if now >= next_info_read:
+            if time_reader_active and now >= next_info_read:
                 success, info = read_device_info(
                     conn["port"], conn["slave"], conn["baud"], conn["parity"]
                 )
@@ -1440,27 +1451,44 @@ def _check_param_queue():
 # 5. Обработка событий GUI
 # =============================================================================
 
-def _update_port_list():
-    """Обновляет список доступных COM-портов в меню выбора."""
-    ports = list_com_ports() or [tr("status_no_ports")]
+def _update_port_list(ports=None):
+    """Обновляет меню портов, сохраняя выбор, если он ещё доступен."""
+    if ports is None:
+        ports = list_com_ports()
+
+    previous_port = port_var.get()
+    choices = ports or [tr("status_no_ports")]
+
     menu = port_menu["menu"]
     menu.delete(0, "end")
-    for p in ports:
-        menu.add_command(label=p, command=lambda v=p: port_var.set(v))
-    port_var.set(ports[0])
-    set_buttons_state("disabled")
+
+    for port in choices:
+        menu.add_command(
+            label=port,
+            command=lambda value=port: port_var.set(value),
+        )
+
+    if previous_port in choices:
+        port_var.set(previous_port)
+    else:
+        port_var.set(choices[0])
 
 
 def refresh_ports():
-    """Показывает список доступных COM-портов в диалоговом окне."""
+    """Обновляет меню и показывает один и тот же список портов."""
     ports = list_com_ports()
-    if not ports:
-        messagebox.showinfo(tr("dlg_available_ports"), tr("dlg_no_port"))
-        ports = [tr("status_no_ports")]
+    _update_port_list(ports)
+
+    if ports:
+        messagebox.showinfo(
+            tr("dlg_available_ports"),
+            tr("dlg_ports_found").format("\n".join(ports)),
+        )
     else:
-        port_list = "\n".join(ports)
-        messagebox.showinfo(tr("dlg_available_ports"), tr("dlg_ports_found").format(port_list))
-    _update_port_list()
+        messagebox.showinfo(
+            tr("dlg_available_ports"),
+            tr("dlg_no_port"),
+        )
 
 
 def connect_scan():
@@ -1649,7 +1677,13 @@ def connect_scan():
 
 def disconnect_device(show_message=False):
     global conn, connect_btn, disconnect_btn, status_canvas, status_indicator, was_ever_connected, is_device_ready
-    stop_time_reader()
+    if not stop_time_reader():
+        messagebox.showwarning(
+            tr("dlg_warning"),
+            tr("dlg_poll_stop_pending"),
+        )
+        return
+
     conn = None
     is_device_ready = False
     set_buttons_state("disabled")
