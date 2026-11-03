@@ -4449,22 +4449,23 @@ load_config()
 
 root = tk.Tk()
 root.title(tr("app_title"))
-# 1. Иконка для главного окна
+# ICO содержит отдельные изображения для разных размеров Windows.
 try:
-    root.iconbitmap(resource_path("app.ico"))
-except Exception:
-    pass
+    app_icon_path = resource_path("app.ico")
 
-# 2. Иконка для ВСЕХ внутренних окон (через PNG - наследуется автоматически)
-# True означает "применить ко всем будущим окнам (Toplevel)"
-try:
-    icon_png_path = resource_path("app.png")
-    if os.path.exists(icon_png_path):
-        app_icon_img = tk.PhotoImage(file=icon_png_path)
+    # Значок главного окна.
+    root.iconbitmap(app_icon_path)
+
+    # Значок будущих дочерних окон.
+    root.iconbitmap(default=app_icon_path)
+
+except tk.TclError:
+    # Запасной вариант, если система не поддерживает ICO.
+    try:
+        app_icon_img = tk.PhotoImage(file=resource_path("app.png"))
         root.iconphoto(True, app_icon_img)
-except Exception:
-    # Если PNG нет, программа не упадет, просто на окнах будет перышко
-    pass
+    except tk.TclError:
+        pass
 sv_ttk.set_theme("light")
 
 # Загружаем картинки устройств

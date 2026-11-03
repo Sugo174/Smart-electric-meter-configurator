@@ -33,8 +33,8 @@
 
 Готовые сборки не требуют установки Python.
 
-- **Windows 10/11:** [Скачать сборку](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.11.1/Smart-Meter-Configurator-v1.11.1.zip)
-- **Windows 7, 64 бит:** [Скачать сборку](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/download/v1.11.1/Smart-Meter-Configurator-v1.11.1-Windows-7.zip)
+- **Windows 10/11:** скачайте обычный Windows ZIP из [последнего релиза](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
+- **Windows 7, 64 бит:** скачайте ZIP с `Windows-7` в названии из [последнего релиза](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
 
 Все выпуски и описание изменений доступны в разделе
 [Releases](https://github.com/Sugo174/Smart-electric-meter-configurator/releases).
@@ -142,9 +142,8 @@
 
 ### Windows 10 и Windows 11
 
-Нужны установленный Python, драйвер адаптера RS-485
-и исходники проекта. Основная сборка версии 1.11.1
-подготовлена на Python 3.14.
+Нужны установленный Python 3.14, драйвер адаптера RS-485
+и исходники проекта.
 
 В PowerShell из папки проекта создайте отдельное окружение
 и установите зависимости:

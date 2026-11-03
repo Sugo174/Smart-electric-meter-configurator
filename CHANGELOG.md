@@ -2,6 +2,18 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
+## [V1.11.2] - 2026-11-03
+
+### Changed
+
+- Added a custom meter application icon with a dedicated 16-pixel variant.
+- Applied the ICO icon to the main window and future child windows, with a PNG fallback.
+- Added a Russian README and Windows user guides in English and Russian.
+- Added Windows build instructions, contribution guidelines, and a security policy.
+- Updated README navigation and source setup instructions.
+- Automated Windows builds and ZIP packaging using the shared application version.
+
+
 ## [V1.11.1] - 2026-11-02
 
 ### Fixed

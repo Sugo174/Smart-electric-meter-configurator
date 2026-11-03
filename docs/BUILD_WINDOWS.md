@@ -6,8 +6,8 @@ The project provides two separate 64-bit Windows builds:
 
 | Target system | Python | Dependencies | Build recipe |
 |---|---|---|---|
-| Windows 10/11 | 3.14 | `requirements.txt` | `Smart-Meter-Configurator-v1.11.1.spec` |
-| Windows 7 | 3.8.10 | `requirements-win7.txt` | `Smart-Meter-Configurator-v1.11.1-Windows-7.spec` |
+| Windows 10/11 | 3.14 | `requirements.txt` | `Smart-Meter-Configurator.spec` |
+| Windows 7 | 3.8.10 | `requirements-win7.txt` | `Smart-Meter-Configurator-Windows-7.spec` |
 
 Run all commands below in PowerShell from the repository root.
 
@@ -53,29 +53,30 @@ Check both environments before building:
 Automated tests do not replace communication checks
 with a real meter.
 
-## Build the Windows 10/11 package
+## Build and package Windows 10/11
 
 ```powershell
-.\.venv\Scripts\python.exe -m PyInstaller --clean --noconfirm --distpath dist --workpath build Smart-Meter-Configurator-v1.11.1.spec
+.\.venv\Scripts\python.exe build_release.py windows
 ```
 
-Output:
-
-```text
-dist/Smart-Meter-Configurator-v1.11.1/
-```
-
-## Build the Windows 7 package
+## Build and package Windows 7
 
 ```powershell
-.\.venv-win7\Scripts\python.exe -m PyInstaller --clean --noconfirm --distpath dist-win7 --workpath build-win7 Smart-Meter-Configurator-v1.11.1-Windows-7.spec
+.\.venv-win7\Scripts\python.exe build_release.py win7
 ```
 
-Output:
+The script reads `APP_VERSION` from `constants.py`,
+runs PyInstaller, creates a ZIP archive, and checks its integrity.
 
-```text
-dist-win7/Smart-Meter-Configurator-v1.11.1-Windows-7/
-```
+Build folders are created in `dist/` or `dist-win7/`.
+Release archives are created in `releases/`.
+
+Output names include the application version automatically.
+The Windows 7 variant also includes the `-Windows-7` suffix.
+
+Existing release archives are not overwritten.
+Before rebuilding the same version, move the previous archive
+to a backup location.
 
 ## Verify the packages
 
@@ -93,51 +94,30 @@ Running it on Windows 10/11 alone does not verify Windows 7 compatibility.
 Keep all accompanying files together. The Windows 10/11
 package requires its `_internal` directory.
 
-## Create release archives
-
-Create ZIP archives containing the complete build folders:
-
-```powershell
-New-Item -ItemType Directory -Path .\releases -Force | Out-Null
-
-Compress-Archive -LiteralPath .\dist\Smart-Meter-Configurator-v1.11.1 -DestinationPath .\releases\Smart-Meter-Configurator-v1.11.1.zip
-
-Compress-Archive -LiteralPath .\dist-win7\Smart-Meter-Configurator-v1.11.1-Windows-7 -DestinationPath .\releases\Smart-Meter-Configurator-v1.11.1-Windows-7.zip
-```
-
-If an archive with the same name already exists, move it
-to a backup location or remove it before running the command.
-
-Extract each archive to a separate test folder and verify
-that the application starts from the extracted package.
-
-Do not include local configuration files, temporary files,
-or unrelated build artifacts in public release archives.
-
 ## Prepare a new release
 
-The commands above describe version 1.11.1.
-For a future release:
-
 1. Update `APP_VERSION` in `constants.py`.
-2. Rename both `.spec` files for the new version.
-3. Update both `name` values inside each `.spec` file:
-   the executable name and the output folder name.
-4. Update the changelog, download links in both README files,
-   and the version-specific examples in this build guide.
-5. Run tests, build both packages, and verify them.
-6. Create and check both ZIP archives.
-7. Commit and push the source and documentation changes.
-8. Create a GitHub Release from the intended commit,
-   using a matching version tag such as `v1.11.1`.
-9. Attach both ZIP archives and check their names carefully.
-10. Publish a regular release and mark it as the latest release.
-11. Verify both download links and update detection
+2. Add a changelog entry describing the changes.
+3. Run tests in both Python environments.
+4. Run `build_release.py` for both Windows targets.
+5. Extract both generated ZIP archives into separate test folders.
+6. Verify application startup, icons, and communication with a meter.
+7. Check the Windows 7 package on Windows 7.
+8. Commit and push the source and documentation changes.
+9. Create a GitHub Release from the intended commit.
+   Use `v` followed by `APP_VERSION` as the tag.
+10. Attach both generated ZIP archives from `releases/`.
+11. Publish a regular release and mark it as the latest release.
+12. Verify both downloads and update detection
     from the previous application version.
 
+The build recipes have permanent filenames.
+Executable, folder, and archive names are generated from
+`APP_VERSION`; do not edit them manually for each release.
+
 Build folders, Python environments, and release ZIP archives
-must remain outside version control. The `.spec` build recipes
-must be committed.
+must remain outside version control.
+Commit the `.spec` build recipes and `build_release.py`.
 
 The application checks the latest published GitHub Release.
 It opens the release page for manual downloading;

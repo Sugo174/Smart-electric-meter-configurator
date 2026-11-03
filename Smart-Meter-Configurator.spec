@@ -1,5 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
+import runpy
+from pathlib import Path
 
+app_version = runpy.run_path(
+    str(Path(SPECPATH) / "constants.py")
+)["APP_VERSION"]
+
+build_name = f"Smart-Meter-Configurator-v{app_version}"
 
 a = Analysis(
     ['gui.py'],
@@ -21,7 +28,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Smart-Meter-Configurator-v1.11.1',
+    name=build_name,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -41,5 +48,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Smart-Meter-Configurator-v1.11.1',
+    name=build_name,
 )
