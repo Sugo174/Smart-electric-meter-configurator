@@ -1,5 +1,9 @@
 # Smart Meter Configurator
 
+<p align="center">
+  <img src="app.png" alt="Smart Meter Configurator" width="160">
+</p>
+
 [Русская версия](README.ru.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
 
 [![Python tests](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml/badge.svg)](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml)
