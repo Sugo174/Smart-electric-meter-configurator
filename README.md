@@ -1,6 +1,9 @@
 # Smart Meter Configurator
 
+[Русская версия](README.ru.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
+
 [![Python tests](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml/badge.svg)](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
  
 Desktop application for configuration, diagnostics, and commissioning of smart electricity meters.
 
@@ -13,7 +16,9 @@ Desktop application for configuration, diagnostics, and commissioning of smart e
 - [Project Structure](#project-structure)
 - [Project Goals](#project-goals)
 - [Current Status](#current-status)
+- [Documentation](#documentation)
 - [Media](#media)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Overview
@@ -41,29 +46,34 @@ for either packaged build.
 See the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest)
 for release notes and downloads.
 
+For first-launch instructions, updates, and troubleshooting,
+see [Running on Windows](docs/RUN_WINDOWS.md).
 
 ### Running from Source
 
-Requirements:
+Run the following commands in PowerShell from the repository root.
 
-- Windows
-- Python 3.10+
-- RS-485 adapter
-- Supported smart electricity meter
+For Windows 10/11, install 64-bit Python 3.14:
 
-Clone the repository and install the dependencies:
-
-```bash
-git clone https://github.com/Sugo174/Smart-electric-meter-configurator.git
-cd Smart-electric-meter-configurator
-pip install -r requirements.txt
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe gui.py
 ```
 
-Start the application:
+For Windows 7, use 64-bit Python 3.8.10 and separate dependencies:
 
-```bash
-python gui.py
+```powershell
+py -3.8 -m venv .venv-win7
+.\.venv-win7\Scripts\python.exe -m pip install -r requirements-win7.txt
+.\.venv-win7\Scripts\python.exe gui.py
 ```
+
+Environment activation is not required.
+Keep the Windows 7 environment separate from the main environment.
+
+For package creation and release checks, see
+[Building Windows packages](docs/BUILD_WINDOWS.md).
 
  
 ## Key Features
@@ -154,7 +164,6 @@ The application checks the latest published GitHub Release after startup.
 - Voltage monitoring
 - Current monitoring
 - Power monitoring
-- Frequency monitoring
 - Energy consumption monitoring
  
 ### Protected Operations
@@ -241,6 +250,13 @@ Reduce commissioning time and eliminate manual communication setup by introducin
  
 ✔ Ready for Field Use
 
+## Documentation
+
+- [Running on Windows and troubleshooting](docs/RUN_WINDOWS.md).
+- [Building Windows 7 and Windows 10/11 packages](docs/BUILD_WINDOWS.md).
+- [Changelog](CHANGELOG.md).
+
+
 ## Media
 
 ### Screenshots
@@ -264,6 +280,15 @@ Reduce commissioning time and eliminate manual communication setup by introducin
 #### Device Settings
 
 ![Smart meter configuration settings](assets/screenshots/Device_Settings.PNG)
+
+## Contributing
+
+For development setup, validation, and issue reporting,
+see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+For vulnerability reporting and handling confidential information,
+see [SECURITY.md](SECURITY.md).
+
 
 ## License
 
