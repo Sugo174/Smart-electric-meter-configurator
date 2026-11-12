@@ -72,7 +72,11 @@ Build folders are created in `dist/` or `dist-win7/`.
 Release archives are created in `releases/`.
 
 Output names include the application version automatically.
-The Windows 7 variant also includes the `-Windows-7` suffix.
+The Windows 7 x64 variant uses the `-Windows-7` suffix.
+For Windows 7 x86, create a separate virtual environment with 32-bit Python
+3.8.10, install `requirements-win7.txt` there, then run
+`build_release.py win7-x86` with that interpreter. The ZIP uses the
+`-Windows-7-x86` suffix.
 
 Existing release archives are not overwritten.
 Before rebuilding the same version, move the previous archive
@@ -99,7 +103,7 @@ package requires its `_internal` directory.
 1. Update `APP_VERSION` in `constants.py`.
 2. Add a changelog entry describing the changes.
 3. Run tests in both Python environments.
-4. Run `build_release.py` for both Windows targets.
+4. Run `build_release.py` for all three Windows targets.
 5. Extract both generated ZIP archives into separate test folders.
 6. Verify application startup, icons, and communication with a meter.
 7. Check the Windows 7 package on Windows 7.

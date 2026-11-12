@@ -69,6 +69,14 @@ from device import (
     decode_meter_serial_number,
 )
 
+from measurement_stats import MeasurementRun
+from power_supply import (
+    read_power_supply,
+    set_power_supply_output,
+    set_power_supply_voltage,
+    voltage_to_register,
+)
+
 # Словарь для хранения ссылок на иконки (чтобы не удалялись сборщиком мусора)
 ICONS = {}
 
@@ -87,6 +95,21 @@ TRANSLATIONS = {
         "app_title": f"Конфигуратор СКВТ ЭМИС-ЭЛЕКТРА 977 V{APP_VERSION}",
         "menu_settings": "☰ Настройки программы",
         "menu_help": "Справка",
+        "menu_power_supply": "Источник питания",
+        "power_supply_read": "Прочитать",
+        "power_supply_reading": "Обмен с источником…",
+        "power_supply_refresh": "Обновить порты",
+        "power_supply_setpoint": "U, В",
+        "power_supply_apply": "Задать",
+        "power_supply_enable": "Включить выход",
+        "power_supply_disable": "Выключить выход",
+        "power_supply_on": "Включён",
+        "power_supply_off": "Выключен",
+        "power_supply_status": "Напряжение: {voltage:.1f} В · Выход: {output}",
+        "power_supply_read_first": "Сначала прочитайте выбранный источник.",
+        "power_supply_invalid_voltage": "Введите напряжение от 0 до 999,9 В с шагом 0,1 В.",
+        "power_supply_confirm_enable": "Включить выход источника на порту {port}?",
+        "power_supply_busy": "Порт {port} занят другой операцией.",
         "menu_exit": "Выход",
         "menu_language": "Язык",
         "lang_ru": "Русский",
@@ -125,9 +148,10 @@ TRANSLATIONS = {
         "btn_writing": "Применение...",
 
         # Вкладка "Дата и время"
-        "lbl_current_time": "Текущее время устройства (ГГ-ММ-ДД чч:мм:сс):",
-        "btn_time_settings": "Настроить",
-        "btn_sync_pc": "Синхронизация с ПК🔄",
+        "lbl_current_time": "Время и дата счётчика:",
+        "lbl_meter_time_unavailable": "Нет связи",
+        "btn_time_settings": "Настроить вручную",
+        "btn_sync_pc": "Синхронизировать с ПК",
         "dlg_time_writing": "Идет запись времени...\nПожалуйста, подождите.",
 
         # Вкладка "Текущие значения" - одноканальный
@@ -142,6 +166,13 @@ TRANSLATIONS = {
         "lbl_nominal": "Номинальные параметры:",
         "lbl_nom_voltage": "Номинальное напряжение:",
         "lbl_nom_current": "Номинальный ток:",
+        "measurement_label": "Измерение текущих параметров:",
+        "measurement_start": "Измерить",
+        "measurement_stop": "Остановить",
+        "measurement_protocol": "Заполнить протокол",
+        "measurement_progress": "Подготовка к усреднению · {count} из {minimum} замеров",
+        "measurement_running": "Усреднение идёт · замеров: {count}",
+
 
         # Вкладка "Текущие значения" - двухканальный
         "lbl_channel_a": "Канал A",
@@ -252,45 +283,6 @@ TRANSLATIONS = {
         "dlg_password_prompt": "Введите пароль для сброса энергии:",
         "dlg_wrong_password": "Неверный пароль.",
         "dlg_help": "Справка о программе",
-        "dlg_help_text":
-            "Конфигуратор счётчика постоянного тока "
-            "СКВТ ЭМИС-ЭЛЕКТРА 977\n\n"
-            "*** Подключение счётчика ***\n\n"
-            "1. Подключите устройство через USB–RS-485 адаптер.\n"
-            "2. Подайте питание на счётчик.\n"
-            "3. Нажмите «Обновить», чтобы увидеть доступные COM-порты.\n"
-            "4. Выберите нужный COM-порт.\n"
-            "5. Нажмите «Подключиться». Программа автоматически определит "
-            "адрес, скорость и чётность соединения.\n"
-            "6. Чтобы изменить параметры Modbus, выберите адрес, скорость "
-            "и/или чётность, затем нажмите «Записать».\n\n"
-            "ВАЖНО: для стабильной работы рекомендуется использовать "
-            "чётность Modbus RTU EVEN.\n\n"
-            "*** Работа с программой после подключения ***\n\n"
-            "1. На вкладке «Соединение» можно изменить тип счётчика.\n"
-            "2. На вкладке «Информация о приборе» можно просматривать "
-            "и изменять информационные поля. Серийный номер — 12 цифр.\n"
-            "   «Автозаполнение»: отсканируйте или введите номер и нажмите "
-            "Enter либо «Применить». Программа синхронизирует часы с ПК "
-            "и заполнит поля; в дату записывается дата ввода номера. "
-            "При ошибке часть полей уже может быть записана.\n"
-            "   Для номеров серии 977 показывается расшифровка каналов, "
-            "питания, даты выпуска и номера в серии.\n"
-            "3. На вкладке «Дата и время» доступны ручная настройка "
-            "даты и времени, а также синхронизация с ПК.\n"
-            "4. На вкладке «Текущие значения» доступны напряжение, ток, "
-            "мощность и показания энергии в соответствии с типом счётчика.\n"
-            "5. На вкладке «Настройки прибора» можно изменять пороги, "
-            "формат энергии и постоянную импульсного выхода. Для "
-            "двухканального счётчика доступны каналы A и B. Выбор "
-            "значения в списке сразу запускает его запись в прибор.\n"
-            "6. В этом же разделе доступен редактор тарифного расписания. "
-            "Он читает, проверяет и записывает периоды тарифов 1–4.\n"
-            "7. В меню «Настройки программы» доступна ручная проверка "
-            "обновлений. При запуске программа также сама предложит "
-            "скачать новую опубликованную версию.\n\n"
-            "Не отключайте питание счётчика или RS-485 адаптер во время "
-            "записи параметров.\n",
         "dlg_change_type_warning": "Изменение типа счётчика требует переподключения.\nСейчас будет выполнено отключение.",
         "dlg_disconnected": "Устройство отключено. Проверьте питание и подключение.",
 
@@ -343,6 +335,21 @@ TRANSLATIONS = {
         "app_title": f"Configurator SKVT EMIS-ELECTRA 977 V{APP_VERSION}",
         "menu_settings": "☰ Program Settings",
         "menu_help": "Help",
+        "menu_power_supply": "Power Supply",
+        "power_supply_read": "Read",
+        "power_supply_reading": "Communicating with power supply…",
+        "power_supply_refresh": "Refresh ports",
+        "power_supply_setpoint": "U, V",
+        "power_supply_apply": "Apply",
+        "power_supply_enable": "Enable output",
+        "power_supply_disable": "Disable output",
+        "power_supply_on": "On",
+        "power_supply_off": "Off",
+        "power_supply_status": "Voltage: {voltage:.1f} V · Output: {output}",
+        "power_supply_read_first": "Read the selected power supply first.",
+        "power_supply_invalid_voltage": "Enter a voltage from 0 to 999.9 V in 0.1 V increments.",
+        "power_supply_confirm_enable": "Enable power supply output on {port}?",
+        "power_supply_busy": "Port {port} is busy with another operation.",
         "menu_exit": "Exit",
         "menu_language": "Language",
         "lang_ru": "Русский",
@@ -381,9 +388,10 @@ TRANSLATIONS = {
         "dlg_poll_stop_pending": "Polling is still stopping. Please wait a moment and disconnect again.",
 
         # Date & Time tab
-        "lbl_current_time": "Device Time (YY-MM-DD hh:mm:ss):",
-        "btn_time_settings": "Settings",
-        "btn_sync_pc": "Sync with PC🔄",
+        "lbl_current_time": "Meter time and date:",
+        "lbl_meter_time_unavailable": "No connection",
+        "btn_time_settings": "Set manually",
+        "btn_sync_pc": "Sync with PC",
         "dlg_time_writing": "Writing time...\nPlease wait.",
 
         # Current Values - single channel
@@ -398,6 +406,12 @@ TRANSLATIONS = {
         "lbl_nominal": "Nominal Parameters:",
         "lbl_nom_voltage": "Nominal Voltage:",
         "lbl_nom_current": "Nominal Current:",
+        "measurement_label": "Measure live readings:",
+        "measurement_start": "Measure",
+        "measurement_stop": "Stop",
+        "measurement_protocol": "Fill in protocol",
+        "measurement_progress": "Preparing to average · {count} of {minimum} readings",
+        "measurement_running": "Averaging · readings: {count}",
 
         # Current Values - dual channel
         "lbl_channel_a": "Channel A",
@@ -508,45 +522,6 @@ TRANSLATIONS = {
         "dlg_password_prompt": "Enter password to clear energy:",
         "dlg_wrong_password": "Wrong password.",
         "dlg_help": "Program Help",
-        "dlg_help_text":
-            "SKVT EMIS-ELECTRA 977 DC Energy Meter Configurator\n\n"
-            "*** Meter Connection ***\n\n"
-            "1. Connect the device through a USB–RS-485 adapter.\n"
-            "2. Power on the meter.\n"
-            "3. Click 'Refresh' to view available COM ports.\n"
-            "4. Select the required COM port.\n"
-            "5. Click 'Connect'. The application automatically detects "
-            "the device address, baud rate, and parity.\n"
-            "6. To change Modbus settings, select the address, baud rate "
-            "and/or parity, then click 'Write'.\n\n"
-            "IMPORTANT: EVEN Modbus RTU parity is recommended for stable "
-            "operation.\n\n"
-            "*** Using the Application After Connection ***\n\n"
-            "1. The 'Connection' tab lets you change the meter type.\n"
-            "2. The 'Device Information' tab lets you view and edit "
-            "information fields. The serial number must contain 12 digits.\n"
-            "   'Auto-fill': scan or enter the number and press Enter or "
-            "'Apply'. The application synchronizes the meter clock with "
-            "the PC and fills in the fields. The date is the date the "
-            "number was entered. If an error occurs, some fields may "
-            "already have been written.\n"
-            "   Valid 977-series numbers are decoded to show the channels, "
-            "power supply, manufacturing date, and number in series.\n"
-            "3. The 'Date & Time' tab supports manual date and time "
-            "configuration and synchronization with the PC.\n"
-            "4. The 'Current Values' tab displays voltage, current, power, "
-            "and energy values according to the selected meter type.\n"
-            "5. The 'Device Settings' tab lets you change thresholds, "
-            "energy format, and the pulse output constant. Channels A and B "
-            "are available for dual-channel meters. Selecting a value "
-            "immediately writes it to the meter.\n"
-            "6. The same tab includes the tariff schedule editor. It reads, "
-            "validates, and writes tariff periods 1–4.\n"
-            "7. The 'Program Settings' menu provides a manual update check. "
-            "On startup, the application also offers to download a newer "
-            "published version when one is available.\n\n"
-            "Do not disconnect meter power or the RS-485 adapter while "
-            "parameters are being written.\n",
         "dlg_disconnected": "Device disconnected. Check power and connection.",
 
         # Settings change dialogs
@@ -598,6 +573,21 @@ TRANSLATIONS = {
         "app_title": f"配置器 SKVT EMIS-ELECTRA 977 V{APP_VERSION}",
         "menu_settings": "☰ 程序设置",
         "menu_help": "帮助",
+        "menu_power_supply": "电源",
+        "power_supply_read": "读取",
+        "power_supply_reading": "正在与电源通信…",
+        "power_supply_refresh": "刷新端口",
+        "power_supply_setpoint": "U，V",
+        "power_supply_apply": "设置",
+        "power_supply_enable": "开启输出",
+        "power_supply_disable": "关闭输出",
+        "power_supply_on": "开启",
+        "power_supply_off": "关闭",
+        "power_supply_status": "电压：{voltage:.1f} V · 输出：{output}",
+        "power_supply_read_first": "请先读取所选电源。",
+        "power_supply_invalid_voltage": "请输入 0 至 999.9 V 的电压，步进为 0.1 V。",
+        "power_supply_confirm_enable": "开启 {port} 上的电源输出？",
+        "power_supply_busy": "端口 {port} 正忙。",
         "menu_exit": "退出",
         "menu_language": "语言",
         "lang_ru": "Русский",
@@ -636,9 +626,10 @@ TRANSLATIONS = {
         "dlg_poll_stop_pending": "正在停止轮询。请稍候，然后再次断开连接。",
 
         # 日期时间选项卡
-        "lbl_current_time": "设备时间 (年-月-日 时:分:秒):",
-        "btn_time_settings": "设置",
-        "btn_sync_pc": "与电脑同步🔄",
+        "lbl_current_time": "电表时间和日期：",
+        "lbl_meter_time_unavailable": "未连接",
+        "btn_time_settings": "手动设置",
+        "btn_sync_pc": "与电脑同步",
         "dlg_time_writing": "正在写入时间...\n请稍候。",
 
         # 当前值 - 单通道
@@ -653,6 +644,12 @@ TRANSLATIONS = {
         "lbl_nominal": "额定参数:",
         "lbl_nom_voltage": "额定电压:",
         "lbl_nom_current": "额定电流:",
+        "measurement_label": "当前参数测量：",
+        "measurement_start": "测量",
+        "measurement_stop": "停止",
+        "measurement_protocol": "填写检定记录",
+        "measurement_progress": "准备计算平均值 · 已采集 {count}/{minimum} 个读数",
+        "measurement_running": "正在计算平均值 · 读数：{count}",
 
         # 当前值 - 双通道
         "lbl_channel_a": "通道A",
@@ -759,37 +756,6 @@ TRANSLATIONS = {
         "dlg_password_prompt": "输入清除电能的密码:",
         "dlg_wrong_password": "密码错误。",
         "dlg_help": "程序帮助",
-        "dlg_help_text":
-            "SKVT EMIS-ELECTRA 977 直流电能表配置器\n\n"
-            "*** 电表连接 ***\n\n"
-            "1. 通过 USB–RS-485 适配器连接设备。\n"
-            "2. 给电表上电。\n"
-            "3. 点击“刷新”查看可用的 COM 端口。\n"
-            "4. 选择所需的 COM 端口。\n"
-            "5. 点击“连接”。程序会自动识别设备地址、波特率和校验位。\n"
-            "6. 如需更改 Modbus 参数，请选择地址、波特率和/或校验位，"
-            "然后点击“写入”。\n\n"
-            "重要：为确保稳定运行，建议使用 EVEN（偶）Modbus RTU 校验。\n\n"
-            "*** 连接后的软件使用说明 ***\n\n"
-            "1. “连接”选项卡可用于更改电表类型。\n"
-            "2. “设备信息”选项卡可查看和修改信息字段。"
-            "序列号必须为12位数字。\n"
-            "   “自动填写”：扫描或输入序列号，然后按 Enter 或“应用”。"
-            "程序将电表时钟与电脑同步并填写所有字段；日期为输入序列号"
-            "的日期。发生错误时，部分字段可能已经写入。\n"
-            "   符合格式的977系列序列号可解析出通道数、供电方式、"
-               "生产日期和系列编号。\n"
-            "3. “日期和时间”选项卡支持手动设置日期和时间，"
-            "以及与电脑同步。\n"
-            "4. “当前值”选项卡根据所选电表类型显示电压、电流、"
-            "功率和电能数据。\n"
-            "5. “设备设置”选项卡可修改阈值、电能显示格式和脉冲输出常数。"
-            "双通道电表可分别设置通道 A 和 B。选择数值后会立即写入电表。\n"
-            "6. 同一选项卡还提供费率时段编辑器，可读取、验证并写入 "
-            "1–4 号费率时段。\n"
-            "7. “程序设置”菜单提供手动检查更新功能。启动时，如有新的"
-            "已发布版本，程序也会自动提示下载。\n\n"
-            "写入参数时，请勿断开电表电源或 RS-485 适配器。\n",
         "dlg_change_type_warning": "更改电表类型需要重新连接。\n正在断开连接。",
         "dlg_disconnected": "设备已断开。请检查电源和连接。",
 
@@ -837,10 +803,180 @@ TRANSLATIONS = {
     }
 }
 
+
 # Вспомогательная функция для получения перевода
 def tr(key):
     """Возвращает перевод для текущего языка."""
     return TRANSLATIONS.get(current_language, TRANSLATIONS["ru"]).get(key, key)
+
+
+def toggle_power_supply_panel():
+    global power_supply_visible
+
+    power_supply_visible = not power_supply_visible
+    create_parameters_tab()
+    if power_supply_visible:
+        root.update_idletasks()
+        height = min(root.winfo_reqheight(), int(root.winfo_screenheight() * 0.9))
+        if height > root.winfo_height():
+            root.geometry(f"{root.winfo_width()}x{height}")
+
+
+def _create_power_supply_panel(parent):
+    frame = ttk.LabelFrame(parent, text=tr("menu_power_supply"), padding=(10, 6))
+    frame.pack(pady=(8, 6))
+
+    ttk.Label(frame, text="COM").grid(row=0, column=0, padx=(0, 6))
+    port_combo = ttk.Combobox(frame, state="readonly", width=10)
+    port_combo.grid(row=0, column=1, sticky="w")
+    ttk.Label(frame, text=tr("power_supply_setpoint")).grid(
+        row=1, column=0, sticky="w", pady=(5, 0),
+    )
+    voltage_entry = ttk.Entry(frame, width=12)
+    voltage_entry.grid(row=1, column=1, sticky="w", pady=(5, 0))
+    status = ttk.Label(frame, wraplength=430)
+    status.grid(row=2, column=0, columnspan=4, sticky="w", pady=(5, 0))
+
+    verified_port = None
+    output_raw = None
+
+    def can_write():
+        return verified_port is not None and verified_port == port_combo.get()
+
+    def update_controls():
+        available = bool(port_combo.get())
+        write_state = "normal" if can_write() else "disabled"
+        port_combo.config(state="readonly")
+        read_button.config(state="normal" if available else "disabled")
+        refresh_button.config(state="normal")
+        voltage_entry.config(state=write_state)
+        voltage_button.config(state=write_state)
+        output_button.config(
+            text=tr("power_supply_disable" if output_raw == 1 else "power_supply_enable"),
+            state=write_state if output_raw in (0, 1) else "disabled",
+        )
+
+    def reset_selection(event=None):
+        nonlocal verified_port, output_raw
+        verified_port = None
+        output_raw = None
+        status.config(text=tr("power_supply_read_first"))
+        update_controls()
+        voltage_entry.config(state="normal")
+        voltage_entry.delete(0, "end")
+        voltage_entry.config(state="disabled")
+
+    def refresh_list():
+        meter_port = conn["port"].upper() if conn else None
+        ports = [port for port in list_com_ports() if port.upper() != meter_port]
+        previous = port_combo.get()
+        port_combo.config(values=ports)
+        port_combo.set(previous if previous in ports else (ports[0] if ports else ""))
+        reset_selection()
+
+    def start_request(operation, *args):
+        global power_supply_pending_port
+        port = port_combo.get()
+        if not port:
+            return
+        if (
+            power_supply_pending_port is not None
+            or search_window_ref is not None
+            or (conn and port.upper() == conn["port"].upper())
+        ):
+            status.config(text=tr("power_supply_busy").format(port=port))
+            return
+
+        power_supply_pending_port = port
+        for control in (
+            port_combo, read_button, refresh_button,
+            voltage_entry, voltage_button, output_button,
+        ):
+            control.config(state="disabled")
+        status.config(text=tr("power_supply_reading"))
+        results = queue.Queue()
+
+        def worker():
+            try:
+                results.put((operation(port, 1, *args), None))
+            except Exception as error:
+                results.put((None, str(error)))
+
+        def finish():
+            global power_supply_pending_port
+            nonlocal verified_port, output_raw
+            try:
+                data, error = results.get_nowait()
+            except queue.Empty:
+                root.after(100, finish)
+                return
+
+            power_supply_pending_port = None
+            if not frame.winfo_exists():
+                return
+            if error is not None:
+                reset_selection()
+                status.config(text=f"{tr('dlg_error')}: {error}")
+                return
+
+            verified_port = port
+            output_raw = data["output_raw"]
+            update_controls()
+            if operation is read_power_supply:
+                voltage_entry.delete(0, "end")
+                voltage_entry.insert(0, f"{data['voltage_v']:.1f}")
+            output = {
+                0: tr("power_supply_off"),
+                1: tr("power_supply_on"),
+            }.get(output_raw, str(output_raw))
+            status.config(text=tr("power_supply_status").format(
+                voltage=data["voltage_v"], output=output,
+            ))
+
+        threading.Thread(target=worker, daemon=True).start()
+        root.after(100, finish)
+
+    def apply_voltage():
+        if not can_write():
+            return
+        voltage = voltage_entry.get()
+        try:
+            voltage_to_register(voltage)
+        except ValueError:
+            status.config(text=tr("power_supply_invalid_voltage"))
+            return
+        start_request(set_power_supply_voltage, voltage)
+
+    def toggle_output():
+        if not can_write() or output_raw not in (0, 1):
+            return
+        enable = output_raw == 0
+        if enable and not messagebox.askyesno(
+            tr("menu_power_supply"),
+            tr("power_supply_confirm_enable").format(port=port_combo.get()),
+            parent=root,
+        ):
+            return
+        start_request(set_power_supply_output, enable)
+
+    read_button = ttk.Button(
+        frame, text=tr("power_supply_read"),
+        command=lambda: start_request(read_power_supply),
+    )
+    read_button.grid(row=0, column=2, padx=(6, 0), sticky="ew")
+    refresh_button = ttk.Button(
+        frame, text=tr("power_supply_refresh"), command=refresh_list,
+    )
+    refresh_button.grid(row=0, column=3, padx=(6, 0), sticky="ew")
+    voltage_button = ttk.Button(
+        frame, text=tr("power_supply_apply"), command=apply_voltage,
+    )
+    voltage_button.grid(row=1, column=2, padx=(6, 0), pady=(5, 0), sticky="ew")
+    output_button = ttk.Button(frame, command=toggle_output)
+    output_button.grid(row=1, column=3, padx=(6, 0), pady=(5, 0), sticky="ew")
+    port_combo.bind("<<ComboboxSelected>>", reset_selection)
+    refresh_list()
+
 
 def set_language(lang_code):
     global current_language
@@ -899,6 +1035,13 @@ def set_language(lang_code):
     settings_m.add_separator()
 
     settings_m.add_command(
+        label=tr("menu_power_supply"),
+        command=toggle_power_supply_panel,
+        image=ICONS.get("power_supply"),
+        compound="left",
+    )
+
+    settings_m.add_command(
         label=tr("menu_help"),
         command=show_help,
         image=ICONS.get("help"),
@@ -939,6 +1082,8 @@ def set_language(lang_code):
     try:
         lbl_modbus_title.config(text=tr("lbl_modbus_params"))
         lbl_time_title.config(text=tr("lbl_current_time"))
+        if not conn:
+            _show_meter_time("")
         lbl_com_port.config(text=tr("lbl_com_port"))
         lbl_status.config(text=tr("lbl_status"))
         lbl_address.config(text=tr("lbl_address"))
@@ -961,6 +1106,7 @@ def set_language(lang_code):
 
     # Авто-ресайз окна под новый язык
     resize_window_to_content()
+
 
 def _update_widget_text(widget):
     """Рекурсивно обновляет текст у поддерживаемых виджетов."""
@@ -1057,6 +1203,15 @@ time_update_queue = queue.Queue()
 param_update_queue = queue.Queue()
 settings_update_queue = queue.Queue()
 info_update_queue = queue.Queue()
+power_supply_visible = False
+power_supply_pending_port = None
+
+measurement_run = None
+measurement_started_at = None
+latest_parameters = None
+measurement_button = None
+measurement_protocol_button = None
+measurement_status = None
 
 # Глобальный флаг: выбрал ли пользователь тип счётчика
 user_has_chosen_device_type = False
@@ -1095,6 +1250,7 @@ update_check_in_progress = False
 
 # Путь к файлу настроек
 CONFIG_FILE = "config.json"
+verification_defaults = {}
 # Словарь для хранения картинок счётчиков
 DEVICE_IMAGES = {}
 
@@ -1112,6 +1268,7 @@ def load_icons():
         "language": resource_path("icons/language.png"),
         "update": resource_path("icons/update.png"),
         "help": resource_path("icons/help.png"),
+        "power_supply": resource_path("icons/power_supply.png"),
         "exit": resource_path("icons/exit.png"),
         "flag_ru": resource_path("icons/flag_ru.png"),
         "flag_en": resource_path("icons/flag_en.png"),
@@ -1123,6 +1280,7 @@ def load_icons():
                 ICONS[name] = tk.PhotoImage(file=path)
         except Exception:
             pass
+
 
 def load_device_images():
     paths = {
@@ -1162,6 +1320,11 @@ def load_config():
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 config = json.load(f)
+                defaults = config.get("verification_defaults")
+                if isinstance(defaults, dict):
+                    verification_defaults.update({
+                        key: value for key, value in defaults.items() if isinstance(value, str)
+                    })
                 saved_lang = config.get("language", "ru")
                 if saved_lang in TRANSLATIONS:
                     current_language = saved_lang
@@ -1173,7 +1336,10 @@ def load_config():
 def save_config():
     """Сохраняет текущие настройки в файл config.json"""
     try:
-        config = {"language": current_language}
+        config = {
+            "language": current_language,
+            "verification_defaults": verification_defaults,
+        }
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
     except Exception as e:
@@ -1287,12 +1453,13 @@ def _time_reader_worker():
 
             # 2. Параметры (каждую секунду)
             if time_reader_active and now >= next_param_read:
+                reading_started_at = time.monotonic()
                 if device_type == "single":
                     success, params = read_device_parameters(conn["port"], conn["slave"], conn["baud"], conn["parity"])
                 else:
                     success, params = read_device_parameters_dual(conn["port"], conn["slave"], conn["baud"], conn["parity"])
                 if success:
-                    param_update_queue.put(params)
+                    param_update_queue.put((reading_started_at, params))
                 else:
                     raise Exception("Потеряна связь при чтении параметров")
                 next_param_read = now + 1
@@ -1347,6 +1514,18 @@ def _time_reader_worker():
         time.sleep(0.1)
 
 
+def _clock_date_text(iso_date):
+    if current_language == "ru":
+        return ".".join(reversed(iso_date.split("-")))
+    return iso_date
+
+
+def _show_meter_time(value):
+    date, _, clock = value.partition(" ")
+    text = f"{clock}  {_clock_date_text(date)}" if clock else tr("lbl_meter_time_unavailable")
+    current_time_value.config(text=text)
+
+
 def _check_time_queue():
     """Обрабатывает очередь обновления времени."""
     global disconnect_flag
@@ -1358,17 +1537,756 @@ def _check_time_queue():
     try:
         while True:
             time_str = time_update_queue.get_nowait()
-            current_time_value.config(text=time_str)
+            _show_meter_time(time_str)
     except queue.Empty:
         pass
     root.after(100, _check_time_queue)
 
 
+def _can_start_measurement():
+    return bool(
+        conn and is_device_ready and time_reader_active
+        and device_type in ("single", "dual")
+    )
+
+
+def _start_measurement():
+    """Начинает новую серию для всех величин подключённого прибора."""
+    global measurement_run, measurement_started_at
+
+    if not _can_start_measurement():
+        return
+
+    from collections import deque
+
+    measurement_run = MeasurementRun(device_type)
+    measurement_run.verification_samples = {
+        key: deque(maxlen=MeasurementRun.MIN_SAMPLES)
+        for key in measurement_run.series
+    }
+    measurement_started_at = time.monotonic()
+
+
+def _stop_measurement():
+    """Завершает серию и возвращает текущие показания."""
+    global measurement_run, measurement_started_at
+
+    was_measuring = measurement_run is not None
+    measurement_started_at = None
+    measurement_run = None
+
+    if was_measuring and conn and latest_parameters is not None:
+        _refresh_electrical_values(latest_parameters)
+
+
+def _toggle_measurement():
+    if measurement_started_at is None:
+        _start_measurement()
+    else:
+        _stop_measurement()
+
+    _refresh_measurement_controls()
+
+PROTOCOL_MEASUREMENT_ROWS = {
+    "voltage": (
+        ("0,05 Uном", 6),
+        ("0,25 Uном", 7),
+        ("0,5 Uном", 8),
+        ("0,75 Uном", 9),
+        ("Uном", 10),
+    ),
+    "current": (
+        ("0,1 Iном", 16),
+        ("0,3 Iном", 17),
+        ("0,5 Iном", 18),
+        ("Iном", 19),
+    ),
+    "power": (
+        ("0,1 Iном", 25),
+        ("0,3 Iном", 26),
+        ("0,5 Iном", 27),
+        ("Iном", 28),
+    ),
+}
+
+
+VERIFICATION_CHECKS = (
+    ("visual_check", "Внешний осмотр"),
+    ("functional_check", "Опробование"),
+    ("dielectric_check", "Электрическая прочность изоляции"),
+    ("insulation_check", "Электрическое сопротивление изоляции"),
+)
+
+
+def _verification_limits(accuracy_class):
+    limit = {"0,5": 0.5, "1": 1.0}[accuracy_class]
+    return (2 * limit,) * 2 + (limit,) * 15
+
+
+def _create_verification_workbook(template_path, output_path, header, nominals, pulse_constant):
+    from pathlib import Path
+
+    from openpyxl import load_workbook
+
+    template_path = Path(template_path)
+    output_path = Path(output_path)
+    if output_path.resolve() == template_path.resolve():
+        raise ValueError("Выберите другое имя для протокола.")
+
+    workbook = load_workbook(template_path)
+    try:
+        summary = workbook["Лист1"]
+        readings = workbook["Лист2"]
+
+        single = "ch2" not in nominals
+        results_row = 29 if single else 28
+        header_cells = {
+            "F2": header["protocol_number"],
+            "M2": header["verification_date"],
+            "E6": header["meter_variant"],
+            "AA6": header["production_year"],
+            "E7": header["accuracy_class"],
+            "O7": pulse_constant,
+            "O8": nominals["ch1"][1],
+            "O9": nominals["ch1"][0],
+            "AA11": header["temperature"],
+            "AA12": header["humidity"],
+            "AA13": header["pressure"],
+            f"B{results_row}": header["serial_number"],
+            f"G{results_row}": header["firmware_version"],
+            ("F40" if single else "F39"): header["verifier"],
+        }
+        for column, (key, _) in zip("CDEF", VERIFICATION_CHECKS):
+            header_cells[f"{column}{results_row}"] = header[key]
+        for address, value in header_cells.items():
+            summary[address] = value
+            if isinstance(value, str):
+                summary[address].data_type = "s"
+
+        readings["J2"] = pulse_constant
+
+        for channel, (nominal_voltage, nominal_current) in nominals.items():
+            first_column = 9 if channel == "ch1" else 26
+            points = [
+                f"{nominal_voltage * factor:g} В"
+                for factor in (0.05, 0.25, 0.5, 0.75, 1.0)
+            ]
+            points.extend(
+                f"{nominal_current * factor:g} А"
+                for _ in range(3)
+                for factor in (0.1, 0.3, 0.5, 1.0)
+            )
+
+            for offset, (label, limit) in enumerate(
+                zip(points, _verification_limits(header["accuracy_class"]))
+            ):
+                column = first_column + offset
+                summary.cell(row=results_row - 4, column=column, value=label)
+                cell = summary.cell(row=results_row - 1, column=column, value=limit)
+                cell.number_format = '"± "0.0' 
+
+            readings["B19" if channel == "ch1" else "E19"] = nominal_current
+
+        # Excel does not calculate column widths when openpyxl saves a workbook.
+        summary.column_dimensions.group("I", "Y", hidden=False)
+        summary.column_dimensions["I"].width = 8
+        if not single:
+            summary.column_dimensions.group("Z", "AP", hidden=False)
+            summary.column_dimensions["Z"].width = 8
+
+        for address in ("AA6", "O7", "O8", "O9"):
+            summary[address].number_format = "General"
+
+        workbook.save(output_path)
+    finally:
+        workbook.close()
+
+
+def _save_verification_step(path, channel, stage, index, reference, readings, confirm, period=None, final_channels=()):
+    import os
+    from pathlib import Path
+    from tempfile import NamedTemporaryFile
+
+    from openpyxl import load_workbook
+
+    reference_col = {"ch1": "B", "ch2": "E"}[channel]
+    measured_col = {"ch1": "C", "ch2": "F"}[channel]
+
+    if stage == "voltage":
+        label, row = PROTOCOL_MEASUREMENT_ROWS["voltage"][index]
+        values = {
+            f"{reference_col}{row}": reference,
+            f"{measured_col}{row}": readings["voltage"],
+        }
+        expected_rows = {row: label}
+    elif stage == "current":
+        label, row = PROTOCOL_MEASUREMENT_ROWS["current"][index]
+        _, power_row = PROTOCOL_MEASUREMENT_ROWS["power"][index]
+        period_row = 35 + index
+        result_col, voltage_col = ("C", "D") if channel == "ch1" else ("G", "H")
+        if period is None or period <= 0:
+            raise ValueError("Введите положительный период с частотомера.")
+        values = {
+            f"{reference_col}{row}": reference,
+            f"{measured_col}{row}": readings["current"],
+            f"{result_col}{power_row}": readings["power"],
+            f"{voltage_col}{power_row}": readings["voltage"],
+            f"{result_col}{period_row}": period,
+            f"{voltage_col}{period_row}": readings["voltage"],
+        }
+        expected_rows = {row: label, power_row: label, period_row: label}
+    else:
+        raise ValueError(f"Неизвестный этап поверки: {stage}")
+
+    path = Path(path)
+    workbook = load_workbook(path)
+    temporary_path = None
+
+    try:
+        if "Лист2" not in workbook.sheetnames:
+            raise ValueError("В протоколе отсутствует «Лист2».")
+
+        sheet = workbook["Лист2"]
+        for row, label in expected_rows.items():
+            if str(sheet[f"A{row}"].value).strip() != label:
+                raise ValueError(f"Строка {row} не совпадает с шаблоном протокола.")
+
+        for address in values:
+            if sheet[address].data_type == "f":
+                raise ValueError(f"В ячейке {address} находится формула.")
+
+        occupied = [address for address, value in values.items()
+                    if sheet[address].value is not None and sheet[address].value != value]
+        if occupied and not confirm(occupied):
+            return False
+
+        for address, value in values.items():
+            sheet[address] = value
+
+        if final_channels:
+            summary = workbook["Лист1"]
+            row = 29 if len(final_channels) == 1 else 28
+            last_col = "Y" if len(final_channels) == 1 else "AP"
+            errors = f"I{row}:{last_col}{row}"
+            limits = f"I{row - 1}:{last_col}{row - 1}"
+            summary[f"H{row}"] = (
+                f'=IF(IFERROR(AND(COUNTIF(C{row}:F{row},"P")=4,'
+                f'COUNT({errors})={17 * len(final_channels)},'
+                f'SUMPRODUCT(--(ABS({errors})>{limits}))=0),FALSE),"P","F")'
+            )
+
+        with NamedTemporaryFile(
+            dir=path.parent, suffix=".xlsx", delete=False
+        ) as temporary_file:
+            temporary_path = Path(temporary_file.name)
+
+        workbook.save(temporary_path)
+        os.replace(temporary_path, path)
+        return True
+    finally:
+        workbook.close()
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
+
+
+
+verification_window = None
+latest_verification_settings = None
+latest_verification_info = None
+
+
+def _ask_verification_header(parent, info, nominals):
+    import re
+    from datetime import date
+    from tkinter import messagebox
+
+    result = None
+    serial_number = str(info.get("serial_number") or "").strip()
+    firmware_version = str(info.get("sw_version") or "").strip()
+    release_date = str(info.get("release_date") or "").strip()
+    year_match = re.match(r"([0-9]{4})(?![0-9])", release_date)
+    serial_details = decode_meter_serial_number(serial_number)
+    if serial_details is None or serial_details["channel_code"] != str(len(nominals)):
+        messagebox.showerror(
+            "Данные протокола",
+            "Проверьте серийный номер и выбранное количество каналов.",
+            parent=parent,
+        )
+        return None
+
+    power_supply = "DC" if serial_details["power_code"] == "1" else "AC"
+    nominal_current = nominals["ch1"][1]
+
+    def format_variant(accuracy_class):
+        return (
+            f"СКВТ ЭЭ-977-{accuracy_class}-1.{nominal_current:g}."
+            f"{power_supply}.{serial_details['channel_code']}"
+        )
+
+    window = tk.Toplevel(parent)
+    window.title("Данные протокола")
+    window.transient(parent)
+    window.resizable(False, False)
+
+    content = ttk.Frame(window, padding=14)
+    content.pack()
+
+    for row, (label, value) in enumerate((
+        ("Серийный номер", serial_number),
+        ("Версия ПО", firmware_version),
+    )):
+        ttk.Label(content, text=label).grid(row=row, column=0, sticky="w")
+        ttk.Label(content, text=value or "—").grid(row=row, column=1, sticky="w")
+
+    fields = (
+        ("protocol_number", "Номер протокола", ""),
+        ("verification_date", "Дата поверки (ГГГГ-ММ-ДД)", date.today().isoformat()),
+        ("production_year", "Год выпуска", year_match.group(1) if year_match else ""),
+        ("accuracy_class", "Класс точности", ""),
+        ("verifier", "ФИО поверителя", ""),
+        ("temperature", "Температура, °C", ""),
+        ("humidity", "Влажность, %", ""),
+        ("pressure", "Давление, кПа", ""),
+    )
+    remembered = ("verifier", "temperature", "humidity", "pressure")
+    check_keys = {key for key, _ in VERIFICATION_CHECKS}
+    fields += tuple((key, label, "") for key, label in VERIFICATION_CHECKS)
+    entries = {}
+
+    for row, (key, label, default) in enumerate(fields, start=2):
+        ttk.Label(content, text=label).grid(
+            row=row, column=0, sticky="w", padx=(0, 10), pady=3
+        )
+        if key == "accuracy_class":
+            entry = ttk.Combobox(content, values=("0,5", "1"), state="readonly", width=28)
+        elif key in check_keys:
+            entry = ttk.Combobox(content, values=("P", "F"), state="readonly", width=28)
+        else:
+            entry = ttk.Entry(content, width=30)
+        entry.grid(row=row, column=1, sticky="ew", pady=3)
+        if key != "accuracy_class" and key not in check_keys:
+            entry.insert(0, verification_defaults.get(key, default) if key in remembered else default)
+        entries[key] = entry
+
+    variant_row = len(fields) + 2
+    ttk.Label(content, text="Исполнение счётчика").grid(
+        row=variant_row, column=0, sticky="w", padx=(0, 10), pady=3
+    )
+    variant_text = tk.StringVar(master=window, value=format_variant("…"))
+    ttk.Label(content, textvariable=variant_text).grid(
+        row=variant_row, column=1, sticky="w", pady=3
+    )
+    accuracy_field = entries["accuracy_class"]
+
+    def update_variant(_event):
+        accuracy = accuracy_field.get().strip().replace(".", ",")
+        variant_text.set(format_variant(accuracy or "…"))
+
+    accuracy_field.bind("<<ComboboxSelected>>", update_variant)
+
+
+    def accept():
+        nonlocal result
+
+        values = {key: entry.get().strip() for key, entry in entries.items()}
+        for key, label, _ in fields:
+            if not values[key]:
+                messagebox.showerror("Данные протокола", f"Заполните поле «{label}».", parent=window)
+                entries[key].focus_set()
+                return
+
+        try:
+            values["verification_date"] = date.fromisoformat(values["verification_date"])
+        except ValueError:
+            messagebox.showerror(
+                "Данные протокола", "Введите дату в формате ГГГГ-ММ-ДД.", parent=window
+            )
+            entries["verification_date"].focus_set()
+            return
+
+        year = values["production_year"]
+        if not re.fullmatch(r"[0-9]{4}", year) or not 1 <= int(year) <= 9999:
+            messagebox.showerror(
+                "Данные протокола", "Введите год выпуска четырьмя цифрами.", parent=window
+            )
+            entries["production_year"].focus_set()
+            return
+
+        accuracy = values["accuracy_class"].replace(".", ",")
+        if accuracy not in ("0,5", "1"):
+            messagebox.showerror(
+                "Данные протокола", "Введите класс точности, например 0,5.", parent=window
+            )
+            accuracy_field.focus_set()
+            return
+
+        values["accuracy_class"] = accuracy
+        values["meter_variant"] = format_variant(accuracy)
+
+        values["production_year"] = int(year)
+        values["serial_number"] = serial_number
+        values["firmware_version"] = firmware_version
+        verification_defaults.update({key: values[key] for key in remembered})
+        save_config()
+        result = values
+        window.destroy()
+
+    buttons = ttk.Frame(content)
+    buttons.grid(row=variant_row + 1, column=0, columnspan=2, pady=(10, 0))
+    ttk.Button(buttons, text="Далее", command=accept).pack(side="left", padx=(0, 8))
+    ttk.Button(buttons, text="Отмена", command=window.destroy).pack(side="left")
+    window.bind("<Escape>", lambda _event: window.destroy())
+
+    window.update_idletasks()
+    x = parent.winfo_rootx() + (parent.winfo_width() - window.winfo_width()) // 2
+    y = parent.winfo_rooty() + (parent.winfo_height() - window.winfo_height()) // 2
+    window.geometry(f"+{x}+{y}")
+    window.grab_set()
+    entries["protocol_number"].focus_set()
+    parent.wait_window(window)
+    return result
+
+
+def _open_verification():
+    import math
+    from pathlib import Path
+    from tkinter import filedialog, messagebox
+
+    global verification_window
+
+    if verification_window is not None and verification_window.winfo_exists():
+        verification_window.lift()
+        return
+
+    run = measurement_run
+    if run is None or not run.ready or not _can_start_measurement():
+        return
+
+    channels = run.channels
+    params = {"ch1": latest_parameters} if device_type == "single" else latest_parameters
+    settings = latest_verification_settings
+    try:
+        nominals = {
+            channel: (float(params[channel]["nom_voltage"]), float(params[channel]["nom_current"]))
+            for channel in channels
+        }
+        constants = [
+            int(settings[f"pulse_constant_{channel}"]) for channel in channels
+        ]
+        if any(not math.isfinite(value) or value <= 0 for pair in nominals.values() for value in pair):
+            raise ValueError
+        if any(value <= 0 for value in constants):
+            raise ValueError
+    except (KeyError, TypeError, ValueError):
+        messagebox.showerror("Поверка", "Дождитесь чтения номиналов и импульсной постоянной.", parent=root)
+        return
+
+    if len(set(constants)) != 1:
+        messagebox.showerror(
+            "Поверка",
+            "В шаблоне одна импульсная постоянная для обоих каналов, а у прибора они различаются.",
+            parent=root,
+        )
+        return
+
+    info = latest_verification_info
+    if not info or not info.get("serial_number") or not info.get("sw_version"):
+        messagebox.showinfo(
+            "Поверка",
+            "Дождитесь чтения серийного номера и версии ПО счётчика.",
+            parent=root,
+        )
+        return
+
+    template_name = (
+        "verification_template_single.xlsx" if len(channels) == 1 else "verification_template.xlsx"
+    )
+    template_path = Path(__file__).resolve().with_name(template_name)
+    if not template_path.is_file():
+        messagebox.showerror(
+            "Поверка", f"Не найден шаблон {template_name}.", parent=root
+        )
+        return
+
+    header = _ask_verification_header(root, info, nominals)
+    if header is None or run is not measurement_run:
+        return
+
+    serial = header["serial_number"]
+    safe_serial = "".join(char for char in serial if char in "0123456789")
+    filename = (
+        f"Протокол поверки СКВТ {safe_serial}.xlsx"
+        if safe_serial else "Протокол поверки СКВТ.xlsx"
+    )
+    path = filedialog.asksaveasfilename(
+        parent=root,
+        title="Сохранить новый протокол",
+        initialfile=filename,
+        defaultextension=".xlsx",
+        filetypes=[("Протокол Excel", "*.xlsx")],
+    )
+    if not path or run is not measurement_run:
+        return
+
+    try:
+        _create_verification_workbook(
+            template_path, path, header, nominals, constants[0]
+        )
+    except PermissionError:
+        messagebox.showerror(
+            "Поверка",
+            "Не удалось сохранить файл. Если он открыт в Excel, закройте его.",
+            parent=root,
+        )
+        return
+    except Exception as error:
+        messagebox.showerror("Ошибка создания протокола", str(error), parent=root)
+        return
+
+    def confirm(parent, addresses):
+        return messagebox.askyesno(
+            "Заменить показания?",
+            f"Заменить значения в ячейках {', '.join(addresses)}?",
+            parent=parent,
+        )
+
+    def save(parent, channel, stage, index, reference, readings, period=None, final_channels=()):
+        try:
+            return _save_verification_step(
+                path, channel, stage, index, reference, readings,
+                lambda addresses: confirm(parent, addresses), period=period, final_channels=final_channels,
+            )
+        except PermissionError:
+            messagebox.showerror("Поверка", "Закройте протокол в Excel и повторите запись.", parent=parent)
+        except Exception as error:
+            messagebox.showerror("Ошибка записи", str(error), parent=parent)
+        return False
+
+    window = tk.Toplevel(root)
+    verification_window = window
+    window.title("Заполнение протокола поверки")
+    window.transient(root)
+    window.resizable(False, False)
+    content = ttk.Frame(window, padding=14)
+    content.pack()
+    ttk.Label(content, text=Path(path).name, wraplength=380).pack(anchor="w")
+    heading = ttk.Label(content, font=("TkDefaultFont", 10, "bold"))
+    heading.pack(anchor="w", pady=(10, 4))
+    instruction = ttk.Label(content, wraplength=380, justify="left")
+    instruction.pack(anchor="w")
+
+    voltage_text = tk.StringVar(master=window)
+    period_text = tk.StringVar(master=window)
+    voltage_row = ttk.Frame(content)
+    ttk.Label(voltage_row, text="Вольтметр, В").pack(side="left", padx=(0, 8))
+    ttk.Entry(voltage_row, textvariable=voltage_text, width=14).pack(side="left")
+    period_row = ttk.Frame(content)
+    ttk.Label(period_row, text="Частотомер, с").pack(side="left", padx=(0, 8))
+    ttk.Entry(period_row, textvariable=period_text, width=14).pack(side="left")
+    status = ttk.Label(content, wraplength=380)
+    status.pack(anchor="w", pady=(8, 0))
+    buttons = ttk.Frame(content)
+    buttons.pack(pady=(10, 0))
+
+    steps = [
+        (channel, stage, index, factor)
+        for channel in channels
+        for stage, factors in (
+            ("voltage", (0.05, 0.25, 0.5, 0.75, 1.0)),
+            ("current", (0.1, 0.3, 0.5, 1.0)),
+        )
+        for index, factor in enumerate(factors)
+    ]
+    step = 0
+    timer = None
+
+    def parse(text):
+        try:
+            value = float(text.get().strip().replace(",", "."))
+        except ValueError:
+            return None
+        return value if math.isfinite(value) and value > 0 else None
+
+    def can_save():
+        if step == len(steps) or run is not measurement_run or not _can_start_measurement():
+            return False
+        _, stage, _, _ = steps[step]
+        return parse(voltage_text if stage == "voltage" else period_text) is not None
+
+    def refresh(*_args):
+        save_button.configure(state="normal" if can_save() else "disabled")
+        if step == len(steps):
+            status.configure(text="")
+        elif run is not measurement_run:
+            status.configure(text="Измерение остановлено. Откройте протокол после нового замера.")
+        else:
+            status.configure(text="")
+
+    def tick():
+        nonlocal timer
+        refresh()
+        timer = window.after(200, tick)
+
+    def show_step():
+        voltage_row.pack_forget()
+        period_row.pack_forget()
+        voltage_text.set("")
+        period_text.set("")
+        if step == len(steps):
+            heading.configure(text="Протокол заполнен")
+            instruction.configure(text="Все точки записаны в выбранный файл.")
+            save_button.pack_forget()
+            close_button.configure(text="ОК")
+            refresh()
+            return
+        channel, stage, index, factor = steps[step]
+        nominal_voltage, nominal_current = nominals[channel]
+        name = tr("lbl_channel_a" if channel == "ch1" else "lbl_channel_b")
+        prefix = f"{name}. " if len(channels) == 2 else ""
+        if stage == "voltage":
+            heading.configure(text=f"{prefix}Напряжение. {index + 1} из 5")
+            text = (
+                f"Выставьте {nominal_voltage * factor:g} В на источнике напряжения "
+                "и введите показание вольтметра."
+            )
+            voltage_row.pack(before=status, anchor="w", pady=(8, 0))
+        else:
+            heading.configure(text=f"{prefix}Ток, мощность и период. {index + 1} из 4")
+            period_row.pack(before=status, anchor="w", pady=(8, 0))
+            text = (
+                "Оставьте напряжение на Uном. Переключите ЭнИ на точку "
+                f"{nominal_current * factor:g} А и введите период с частотомера."
+            )
+        instruction.configure(text=text)
+        refresh()
+
+    def save_point():
+        nonlocal step
+        if not can_save():
+            return
+        channel, stage, index, factor = steps[step]
+        readings = {
+            quantity: sum(run.verification_samples[(channel, quantity)]) / run.MIN_SAMPLES
+            for quantity in MeasurementRun.QUANTITIES
+        }
+        reference = parse(voltage_text) if stage == "voltage" else nominals[channel][1] * factor
+        period = parse(period_text) if stage == "current" else None
+        final_channels = channels if step + 1 == len(steps) else ()
+        if not save(window, channel, stage, index, reference, readings, period, final_channels):
+            return
+        step += 1
+        if step < len(steps) and steps[step][0] != channel:
+            messagebox.showinfo("Следующий канал", "Переключите стенд на канал В.", parent=window)
+        show_step()
+
+    def close_window():
+        if timer is not None:
+            window.after_cancel(timer)
+        window.destroy()
+
+    save_button = ttk.Button(buttons, text="Записать", command=save_point)
+    save_button.pack(side="left", padx=(0, 8))
+    close_button = ttk.Button(buttons, text="Закрыть", command=close_window)
+    close_button.pack(side="left")
+    voltage_text.trace_add("write", refresh)
+    period_text.trace_add("write", refresh)
+    window.protocol("WM_DELETE_WINDOW", close_window)
+    window.bind("<Escape>", lambda _event: close_window())
+    show_step()
+    tick()
+    window.update_idletasks()
+    x = root.winfo_rootx() + (root.winfo_width() - window.winfo_width()) // 2
+    y = root.winfo_rooty() + (root.winfo_height() - window.winfo_height()) // 2
+    window.geometry(f"{x:+d}{y:+d}")
+
+
+def _refresh_measurement_controls():
+    if measurement_button is None or not measurement_button.winfo_exists():
+        return
+
+    active = measurement_started_at is not None
+
+    measurement_button.config(
+        text=tr("measurement_stop" if active else "measurement_start"),
+        state="normal" if active or _can_start_measurement() else "disabled",
+    )
+
+    run = measurement_run
+    if measurement_protocol_button is not None and measurement_protocol_button.winfo_exists():
+        can_capture = run is not None and run.ready and run.device_type == device_type
+        measurement_protocol_button.configure(
+            state="normal" if can_capture else "disabled"
+        )
+    if run is None:
+        status = ""
+    elif not run.ready:
+        status = tr("measurement_progress").format(
+            count=run.count, minimum=run.MIN_SAMPLES
+        )
+    else:
+        status = tr("measurement_running").format(count=run.count)
+
+    measurement_status.config(text=status)
+
+
+def _refresh_electrical_values(params):
+    """Обновляет напряжение, ток и мощность в существующих полях."""
+    if device_type == "single":
+        readings = {"ch1": params}
+        channel_labels = {
+            "ch1": (param_voltage_label, param_current_label, param_power_label),
+        }
+    else:
+        readings = params
+        channel_labels = {
+            "ch1": (param_v1_label, param_i1_label, param_p1_label),
+            "ch2": (param_v2_label, param_i2_label, param_p2_label),
+        }
+
+    run = measurement_run
+    show_average = run is not None and run.ready and run.device_type == device_type
+    units = ("unit_v", "unit_a", "unit_kw")
+    precision = (2, 3, 3)
+    for channel, labels in channel_labels.items():
+        for label, quantity, unit, decimals in zip(
+            labels, MeasurementRun.QUANTITIES, units, precision
+        ):
+            if label is None or not label.winfo_exists():
+                continue
+            value = (
+                run.series[(channel, quantity)].mean
+                if show_average else readings[channel][quantity]
+            )
+            label.config(text=f"{value:.{decimals}f} {tr(unit)}")
+
+
 def _check_param_queue():
     """Обрабатывает очередь обновления параметров. Гарантирует непрерывный цикл."""
+    global latest_parameters
+
     try:
         while True:
-            params = param_update_queue.get_nowait()
+            queued_reading = param_update_queue.get_nowait()
+            if queued_reading is None:
+                reading_started_at, params = None, None
+            else:
+                reading_started_at, params = queued_reading
+            if params is None:
+                latest_parameters = None
+                _stop_measurement()
+            elif not conn:
+                continue
+            elif (
+                is_device_ready
+                and measurement_run is not None
+                and measurement_run.device_type == device_type
+                and measurement_started_at is not None
+                and reading_started_at >= measurement_started_at
+            ):
+                measurement_run.add_reading(params)
+                readings = {"ch1": params} if device_type == "single" else params
+                for (channel, quantity), samples in measurement_run.verification_samples.items():
+                    samples.append(readings[channel][quantity])
             status_txt = tr("status_disconnected")
 
             if params is None:
@@ -1385,7 +2303,8 @@ def _check_param_queue():
                     if lbl and lbl.winfo_exists():
                         lbl.config(text=status_txt)
             else:
-                # Обновление
+                latest_parameters = params
+                _refresh_electrical_values(params)
                 if device_type == "single":
                     if param_energy_abs_label and param_energy_abs_label.winfo_exists():
                         param_energy_abs_label.config(text=f"{params.get('energy_abs', 0):.2f} {tr('unit_kwh')}")
@@ -1393,12 +2312,6 @@ def _check_param_queue():
                         param_energy_pos_label.config(text=f"{params.get('energy_pos', 0):.2f} {tr('unit_kwh')}")
                     if param_energy_neg_label and param_energy_neg_label.winfo_exists():
                         param_energy_neg_label.config(text=f"{params.get('energy_neg', 0):.2f} {tr('unit_kwh')}")
-                    if param_voltage_label and param_voltage_label.winfo_exists():
-                        param_voltage_label.config(text=f"{params.get('voltage', 0):.2f} {tr('unit_v')}")
-                    if param_current_label and param_current_label.winfo_exists():
-                        param_current_label.config(text=f"{params.get('current', 0):.3f} {tr('unit_a')}")
-                    if param_power_label and param_power_label.winfo_exists():
-                        param_power_label.config(text=f"{params.get('power', 0):.3f} {tr('unit_kw')}")
                     if param_nom_voltage_label and param_nom_voltage_label.winfo_exists():
                         param_nom_voltage_label.config(text=f"{params.get('nom_voltage', 0):.2f} {tr('unit_v')}")
                     if param_nom_current_label and param_nom_current_label.winfo_exists():
@@ -1411,12 +2324,6 @@ def _check_param_queue():
                         param_ch1_energy_pos_label.config(text=f"{params['ch1']['energy_pos']:.2f} {tr('unit_kwh')}")
                     if param_ch1_energy_neg_label and param_ch1_energy_neg_label.winfo_exists():
                         param_ch1_energy_neg_label.config(text=f"{params['ch1']['energy_neg']:.2f} {tr('unit_kwh')}")
-                    if param_v1_label and param_v1_label.winfo_exists():
-                        param_v1_label.config(text=f"{params['ch1']['voltage']:.2f} {tr('unit_v')}")
-                    if param_i1_label and param_i1_label.winfo_exists():
-                        param_i1_label.config(text=f"{params['ch1']['current']:.3f} {tr('unit_a')}")
-                    if param_p1_label and param_p1_label.winfo_exists():
-                        param_p1_label.config(text=f"{params['ch1']['power']:.3f} {tr('unit_kw')}")
                     if param_ch1_nom_v_label and param_ch1_nom_v_label.winfo_exists():
                         param_ch1_nom_v_label.config(text=f"{params['ch1']['nom_voltage']:.2f} {tr('unit_v')}")
                     if param_ch1_nom_i_label and param_ch1_nom_i_label.winfo_exists():
@@ -1428,12 +2335,6 @@ def _check_param_queue():
                         param_ch2_energy_pos_label.config(text=f"{params['ch2']['energy_pos']:.2f} {tr('unit_kwh')}")
                     if param_ch2_energy_neg_label and param_ch2_energy_neg_label.winfo_exists():
                         param_ch2_energy_neg_label.config(text=f"{params['ch2']['energy_neg']:.2f} {tr('unit_kwh')}")
-                    if param_v2_label and param_v2_label.winfo_exists():
-                        param_v2_label.config(text=f"{params['ch2']['voltage']:.2f} {tr('unit_v')}")
-                    if param_i2_label and param_i2_label.winfo_exists():
-                        param_i2_label.config(text=f"{params['ch2']['current']:.3f} {tr('unit_a')}")
-                    if param_p2_label and param_p2_label.winfo_exists():
-                        param_p2_label.config(text=f"{params['ch2']['power']:.3f} {tr('unit_kw')}")
                     if param_ch2_nom_v_label and param_ch2_nom_v_label.winfo_exists():
                         param_ch2_nom_v_label.config(text=f"{params['ch2']['nom_voltage']:.2f} {tr('unit_v')}")
                     if param_ch2_nom_i_label and param_ch2_nom_i_label.winfo_exists():
@@ -1445,6 +2346,7 @@ def _check_param_queue():
     finally:
         # Цикл продолжится в любом случае
         root.after(100, _check_param_queue)
+        _refresh_measurement_controls()
 
 
 # =============================================================================
@@ -1502,6 +2404,10 @@ def connect_scan():
     port = port_var.get().strip()
     if not port or port == tr("status_no_ports"):
         messagebox.showerror(tr("dlg_error"), tr("dlg_no_port"))
+        return
+
+    if power_supply_pending_port and port.upper() == power_supply_pending_port.upper():
+        messagebox.showwarning(tr("dlg_warning"), tr("power_supply_busy").format(port=port))
         return
 
     # Создаём окно поиска
@@ -1683,8 +2589,8 @@ def disconnect_device(show_message=False):
             tr("dlg_poll_stop_pending"),
         )
         return
-
     conn = None
+    _stop_measurement()
     is_device_ready = False
     set_buttons_state("disabled")
 
@@ -1803,6 +2709,7 @@ def write_settings():
         new_baud = int(speed_var.get())
         new_parity = parity_var.get()
 
+        _stop_measurement()
         success, result = write_device_settings(
             conn["port"],
             conn["slave"],
@@ -2041,7 +2948,7 @@ def open_time_settings():
                     messagebox.showerror(tr("dlg_write_error"), msg, parent=win)
             else:
                 new_time_str = f"{Y:04}-{M:02}-{D:02} {H:02}:{m:02}:{S:02}"
-                current_time_value.config(text=new_time_str)
+                _show_meter_time(new_time_str)
                 time_update_queue.put(new_time_str)
                 root.after(0, _check_time_queue)
 
@@ -2101,7 +3008,7 @@ def sync_pc_time():
             return
 
         messagebox.showinfo(tr("dlg_write_success"), tr("dlg_sync_success").format(result))
-        current_time_value.config(text=result)
+        _show_meter_time(result)
         # Принудительно обновляем очередь времени
         time_update_queue.put(result)
         root.after(0, _check_time_queue)
@@ -2208,9 +3115,70 @@ def _prompt_password():
 
 
 def show_help():
-    """Показывает окно справки."""
-    help_text = tr("dlg_help_text")
-    messagebox.showinfo(tr("dlg_help"), help_text)
+    """Открывает справку с оглавлением."""
+    from help_topics import HELP_TOPICS
+
+    existing = getattr(show_help, "window", None)
+    if existing is not None and existing.winfo_exists():
+        existing.deiconify()
+        existing.lift()
+        existing.focus_set()
+        return
+
+    topics = HELP_TOPICS[current_language]
+    window = tk.Toplevel(root)
+    show_help.window = window
+    window.title(tr("dlg_help"))
+    window.transient(root)
+    width, height = 720, 460
+    x = max(0, (window.winfo_screenwidth() - width) // 2)
+    y = max(0, (window.winfo_screenheight() - height) // 2)
+    window.geometry(f"{width}x{height}+{x}+{y}")
+    window.minsize(500, 300)
+
+    content = ttk.Frame(window, padding=12)
+    content.pack(fill="both", expand=True)
+    content.columnconfigure(1, weight=1)
+    content.rowconfigure(0, weight=1)
+
+    navigation = ttk.Treeview(
+        content, show="tree", selectmode="browse", takefocus=True
+    )
+    navigation.column("#0", width=180, minwidth=140, stretch=False)
+    navigation.grid(row=0, column=0, sticky="ns", padx=(0, 12))
+
+    article = ttk.Frame(content)
+    article.grid(row=0, column=1, sticky="nsew")
+    article.columnconfigure(0, weight=1)
+    article.rowconfigure(1, weight=1)
+
+    title = ttk.Label(article, font=("TkDefaultFont", 12, "bold"))
+    title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
+    body = tk.Text(article, wrap="word", font="TkDefaultFont", padx=8, pady=6)
+    scrollbar = ttk.Scrollbar(article, orient="vertical", command=body.yview)
+    body.configure(yscrollcommand=scrollbar.set)
+    body.grid(row=1, column=0, sticky="nsew")
+    scrollbar.grid(row=1, column=1, sticky="ns")
+
+    def show_topic(_event=None):
+        selection = navigation.selection()
+        if selection:
+            heading, text = topics[int(selection[0])]
+            title.configure(text=heading)
+            body.configure(state="normal")
+            body.delete("1.0", tk.END)
+            body.insert("1.0", text)
+            body.configure(state="disabled")
+            body.yview_moveto(0)
+
+    for index, (heading, _) in enumerate(topics):
+        navigation.insert("", "end", iid=str(index), text=heading)
+    navigation.bind("<<TreeviewSelect>>", show_topic)
+    navigation.selection_set("0")
+    navigation.focus("0")
+    navigation.focus_set()
+    show_topic()
+    window.bind("<Escape>", lambda _event: window.destroy())
 
 
 def show_update_available_dialog(latest_version, release_url):
@@ -2395,6 +3363,29 @@ def check_for_updates(show_messages=True):
     root.after(100, wait_for_result)
 
 
+def _create_measurement_controls(parent):
+    global measurement_button, measurement_status, measurement_protocol_button
+
+    button_row = ttk.Frame(parent)
+    button_row.pack(pady=(4, 0))
+    ttk.Label(
+        button_row,
+        text=tr("measurement_label"),
+        font=("TkDefaultFont", 9, "bold"),
+    ).pack(side="left", padx=(0, 10))
+    measurement_button = ttk.Button(button_row, width=12, command=_toggle_measurement)
+    measurement_button.pack(side="left")
+    measurement_protocol_button = ttk.Button(
+        button_row,
+        text=tr("measurement_protocol"),
+        command=_open_verification,
+        state="disabled",
+    )
+    measurement_protocol_button.pack(side="left", padx=(8, 0))
+    measurement_status = ttk.Label(parent, wraplength=360, justify="center")
+    measurement_status.pack(pady=(3, 0))
+
+
 def create_parameters_tab():
     """Создаёт вкладку «Параметры» в зависимости от типа счётчика."""
     global param_voltage_label, param_current_label, param_power_label
@@ -2413,68 +3404,72 @@ def create_parameters_tab():
 
     if device_type == "single":
         center_frame = tk.Frame(tab_params)
-        center_frame.pack(pady=20)
+        center_frame.pack(pady=(20, 0))
 
-        # --- Блок 1: Энергия ---
-        tk.Label(center_frame, text=tr("lbl_energy"), font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(0, 4))
+        # Блок 1: Номинальные параметры
+        tk.Label(center_frame, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
+
+        row_n1 = tk.Frame(center_frame)
+        row_n1.pack(anchor="w", pady=2)
+        tk.Label(row_n1, text=tr("lbl_nom_v")).pack(side="left")
+        param_nom_voltage_label = tk.Label(row_n1, text=tr("status_disconnected"), font=("Consolas", 11))
+        param_nom_voltage_label.pack(side="left", padx=(10, 0))
+
+        row_n2 = tk.Frame(center_frame)
+        row_n2.pack(anchor="w", pady=2)
+        tk.Label(row_n2, text=tr("lbl_nom_i")).pack(side="left")
+        param_nom_current_label = tk.Label(row_n2, text=tr("status_disconnected"), font=("Consolas", 11))
+        param_nom_current_label.pack(side="left", padx=(10, 0))
+
+        tk.Frame(center_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
+
+        # Блок 2: Электроэнергия
+        tk.Label(center_frame, text=tr("lbl_energy"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(0, 4))
 
         row_e1 = tk.Frame(center_frame)
         row_e1.pack(anchor="w", pady=2)
-        tk.Label(row_e1, text=tr("lbl_energy_abs")).pack(side="left")
-        param_energy_abs_label = tk.Label(row_e1, text=tr("status_disconnected"), font=("Consolas", 12))
+        tk.Label(row_e1, text=tr("lbl_abs")).pack(side="left")
+        param_energy_abs_label = tk.Label(row_e1, text=tr("status_disconnected"), font=("Consolas", 11))
         param_energy_abs_label.pack(side="left", padx=(10, 0))
 
         row_e2 = tk.Frame(center_frame)
         row_e2.pack(anchor="w", pady=2)
-        tk.Label(row_e2, text=tr("lbl_energy_pos")).pack(side="left")
-        param_energy_pos_label = tk.Label(row_e2, text=tr("status_disconnected"), font=("Consolas", 12))
+        tk.Label(row_e2, text=tr("lbl_pos")).pack(side="left")
+        param_energy_pos_label = tk.Label(row_e2, text=tr("status_disconnected"), font=("Consolas", 11))
         param_energy_pos_label.pack(side="left", padx=(10, 0))
 
         row_e3 = tk.Frame(center_frame)
         row_e3.pack(anchor="w", pady=(0, 8))
-        tk.Label(row_e3, text=tr("lbl_energy_neg")).pack(side="left")
-        param_energy_neg_label = tk.Label(row_e3, text=tr("status_disconnected"), font=("Consolas", 12))
+        tk.Label(row_e3, text=tr("lbl_neg")).pack(side="left")
+        param_energy_neg_label = tk.Label(row_e3, text=tr("status_disconnected"), font=("Consolas", 11))
         param_energy_neg_label.pack(side="left", padx=(10, 0))
 
         tk.Frame(center_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
 
-        # --- Блок 2: Текущие параметры ---
-        tk.Label(center_frame, text=tr("lbl_current_params"), font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(4, 0))
+        # Блок 3: Текущие параметры
+        tk.Label(center_frame, text=tr("lbl_current_params"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
 
         row1 = tk.Frame(center_frame)
         row1.pack(anchor="w", pady=2)
         tk.Label(row1, text=tr("lbl_voltage")).pack(side="left")
-        param_voltage_label = tk.Label(row1, text=tr("status_disconnected"), font=("Consolas", 12))
+        param_voltage_label = tk.Label(row1, text=tr("status_disconnected"), font=("Consolas", 11))
         param_voltage_label.pack(side="left", padx=(10, 0))
 
         row2 = tk.Frame(center_frame)
         row2.pack(anchor="w", pady=2)
         tk.Label(row2, text=tr("lbl_current")).pack(side="left")
-        param_current_label = tk.Label(row2, text=tr("status_disconnected"), font=("Consolas", 12))
+        param_current_label = tk.Label(row2, text=tr("status_disconnected"), font=("Consolas", 11))
         param_current_label.pack(side="left", padx=(10, 0))
 
         row3 = tk.Frame(center_frame)
         row3.pack(anchor="w", pady=(0, 8))
         tk.Label(row3, text=tr("lbl_power")).pack(side="left")
-        param_power_label = tk.Label(row3, text=tr("status_disconnected"), font=("Consolas", 12))
+        param_power_label = tk.Label(row3, text=tr("status_disconnected"), font=("Consolas", 11))
         param_power_label.pack(side="left", padx=(10, 0))
 
-        tk.Frame(center_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
-
-        # --- Блок 3: Номиналы ---
-        tk.Label(center_frame, text=tr("lbl_nominal"), font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(4, 0))
-
-        row_n1 = tk.Frame(center_frame)
-        row_n1.pack(anchor="w", pady=2)
-        tk.Label(row_n1, text=tr("lbl_nom_voltage")).pack(side="left")
-        param_nom_voltage_label = tk.Label(row_n1, text=tr("status_disconnected"), font=("Consolas", 12))
-        param_nom_voltage_label.pack(side="left", padx=(10, 0))
-
-        row_n2 = tk.Frame(center_frame)
-        row_n2.pack(anchor="w", pady=2)
-        tk.Label(row_n2, text=tr("lbl_nom_current")).pack(side="left")
-        param_nom_current_label = tk.Label(row_n2, text=tr("status_disconnected"), font=("Consolas", 12))
-        param_nom_current_label.pack(side="left", padx=(10, 0))
+        controls = ttk.Frame(tab_params)
+        controls.pack()
+        _create_measurement_controls(controls)
 
     else:   # Двухканальный счетчик
         main_frame = tk.Frame(tab_params)
@@ -2482,10 +3477,25 @@ def create_parameters_tab():
 
         # --- ЛЕВАЯ КОЛОНКА: КАНАЛ A ---
         col1 = tk.Frame(main_frame)
-        col1.pack(side="left", padx=20, pady=5)
+        col1.grid(row=0, column=0, sticky="nw", padx=20, pady=5)
         tk.Label(col1, text=tr("lbl_channel_a"), font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(0, 10))
 
-        # Блок 1: Энергия
+        # Блок 1: Номинальные параметры
+        tk.Label(col1, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
+
+        rn1 = tk.Frame(col1); rn1.pack(anchor="w", pady=1)
+        tk.Label(rn1, text=tr("lbl_nom_v")).pack(side="left")
+        param_ch1_nom_v_label = tk.Label(rn1, text=tr("status_disconnected"), font=("Consolas", 11))
+        param_ch1_nom_v_label.pack(side="left", padx=(5, 0))
+
+        rn2 = tk.Frame(col1); rn2.pack(anchor="w", pady=1)
+        tk.Label(rn2, text=tr("lbl_nom_i")).pack(side="left")
+        param_ch1_nom_i_label = tk.Label(rn2, text=tr("status_disconnected"), font=("Consolas", 11))
+        param_ch1_nom_i_label.pack(side="left", padx=(5, 0))
+
+        tk.Frame(col1, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
+
+        # Блок 2: Электроэнергия
         tk.Label(col1, text=tr("lbl_energy"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
 
         r1 = tk.Frame(col1); r1.pack(anchor="w", pady=1)
@@ -2505,7 +3515,7 @@ def create_parameters_tab():
 
         tk.Frame(col1, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
 
-        # Блок 2: Текущие параметры
+        # Блок 3: Текущие параметры
         tk.Label(col1, text=tr("lbl_current_params"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
 
         row_v1 = tk.Frame(col1); row_v1.pack(anchor="w", pady=1)
@@ -2523,30 +3533,30 @@ def create_parameters_tab():
         param_p1_label = tk.Label(row_p1, text=tr("status_disconnected"), font=("Consolas", 11))
         param_p1_label.pack(side="left", padx=(10, 0))
 
-        tk.Frame(col1, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
-
-        # Блок 3: Номиналы
-        tk.Label(col1, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        rn1 = tk.Frame(col1); rn1.pack(anchor="w", pady=1)
-        tk.Label(rn1, text=tr("lbl_nom_v")).pack(side="left")
-        param_ch1_nom_v_label = tk.Label(rn1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch1_nom_v_label.pack(side="left", padx=(5, 0))
-
-        rn2 = tk.Frame(col1); rn2.pack(anchor="w", pady=1)
-        tk.Label(rn2, text=tr("lbl_nom_i")).pack(side="left")
-        param_ch1_nom_i_label = tk.Label(rn2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch1_nom_i_label.pack(side="left", padx=(5, 0))
-
         separator = tk.Frame(main_frame, width=2, bg="gray")
-        separator.pack(side="left", fill="y", padx=10)
+        separator.grid(row=0, column=1, sticky="ns", padx=10)
 
         # --- ПРАВАЯ КОЛОНКА: КАНАЛ B ---
         col2 = tk.Frame(main_frame)
-        col2.pack(side="left", padx=20, pady=5)
+        col2.grid(row=0, column=2, sticky="nw", padx=20, pady=5)
         tk.Label(col2, text=tr("lbl_channel_b"), font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(0, 10))
 
-        # Блок 1: Энергия
+        # Блок 1: Номинальные параметры
+        tk.Label(col2, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
+
+        rn1b = tk.Frame(col2); rn1b.pack(anchor="w", pady=1)
+        tk.Label(rn1b, text=tr("lbl_nom_v")).pack(side="left")
+        param_ch2_nom_v_label = tk.Label(rn1b, text=tr("status_disconnected"), font=("Consolas", 11))
+        param_ch2_nom_v_label.pack(side="left", padx=(5, 0))
+
+        rn2b = tk.Frame(col2); rn2b.pack(anchor="w", pady=1)
+        tk.Label(rn2b, text=tr("lbl_nom_i")).pack(side="left")
+        param_ch2_nom_i_label = tk.Label(rn2b, text=tr("status_disconnected"), font=("Consolas", 11))
+        param_ch2_nom_i_label.pack(side="left", padx=(5, 0))
+
+        tk.Frame(col2, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
+
+        # Блок 2: Электроэнергия
         tk.Label(col2, text=tr("lbl_energy"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
 
         r1b = tk.Frame(col2); r1b.pack(anchor="w", pady=1)
@@ -2566,7 +3576,7 @@ def create_parameters_tab():
 
         tk.Frame(col2, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
 
-        # Блок 2: Текущие параметры
+        # Блок 3: Текущие параметры
         tk.Label(col2, text=tr("lbl_current_params"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
 
         row_v2 = tk.Frame(col2); row_v2.pack(anchor="w", pady=1)
@@ -2584,20 +3594,13 @@ def create_parameters_tab():
         param_p2_label = tk.Label(row_p2, text=tr("status_disconnected"), font=("Consolas", 11))
         param_p2_label.pack(side="left", padx=(10, 0))
 
-        tk.Frame(col2, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
+        controls = ttk.Frame(main_frame)
+        controls.grid(row=1, column=0, columnspan=3, pady=(8, 0))
+        _create_measurement_controls(controls)
 
-        # Блок 3: Номиналы
-        tk.Label(col2, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        rn1b = tk.Frame(col2); rn1b.pack(anchor="w", pady=1)
-        tk.Label(rn1b, text=tr("lbl_nom_v")).pack(side="left")
-        param_ch2_nom_v_label = tk.Label(rn1b, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch2_nom_v_label.pack(side="left", padx=(5, 0))
-
-        rn2b = tk.Frame(col2); rn2b.pack(anchor="w", pady=1)
-        tk.Label(rn2b, text=tr("lbl_nom_i")).pack(side="left")
-        param_ch2_nom_i_label = tk.Label(rn2b, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch2_nom_i_label.pack(side="left", padx=(5, 0))
+    _refresh_measurement_controls()
+    if power_supply_visible:
+        _create_power_supply_panel(tab_params)
 
 
 def on_close_attempt(win):
@@ -2687,14 +3690,14 @@ def create_settings_tab():
     # --- Строка 1 ---
     tk.Label(grid_frame, text=tr("lbl_max_current_a"),
              anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=0, column=0, sticky="e", pady=5, padx=(0, 12))
-    settings_max_i_a_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=8, anchor="w")
+    settings_max_i_a_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=12, anchor="w")
     settings_max_i_a_label.grid(row=0, column=1, sticky="w", pady=5)
     ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_max_current_a, width=10).grid(row=0, column=2, sticky="w", pady=5, padx=(10, 0))
 
     # --- Строка 2 ---
     tk.Label(grid_frame, text=tr("lbl_max_current_b"),
              anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=1, column=0, sticky="e", pady=5, padx=(0, 12))
-    settings_max_i_b_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=8, anchor="w")
+    settings_max_i_b_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=12, anchor="w")
     settings_max_i_b_label.grid(row=1, column=1, sticky="w", pady=5)
     ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_max_current_b, width=10).grid(row=1, column=2, sticky="w", pady=5, padx=(10, 0))
 
@@ -2724,35 +3727,6 @@ def create_settings_tab():
     settings_decimal_combo.grid(row=4, column=1, sticky="w", pady=5)
     settings_decimal_combo.bind('<<ComboboxSelected>>', _on_change_decimal_places)
 
-    # --- Строка 6 ---
-    tk.Label(
-        grid_frame,
-        text=tr("lbl_tariff_schedule"),
-        anchor="e",
-        width=34,
-        font=("TkDefaultFont", 10),
-    ).grid(
-        row=5,
-        column=0,
-        sticky="e",
-        pady=5,
-        padx=(0, 12),
-    )
-
-    settings_tariff_button = ttk.Button(
-        grid_frame,
-        text=tr("btn_tariff_schedule"),
-        command=show_tariff_schedule_dialog,
-        width=22,
-    )
-    settings_tariff_button.grid(
-        row=5,
-        column=1,
-        columnspan=2,
-        sticky="w",
-        pady=5,
-    )
-
     # Постоянная импульсного выхода: один или два канала.
     settings_pulse_combos = {}
 
@@ -2760,7 +3734,7 @@ def create_settings_tab():
     if device_type == "dual":
         channels.append(("b", "lbl_pulse_constant_ch2"))
 
-    for row, (channel, label_key) in enumerate(channels, start=6):
+    for row, (channel, label_key) in enumerate(channels, start=5):
         tk.Label(
             grid_frame,
             text=tr(label_key),
@@ -2793,6 +3767,36 @@ def create_settings_tab():
             row=row, column=2, sticky="w",
             pady=5, padx=(10, 0),
         )
+
+    # Тарифное расписание после строк импульсного выхода.
+    tariff_row = 5 + len(channels)
+    tk.Label(
+        grid_frame,
+        text=tr("lbl_tariff_schedule"),
+        anchor="e",
+        width=34,
+        font=("TkDefaultFont", 10),
+    ).grid(
+        row=tariff_row,
+        column=0,
+        sticky="e",
+        pady=5,
+        padx=(0, 12),
+    )
+
+    settings_tariff_button = ttk.Button(
+        grid_frame,
+        text=tr("btn_tariff_schedule"),
+        command=show_tariff_schedule_dialog,
+        width=22,
+    )
+    settings_tariff_button.grid(
+        row=tariff_row,
+        column=1,
+        columnspan=2,
+        sticky="w",
+        pady=5,
+    )
 
     # Разделитель и кнопка очистки (в том же центральном блоке, выравниваются по ширине сетки)
     tk.Frame(center_block, height=2, bd=1, relief="sunken").pack(fill="x", pady=15)
@@ -2932,9 +3936,12 @@ def widget_exists(w):
 
 def _check_settings_queue():
     """Обрабатывает очередь обновления настроек."""
+    global latest_verification_settings
+
     try:
         while True:
             settings = settings_update_queue.get_nowait()
+            latest_verification_settings = settings
             # Обновляем постоянную импульсного выхода по каналам.
             for channel, combo in settings_pulse_combos.items():
                 key = (
@@ -2994,9 +4001,11 @@ def _check_settings_queue():
 
 def _check_info_queue():
     """Обрабатывает очередь обновления информации о приборе."""
+    global latest_verification_info
     try:
         while True:
             info = info_update_queue.get_nowait()
+            latest_verification_info = info
             if info is None:
                 if info_serial_label: info_serial_label.config(text=tr("status_disconnected"))
                 if info_manufacturer_label: info_manufacturer_label.config(text=tr("status_disconnected"))
@@ -3202,6 +4211,7 @@ def _on_change_max_current_a():
     def on_ok():
         try:
             new_value = float(value_var.get().replace(',', '.'))
+            _stop_measurement()
             success, msg = write_max_current(conn["port"], conn["slave"], conn["baud"], conn["parity"], 'a', new_value)
             if success:
                 _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
@@ -3269,6 +4279,7 @@ def _on_change_max_current_b():
     def on_ok():
         try:
             new_value = float(value_var.get().replace(',', '.'))
+            _stop_measurement()
             success, msg = write_max_current(conn["port"], conn["slave"], conn["baud"], conn["parity"], 'b', new_value)
             if success:
                 _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
@@ -3339,6 +4350,7 @@ def _on_change_sens_voltage():
     def on_ok():
         try:
             new_value = float(value_var.get().replace(',', '.'))
+            _stop_measurement()
             success, msg = write_sensitivity_voltage(conn["port"], conn["slave"], conn["baud"], conn["parity"], new_value)
             if success:
                 _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
@@ -3409,6 +4421,7 @@ def _on_change_sens_current():
     def on_ok():
         try:
             new_value = float(value_var.get().replace(',', '.'))
+            _stop_measurement()
             success, msg = write_sensitivity_current(conn["port"], conn["slave"], conn["baud"], conn["parity"], new_value)
             if success:
                 _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
@@ -4394,6 +5407,8 @@ def choose_device_type_from_menu():
     if conn:
         messagebox.showwarning(tr("dlg_warning"), tr("dlg_change_type_warning"))
         disconnect_device()
+        if conn:
+            return
 
     win = tk.Toplevel(root)
     win.title(tr("dlg_select_type"))
@@ -4401,8 +5416,10 @@ def choose_device_type_from_menu():
     win.resizable(False, False)
 
     def set_type(t):
-        global device_type
-        stop_time_reader()
+        global device_type, latest_parameters
+
+        latest_parameters = None
+        _stop_measurement()
         device_type = t
 
         # Пересоздаём вкладки под новый тип
@@ -4471,6 +5488,16 @@ sv_ttk.set_theme("light")
 # Загружаем картинки устройств
 load_device_images()
 
+# Общий статус связи над вкладками.
+connection_status_bar = tk.Frame(root)
+connection_status_bar.pack(fill="x", padx=10, pady=(4, 6))
+lbl_status = tk.Label(connection_status_bar, text=tr("lbl_status"))
+lbl_status.pack(side="left")
+status_canvas = tk.Canvas(connection_status_bar, width=16, height=16, highlightthickness=0)
+status_canvas.pack(side="left", padx=(3, 0))
+status_indicator = status_canvas.create_oval(2, 2, 14, 14, fill="red")
+
+
 # 1. Cоздаём notebook и вкладки
 notebook = ttk.Notebook(root)
 notebook.pack(fill="both", expand=True)
@@ -4487,29 +5514,21 @@ tab_settings = tk.Frame(notebook)
 notebook.add(tab_settings, text="...")
 
 # 2. Статичные элементы вкладки "Соединение"
-com_status_frame = tk.Frame(tab_conn)
-com_status_frame.pack(pady=(12, 6), padx=10, fill="x")
-lbl_com_port = tk.Label(com_status_frame, text=tr("lbl_com_port"))
+com_controls_frame = tk.Frame(tab_conn)
+com_controls_frame.pack(pady=(12, 6), padx=10, fill="x")
+lbl_com_port = tk.Label(com_controls_frame, text=tr("lbl_com_port"))
 lbl_com_port.pack(side="left")
 port_var = tk.StringVar(value=tr("status_no_ports"))
-port_menu = ttk.OptionMenu(com_status_frame, port_var, tr("status_no_ports"))
+port_menu = ttk.OptionMenu(com_controls_frame, port_var, tr("status_no_ports"))
 port_menu.config(width=11)
 port_menu.pack(side="left", padx=(5, 10))
-lbl_status = tk.Label(com_status_frame, text=tr("lbl_status"))
-lbl_status.pack(side="left")
-status_canvas = tk.Canvas(com_status_frame, width=16, height=16, highlightthickness=0)
-status_canvas.pack(side="left", padx=(3, 0))
-status_indicator = status_canvas.create_oval(2, 2, 14, 14, fill="red")
 
-# Кнопки управления
-btn_row = tk.Frame(tab_conn)
-btn_row.pack(pady=(0, 8), padx=10, fill="x")
-refresh_btn = ttk.Button(btn_row, text="Обновить", command=refresh_ports, width=14)
+refresh_btn = ttk.Button(com_controls_frame, text=tr("btn_refresh"), command=refresh_ports, width=14)
 refresh_btn.pack(side="left", padx=(0, 8))
-connect_btn = ttk.Button(btn_row, text="Подключиться", command=connect_scan, width=16)
-connect_btn.pack(side="left", padx=8)
-disconnect_btn = ttk.Button(btn_row, text="Отключиться", command=disconnect_device, state="disabled", width=16)
-disconnect_btn.pack(side="left", padx=8)
+connect_btn = ttk.Button(com_controls_frame, text=tr("btn_connect"), command=connect_scan, width=16)
+connect_btn.pack(side="left", padx=(0, 8))
+disconnect_btn = ttk.Button(com_controls_frame, text=tr("btn_disconnect"), command=disconnect_device, state="disabled", width=16)
+disconnect_btn.pack(side="left")
 
 # Горизонтальный разделитель
 sep = tk.Frame(tab_conn, height=2, bd=1, relief="sunken")
@@ -4584,16 +5603,22 @@ change_type_btn = ttk.Button(right_frame, text=tr("btn_change_type"), command=ch
 change_type_btn.pack(pady=5)
 
 # 3. Статичные элементы вкладки "Дата и время"
-lbl_time_title = tk.Label(tab_time, text=tr("lbl_current_time"))
-lbl_time_title.pack(anchor="w", padx=10, pady=(12, 0))
-time_btn_frame = tk.Frame(tab_time)
-time_btn_frame.pack(padx=10, pady=(4, 10), fill="x")
-current_time_value = tk.Label(time_btn_frame, text="—", font=("Consolas", 12))
-current_time_value.pack(side="left")
-settings_btn = ttk.Button(time_btn_frame, text="Настроить", state="disabled")
-settings_btn.pack(side="left", padx=(15, 5))
-sync_pc_btn = ttk.Button(time_btn_frame, text="Синхронизация с ПК🔄", state="disabled")
-sync_pc_btn.pack(side="left", padx=(5, 0))
+clock_panel = ttk.Frame(tab_time, padding=(16, 8))
+clock_panel.pack(pady=(28, 0))
+lbl_time_title = ttk.Label(clock_panel, text=tr("lbl_current_time"), font=("TkDefaultFont", 11, "bold"))
+lbl_time_title.pack()
+current_time_value = ttk.Label(
+    clock_panel, text=tr("lbl_meter_time_unavailable"),
+    font=("Consolas", 24), width=21, anchor="center",
+)
+current_time_value.pack(pady=(6, 0))
+
+time_btn_frame = ttk.Frame(clock_panel)
+time_btn_frame.pack(pady=(20, 0))
+settings_btn = ttk.Button(time_btn_frame, text=tr("btn_time_settings"), state="disabled")
+settings_btn.pack(side="left", padx=(0, 8))
+sync_pc_btn = ttk.Button(time_btn_frame, text=tr("btn_sync_pc"), state="disabled")
+sync_pc_btn.pack(side="left")
 
 # 4. Вызов set_language — все виджеты и функции уже созданы
 set_language(current_language)
@@ -4615,6 +5640,12 @@ root.geometry(f"{width}x{height}+{x}+{y}")
 
 def on_closing():
     """Обработка закрытия главного окна."""
+    if power_supply_pending_port:
+        messagebox.showwarning(
+            tr("dlg_warning"),
+            tr("power_supply_busy").format(port=power_supply_pending_port),
+        )
+        return
     stop_time_reader()
     root.destroy()
 

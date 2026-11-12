@@ -2,6 +2,20 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
+## [V1.12] - 2026-11-12
+
+### Added
+
+- Averaging of live voltage, current and power readings.
+- Guided Excel verification reports for single- and dual-channel meters, with class-specific tolerances and an automatic pass/fail result.
+- Optional voltage source controls for the metrology bench.
+- A Windows 7 x86 package alongside the existing x64 packages.
+
+### Changed
+
+- Reorganized the built-in Help into scrollable topics in Russian, English and Simplified Chinese.
+- Moved connection status above the tabs and simplified the date and time tab.
+
 ## [V1.11.2] - 2026-11-03
 
 ### Changed

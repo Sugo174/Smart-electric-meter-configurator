@@ -2,6 +2,7 @@
 
 import argparse
 from pathlib import Path
+import struct
 import subprocess
 import sys
 import zipfile
@@ -18,17 +19,21 @@ def main():
     )
     parser.add_argument(
         "target",
-        choices=("windows", "win7"),
-        help="windows: Windows 10/11; win7: Windows 7",
+        choices=("windows", "win7", "win7-x86"),
+        help="windows: Windows 10/11 x64; win7: Windows 7 x64; win7-x86: Windows 7 x86",
     )
     args = parser.parse_args()
 
-    if args.target == "win7":
+    if args.target in ("win7", "win7-x86"):
         required_python = (3, 8)
         spec_name = "Smart-Meter-Configurator-Windows-7.spec"
         dist_name = "dist-win7"
         work_name = "build-win7"
         suffix = "-Windows-7"
+        if args.target == "win7-x86":
+            dist_name += "-x86"
+            work_name += "-x86"
+            suffix += "-x86"
     else:
         required_python = (3, 14)
         spec_name = "Smart-Meter-Configurator.spec"
@@ -41,6 +46,10 @@ def main():
             "This target requires Python "
             + ".".join(map(str, required_python))
         )
+
+    required_bits = 32 if args.target == "win7-x86" else 64
+    if struct.calcsize("P") * 8 != required_bits:
+        parser.error(f"This target requires {required_bits}-bit Python")
 
     build_name = f"Smart-Meter-Configurator-v{APP_VERSION}{suffix}"
     output_folder = PROJECT_ROOT / dist_name / build_name

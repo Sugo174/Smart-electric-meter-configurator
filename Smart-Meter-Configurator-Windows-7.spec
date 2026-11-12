@@ -1,15 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
 import runpy
+import struct
 from pathlib import Path
 
 app_version = runpy.run_path(
     str(Path(SPECPATH) / "constants.py")
 )["APP_VERSION"]
 
-build_name = f"Smart-Meter-Configurator-v{app_version}-Windows-7"
+architecture_suffix = "-x86" if struct.calcsize("P") == 4 else ""
+build_name = f"Smart-Meter-Configurator-v{app_version}-Windows-7{architecture_suffix}"
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images')]
+datas = [('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')]
 binaries = []
 hiddenimports = ['babel.numbers']
 tmp_ret = collect_all('sv_ttk')

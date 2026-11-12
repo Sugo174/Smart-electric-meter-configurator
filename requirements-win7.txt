@@ -5,3 +5,4 @@ sv-ttk==2.6.0
 tkcalendar==1.6.1
 pyinstaller==5.13.2
 pyinstaller-hooks-contrib==2023.8
+openpyxl==3.1.5

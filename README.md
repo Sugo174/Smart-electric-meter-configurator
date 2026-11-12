@@ -37,7 +37,7 @@ It provides automatic communication parameter detection, real-time monitoring, d
 Choose the build for your operating system:
 
 - **Windows 10/11:** download the standard Windows ZIP from the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
-- **Windows 7 (64-bit):** download the ZIP with `Windows-7` in its name from the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
+- **Windows 7:** download the ZIP ending in `-Windows-7.zip` for 64-bit or `-Windows-7-x86.zip` for 32-bit from the [latest release](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
 
 1. Download and extract the entire archive.
 2. Connect the smart meter through an RS-485 adapter.
@@ -81,6 +81,10 @@ For package creation and release checks, see
 
  
 ## Key Features
+
+- Averaged voltage, current and power readings.
+- Guided Excel verification reports for one or two channels, with class-specific tolerances and pass/fail results.
+- Optional voltage source controls and built-in Help organized by topic.
  
 ### Automatic Communication Parameter Discovery
  

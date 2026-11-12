@@ -38,7 +38,7 @@
 Готовые сборки не требуют установки Python.
 
 - **Windows 10/11:** скачайте обычный Windows ZIP из [последнего релиза](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
-- **Windows 7, 64 бит:** скачайте ZIP с `Windows-7` в названии из [последнего релиза](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
+- **Windows 7:** скачайте архив с окончанием `-Windows-7.zip` для 64 бит или `-Windows-7-x86.zip` для 32 бит из [последнего релиза](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest).
 
 Все выпуски и описание изменений доступны в разделе
 [Releases](https://github.com/Sugo174/Smart-electric-meter-configurator/releases).
@@ -59,6 +59,10 @@
 [Запуск в Windows](docs/RUN_WINDOWS_RU.md).
 
 ## Возможности
+
+- Усреднение напряжения, тока и мощности.
+- Пошаговое заполнение протокола поверки Excel для одного или двух каналов с допусками по классу точности и автоматическим итогом.
+- Управление источником напряжения на стенде и встроенная справка с оглавлением.
 
 ### Подключение к прибору
 

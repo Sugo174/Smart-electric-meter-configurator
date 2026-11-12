@@ -12,7 +12,7 @@ a = Analysis(
     ['gui.py'],
     pathex=[],
     binaries=[],
-    datas=[('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images')],
+    datas=[('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

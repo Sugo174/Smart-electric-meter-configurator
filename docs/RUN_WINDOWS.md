@@ -6,7 +6,7 @@
 
 The application requires:
 
-- Windows 10/11 or 64-bit Windows 7;
+- 64-bit Windows 10/11 or 64-bit or 32-bit Windows 7;
 - the application build for your Windows version;
 - a supported EMIS-ELECTRA 977 DC electricity meter;
 - an RS-485 adapter with its driver installed;
