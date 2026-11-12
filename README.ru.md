@@ -7,6 +7,8 @@
 [English version](README.md) · [История изменений](CHANGELOG.md) · [Безопасность](SECURITY.md)
 
 [![Python tests](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml/badge.svg)](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml)
+[![Последний релиз](https://img.shields.io/github/v/release/Sugo174/Smart-electric-meter-configurator?label=release)](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest)
+[![Windows 10/11 x64, Windows 7 x64 и x86](https://img.shields.io/badge/Windows-10%2F11%20x64%20%7C%207%20x64%2Fx86-blue)](#скачивание)
 [![Лицензия: MIT](https://img.shields.io/badge/Лицензия-MIT-yellow.svg)](LICENSE)
 
 Конфигуратор счётчиков электрической энергии постоянного тока

@@ -7,6 +7,8 @@
 [Русская версия](README.ru.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
 
 [![Python tests](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml/badge.svg)](https://github.com/Sugo174/Smart-electric-meter-configurator/actions/workflows/tests.yml)
+[![Latest release](https://img.shields.io/github/v/release/Sugo174/Smart-electric-meter-configurator?label=release)](https://github.com/Sugo174/Smart-electric-meter-configurator/releases/latest)
+[![Windows 10/11 x64, Windows 7 x64 and x86](https://img.shields.io/badge/Windows-10%2F11%20x64%20%7C%207%20x64%2Fx86-blue)](#download)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
  
 Desktop application for configuration, diagnostics, and commissioning of smart electricity meters.
