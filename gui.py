@@ -36,6 +36,7 @@ from constants import (
     PARITY_LIST,
     PULSE_CONSTANT_VALUES,
     DEVICE_INFO_REGISTER_COUNT,
+    ENERGY_DECIMAL_PLACES,
 )
 
 from update_checker import (
@@ -2246,7 +2247,7 @@ def _refresh_electrical_values(params):
     run = measurement_run
     show_average = run is not None and run.ready and run.device_type == device_type
     units = ("unit_v", "unit_a", "unit_kw")
-    precision = (2, 3, 3)
+    precision = (4, 4, 4)
     for channel, labels in channel_labels.items():
         for label, quantity, unit, decimals in zip(
             labels, MeasurementRun.QUANTITIES, units, precision
@@ -2263,7 +2264,9 @@ def _refresh_electrical_values(params):
 def _check_param_queue():
     """Обрабатывает очередь обновления параметров. Гарантирует непрерывный цикл."""
     global latest_parameters
-
+    energy_decimals = (latest_verification_settings or {}).get("decimal_places")
+    if energy_decimals not in ENERGY_DECIMAL_PLACES:
+        energy_decimals = 2
     try:
         while True:
             queued_reading = param_update_queue.get_nowait()
@@ -2307,38 +2310,38 @@ def _check_param_queue():
                 _refresh_electrical_values(params)
                 if device_type == "single":
                     if param_energy_abs_label and param_energy_abs_label.winfo_exists():
-                        param_energy_abs_label.config(text=f"{params.get('energy_abs', 0):.2f} {tr('unit_kwh')}")
+                        param_energy_abs_label.config(text=f"{params.get('energy_abs', 0):.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_energy_pos_label and param_energy_pos_label.winfo_exists():
-                        param_energy_pos_label.config(text=f"{params.get('energy_pos', 0):.2f} {tr('unit_kwh')}")
+                        param_energy_pos_label.config(text=f"{params.get('energy_pos', 0):.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_energy_neg_label and param_energy_neg_label.winfo_exists():
-                        param_energy_neg_label.config(text=f"{params.get('energy_neg', 0):.2f} {tr('unit_kwh')}")
+                        param_energy_neg_label.config(text=f"{params.get('energy_neg', 0):.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_nom_voltage_label and param_nom_voltage_label.winfo_exists():
-                        param_nom_voltage_label.config(text=f"{params.get('nom_voltage', 0):.2f} {tr('unit_v')}")
+                        param_nom_voltage_label.config(text=f"{params.get('nom_voltage', 0):.0f} {tr('unit_v')}")
                     if param_nom_current_label and param_nom_current_label.winfo_exists():
-                        param_nom_current_label.config(text=f"{params.get('nom_current', 0):.2f} {tr('unit_a')}")
+                        param_nom_current_label.config(text=f"{params.get('nom_current', 0):.0f} {tr('unit_a')}")
                 else:
                     # Канал 1
                     if param_ch1_energy_abs_label and param_ch1_energy_abs_label.winfo_exists():
-                        param_ch1_energy_abs_label.config(text=f"{params['ch1']['energy_abs']:.2f} {tr('unit_kwh')}")
+                        param_ch1_energy_abs_label.config(text=f"{params['ch1']['energy_abs']:.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_ch1_energy_pos_label and param_ch1_energy_pos_label.winfo_exists():
-                        param_ch1_energy_pos_label.config(text=f"{params['ch1']['energy_pos']:.2f} {tr('unit_kwh')}")
+                        param_ch1_energy_pos_label.config(text=f"{params['ch1']['energy_pos']:.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_ch1_energy_neg_label and param_ch1_energy_neg_label.winfo_exists():
-                        param_ch1_energy_neg_label.config(text=f"{params['ch1']['energy_neg']:.2f} {tr('unit_kwh')}")
+                        param_ch1_energy_neg_label.config(text=f"{params['ch1']['energy_neg']:.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_ch1_nom_v_label and param_ch1_nom_v_label.winfo_exists():
-                        param_ch1_nom_v_label.config(text=f"{params['ch1']['nom_voltage']:.2f} {tr('unit_v')}")
+                        param_ch1_nom_v_label.config(text=f"{params['ch1']['nom_voltage']:.0f} {tr('unit_v')}")
                     if param_ch1_nom_i_label and param_ch1_nom_i_label.winfo_exists():
-                        param_ch1_nom_i_label.config(text=f"{params['ch1']['nom_current']:.2f} {tr('unit_a')}")
+                        param_ch1_nom_i_label.config(text=f"{params['ch1']['nom_current']:.0f} {tr('unit_a')}")
                     # Канал 2
                     if param_ch2_energy_abs_label and param_ch2_energy_abs_label.winfo_exists():
-                        param_ch2_energy_abs_label.config(text=f"{params['ch2']['energy_abs']:.2f} {tr('unit_kwh')}")
+                        param_ch2_energy_abs_label.config(text=f"{params['ch2']['energy_abs']:.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_ch2_energy_pos_label and param_ch2_energy_pos_label.winfo_exists():
-                        param_ch2_energy_pos_label.config(text=f"{params['ch2']['energy_pos']:.2f} {tr('unit_kwh')}")
+                        param_ch2_energy_pos_label.config(text=f"{params['ch2']['energy_pos']:.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_ch2_energy_neg_label and param_ch2_energy_neg_label.winfo_exists():
-                        param_ch2_energy_neg_label.config(text=f"{params['ch2']['energy_neg']:.2f} {tr('unit_kwh')}")
+                        param_ch2_energy_neg_label.config(text=f"{params['ch2']['energy_neg']:.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_ch2_nom_v_label and param_ch2_nom_v_label.winfo_exists():
-                        param_ch2_nom_v_label.config(text=f"{params['ch2']['nom_voltage']:.2f} {tr('unit_v')}")
+                        param_ch2_nom_v_label.config(text=f"{params['ch2']['nom_voltage']:.0f} {tr('unit_v')}")
                     if param_ch2_nom_i_label and param_ch2_nom_i_label.winfo_exists():
-                        param_ch2_nom_i_label.config(text=f"{params['ch2']['nom_current']:.2f} {tr('unit_a')}")
+                        param_ch2_nom_i_label.config(text=f"{params['ch2']['nom_current']:.0f} {tr('unit_a')}")
     except queue.Empty:
         pass
     except Exception:
@@ -3720,7 +3723,7 @@ def create_settings_tab():
              anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=4, column=0, sticky="e", pady=5, padx=(0, 12))
     settings_decimal_combo = ttk.Combobox(
         grid_frame,
-        values=["2", "3"],
+        values=tuple(str(value) for value in ENERGY_DECIMAL_PLACES),
         state="readonly",
         width=8,
     )
@@ -3978,10 +3981,10 @@ def _check_settings_queue():
                 if settings_sens_v_label: settings_sens_v_label.config(text=tr("status_disconnected"))
                 if settings_sens_i_label: settings_sens_i_label.config(text=tr("status_disconnected"))
             else:
-                if settings_max_i_a_label: settings_max_i_a_label.config(text=f"{settings['max_current_a']:.2f} {tr('unit_a')}")
+                if settings_max_i_a_label: settings_max_i_a_label.config(text=f"{settings['max_current_a']:.0f} {tr('unit_a')}")
                 if settings_max_i_b_label:
                     if 'max_current_b' in settings:
-                        settings_max_i_b_label.config(text=f"{settings['max_current_b']:.2f} {tr('unit_a')}")
+                        settings_max_i_b_label.config(text=f"{settings['max_current_b']:.0f} {tr('unit_a')}")
                     else:
                         settings_max_i_b_label.config(text=tr("status_disconnected"))
                 if settings_sens_v_label: settings_sens_v_label.config(text=f"{settings['sens_voltage']:.1f} {tr('unit_percent')}")
@@ -4204,13 +4207,21 @@ def _on_change_max_current_a():
     dialog.protocol("WM_DELETE_WINDOW", cleanup_and_close)
 
     tk.Label(dialog, text=tr("dlg_max_current_a_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 5), padx=20)
-    value_var = tk.StringVar(value=f"{current_val:.2f}")
+    value_var = tk.StringVar(value=f"{current_val:.0f}")
     entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15)
     entry.pack(pady=5); entry.focus(); entry.select_range(0, 'end')
 
     def on_ok():
+        raw_value = value_var.get().strip()
+        if not raw_value or any(char not in "0123456789" for char in raw_value):
+            messagebox.showerror(
+                tr("dlg_input_error"), tr("dlg_invalid_number"), parent=dialog
+            )
+            entry.focus_set()
+            return
+
         try:
-            new_value = float(value_var.get().replace(',', '.'))
+            new_value = int(raw_value)
             _stop_measurement()
             success, msg = write_max_current(conn["port"], conn["slave"], conn["baud"], conn["parity"], 'a', new_value)
             if success:
@@ -4270,15 +4281,23 @@ def _on_change_max_current_b():
     dialog.protocol("WM_DELETE_WINDOW", cleanup_and_close)
 
     tk.Label(dialog, text=tr("dlg_max_current_b_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 5), padx=20)
-    value_var = tk.StringVar(value=f"{current_val:.2f}")
+    value_var = tk.StringVar(value=f"{current_val:.0f}")
     entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15)
     entry.pack(pady=5)
     entry.focus()
     entry.select_range(0, 'end')
 
     def on_ok():
+        raw_value = value_var.get().strip()
+        if not raw_value or any(char not in "0123456789" for char in raw_value):
+            messagebox.showerror(
+                tr("dlg_input_error"), tr("dlg_invalid_number"), parent=dialog
+            )
+            entry.focus_set()
+            return
+
         try:
-            new_value = float(value_var.get().replace(',', '.'))
+            new_value = int(raw_value)
             _stop_measurement()
             success, msg = write_max_current(conn["port"], conn["slave"], conn["baud"], conn["parity"], 'b', new_value)
             if success:
@@ -4951,9 +4970,13 @@ def _on_change_pulse_constant(channel):
 
 def _on_change_decimal_places(event=None):
     global settings_dialog_open
+    previous_places = (latest_verification_settings or {}).get("decimal_places")
+    previous_selection = (
+        str(previous_places) if previous_places in ENERGY_DECIMAL_PLACES else ""
+    )
     if not conn:
         messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
-        settings_decimal_combo.set("1")
+        settings_decimal_combo.set(previous_selection)
         return
     if settings_dialog_open:
         return
@@ -4972,10 +4995,10 @@ def _on_change_decimal_places(event=None):
             root.after(0, _check_settings_queue)
         else:
             messagebox.showerror(tr("dlg_write_error"), msg)
-            settings_decimal_combo.set("1") # Сброс при ошибке
+            settings_decimal_combo.set(previous_selection) # Сброс при ошибке
     except Exception as e:
         messagebox.showerror(tr("dlg_input_error"), str(e))
-        settings_decimal_combo.set("1")
+        settings_decimal_combo.set(previous_selection)
     finally:
         settings_dialog_open = False
         start_time_reader() # Запускаем поток обратно

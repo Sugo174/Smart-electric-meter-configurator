@@ -54,6 +54,7 @@ from constants import (
     PARITY_VAL_TO_STR,
     PARITY_STR_TO_VAL,
     ENERGY_FACTOR,
+    ENERGY_DECIMAL_PLACES,
     REG_ENERGY_CLEAR
 )
 
@@ -1087,10 +1088,10 @@ def write_sensitivity_current(port, slave, baud, parity, value):
 
 def write_decimal_places(port, slave, baud, parity, value):
     """Записывает количество знаков после запятой для энергии."""
-    if value not in (2, 3):
+    if value not in ENERGY_DECIMAL_PLACES:
         return False, (
             "Unsupported number of energy decimal places. "
-            "Supported values: 2 or 3."
+            "Supported values: 0, 2 or 3."
         )
 
     dev = None

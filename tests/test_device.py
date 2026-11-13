@@ -267,7 +267,7 @@ class DecimalPlacesValidationTests(unittest.TestCase):
                 )
 
                 self.assertFalse(success)
-                self.assertIn("Supported values: 2 or 3", message)
+                self.assertIn("Supported values: 0, 2 or 3", message)
 
 
 class PortCleanupTests(unittest.TestCase):
