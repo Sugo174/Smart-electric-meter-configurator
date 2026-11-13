@@ -2,6 +2,19 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
+## [V1.12.1] - 2026-11-13
+
+### Added
+
+- Display the current tariff based on the meter clock and the configured tariff schedule.
+- Support zero decimal places for energy readings.
+
+### Changed
+
+- Display energy readings using the decimal-place setting read from the meter.
+- Display nominal voltage and current as whole numbers and accept only whole numbers when setting maximum current.
+- Display live and averaged voltage, current, and power with four decimal places.
+
 ## [V1.12] - 2026-11-12
 
 ### Added

@@ -1303,6 +1303,20 @@ def parse_tariff_schedule_registers(registers):
     return periods
 
 
+def get_tariff_at_time(periods, meter_time):
+    """Возвращает номер тарифа по суточному расписанию."""
+    if not periods or meter_time is None:
+        return None
+
+    current_minute = meter_time.hour * 60 + meter_time.minute
+
+    for hour, minute, tariff in reversed(periods):
+        if hour * 60 + minute <= current_minute:
+            return tariff
+
+    return periods[-1][2]
+
+
 def read_tariff_schedule(port, slave, baud, parity):
     """Читает и расшифровывает тарифное расписание счётчика."""
     device = None

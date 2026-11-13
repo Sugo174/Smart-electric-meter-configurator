@@ -68,6 +68,7 @@ from device import (
     validate_scanned_serial_number,
     autofill_device_info,
     decode_meter_serial_number,
+    get_tariff_at_time,
 )
 
 from measurement_stats import MeasurementRun
@@ -198,6 +199,7 @@ TRANSLATIONS = {
         "btn_clear_energy": "Очистить значения энергии",
 
         # Тарифное расписание
+        "lbl_active_tariff": "Тариф по расписанию:",
         "lbl_tariff_schedule": "Тарифное расписание:",
         "btn_tariff_schedule": "Настроить расписание",
         "dlg_tariff_schedule": "Настройка тарифного расписания",
@@ -437,6 +439,7 @@ TRANSLATIONS = {
         "btn_clear_energy": "Clear Energy Values",
 
         # Tariff schedule
+        "lbl_active_tariff": "Tariff by schedule:",
         "lbl_tariff_schedule": "Tariff schedule:",
         "btn_tariff_schedule": "Configure schedule",
         "dlg_tariff_schedule": "Tariff Schedule",
@@ -675,6 +678,7 @@ TRANSLATIONS = {
         "btn_clear_energy": "清除电能值",
 
         # 费率时段表
+        "lbl_active_tariff": "按时段表计算的费率：",
         "lbl_tariff_schedule": "费率时段表：",
         "btn_tariff_schedule": "设置费率时段",
         "dlg_tariff_schedule": "费率时段设置",
@@ -1181,6 +1185,8 @@ settings_sens_v_label = None
 settings_sens_i_label = None
 settings_decimal_combo = None
 settings_tariff_button = None
+active_tariff_label = None
+latest_tariff_periods = None
 
 # Выпадающие списки постоянной импульсного выхода по каналам.
 settings_pulse_combos = {}
@@ -1418,6 +1424,7 @@ def _time_reader_worker():
     next_time_read = time.time() + 1
     next_param_read = time.time() + 1
     next_settings_read = time.time() + 2
+    next_tariff_read = 0
     next_info_read = time.time() + 2
     consecutive_read_errors = 0
     max_consecutive_read_errors = 3
@@ -1471,6 +1478,12 @@ def _time_reader_worker():
                     conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type
                 )
                 if success:
+                    if now >= next_tariff_read:
+                        tariff_ok, periods = read_tariff_schedule(
+                            conn["port"], conn["slave"], conn["baud"], conn["parity"]
+                        )
+                        settings["tariff_periods"] = periods if tariff_ok else None
+                        next_tariff_read = now + 30
                     settings_update_queue.put(settings)
                 else:
                     raise Exception("Потеряна связь при чтении настроек")
@@ -1520,8 +1533,25 @@ def _clock_date_text(iso_date):
         return ".".join(reversed(iso_date.split("-")))
     return iso_date
 
+latest_meter_time_text = None
+
+def _refresh_active_tariff():
+    from datetime import datetime
+
+    if not widget_exists(active_tariff_label):
+        return
+    try:
+        meter_time = datetime.strptime(latest_meter_time_text, "%Y-%m-%d %H:%M:%S")
+    except (TypeError, ValueError):
+        meter_time = None
+    tariff = get_tariff_at_time(latest_tariff_periods, meter_time) if conn else None
+    active_tariff_label.configure(text="—" if tariff is None else str(tariff))
+
 
 def _show_meter_time(value):
+    global latest_meter_time_text
+    latest_meter_time_text = value
+    _refresh_active_tariff()
     date, _, clock = value.partition(" ")
     text = f"{clock}  {_clock_date_text(date)}" if clock else tr("lbl_meter_time_unavailable")
     current_time_value.config(text=text)
@@ -3671,7 +3701,7 @@ def create_settings_tab():
     """Создаёт вкладку «Настройки прибора»."""
     global settings_max_i_a_label, settings_max_i_b_label
     global settings_sens_v_label, settings_sens_i_label
-    global settings_decimal_combo, settings_tariff_button
+    global settings_decimal_combo, settings_tariff_button, active_tariff_label
     global settings_pulse_combos
 
     # Очищаем старое содержимое
@@ -3800,6 +3830,13 @@ def create_settings_tab():
         sticky="w",
         pady=5,
     )
+
+    tk.Label(grid_frame, text=tr("lbl_active_tariff"), font=("TkDefaultFont", 10)).grid(
+        row=tariff_row + 1, column=0, sticky="e", padx=(0, 12), pady=5
+    )
+    active_tariff_label = tk.Label(grid_frame, text="—", font=("TkDefaultFont", 10))
+    active_tariff_label.grid(row=tariff_row + 1, column=1, sticky="w", pady=5)
+    _refresh_active_tariff()
 
     # Разделитель и кнопка очистки (в том же центральном блоке, выравниваются по ширине сетки)
     tk.Frame(center_block, height=2, bd=1, relief="sunken").pack(fill="x", pady=15)
@@ -3939,12 +3976,15 @@ def widget_exists(w):
 
 def _check_settings_queue():
     """Обрабатывает очередь обновления настроек."""
-    global latest_verification_settings
+    global latest_verification_settings, latest_tariff_periods
 
     try:
         while True:
             settings = settings_update_queue.get_nowait()
             latest_verification_settings = settings
+            if settings is None or "tariff_periods" in settings:
+                latest_tariff_periods = None if settings is None else settings["tariff_periods"]
+                _refresh_active_tariff()
             # Обновляем постоянную импульсного выхода по каналам.
             for channel, combo in settings_pulse_combos.items():
                 key = (
