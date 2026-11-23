@@ -241,8 +241,10 @@ def registers_to_i32(registers):
 # Все функции изолированы, не имеют побочных эффектов и безопасны для вызова.
 # =============================================================================
 
-def scan_device(port, preferred_slave, preferred_baud, preferred_parity):
+def scan_device(port, preferred_slave, preferred_baud, preferred_parity, *, cancelled=None, progress=None):
     """Сканирует COM-порт. Возвращает РЕАЛЬНЫЕ параметры, читая 0xA004."""    
+    if not 1 <= preferred_slave <= 254:
+        return False, "Modbus address must be between 1 and 254."
     if not port or port == "(нет портов)":
         return False, "COM-порт не выбран"
 
@@ -255,39 +257,47 @@ def scan_device(port, preferred_slave, preferred_baud, preferred_parity):
         return False, f"Ошибка доступа к порту: {e}" 
 
     try_bauds = [preferred_baud] + [b for b in BAUD_VALUES if b != preferred_baud]
-    try_slaves = [preferred_slave] + [s for s in range(1, 11) if s != preferred_slave]
-    try_pars = [preferred_parity] + [p for p in PARITY_MAP.keys() if p != preferred_parity]
+    parities = [preferred_parity] + [p for p in PARITY_MAP if p != preferred_parity]
+    pairs = [(baud, parity) for parity in parities for baud in try_bauds]
 
-    start_time = time.time()
-    MAX_DURATION = 40.0
+    def candidates():
+        for baud, parity in pairs:
+            yield baud, parity, preferred_slave
+        for baud, parity in pairs:
+            for address in range(1, 255):
+                if address != preferred_slave:
+                    yield baud, parity, address
+
     best_match = None
-    
-    for ptxt in try_pars:
-        if time.time() - start_time > MAX_DURATION: break
-        parity_mode = PARITY_MAP[ptxt]
-        for b in try_bauds:
-            if time.time() - start_time > MAX_DURATION: break
-            for s in try_slaves:
-                if time.time() - start_time > MAX_DURATION: break
-
-                dev = None
-                try:
-                    dev = make_instrument(port, s, b, parity_mode)
-                    dev.serial.timeout = 0.15
-                    dev.read_register(REG_LOCAL_ADDR, 0, functioncode=3)
-                    time.sleep(0.05)
-                    dev.read_register(REG_LOCAL_ADDR, 0, functioncode=3) # Двойная проверка
-                    best_match = (b, s, ptxt)
-                    break
-                except Exception:
-                    continue
-                finally:
-                    if dev is not None:
-                        try: dev.serial.close()
-                        except: pass
-                    time.sleep(0.1)
-            if best_match: break
-        if best_match: break
+    dev = None
+    try:
+        dev = make_instrument(port, preferred_slave, preferred_baud, PARITY_MAP[preferred_parity])
+        dev.serial.timeout = 0.15
+        current_pair = (preferred_baud, preferred_parity)
+        for attempt, (baud, parity, address) in enumerate(candidates(), start=1):
+            if cancelled is not None and cancelled.is_set():
+                return False, ""
+            if (baud, parity) != current_pair:
+                dev.serial.baudrate = baud
+                dev.serial.parity = PARITY_MAP[parity]
+                current_pair = baud, parity
+            dev.address = address
+            if progress is not None:
+                progress(baud, parity, address, attempt, len(pairs) * 254)
+            try:
+                dev.read_register(REG_LOCAL_ADDR, 0, functioncode=3)
+                if cancelled is not None and cancelled.is_set():
+                    return False, ""
+                dev.read_register(REG_LOCAL_ADDR, 0, functioncode=3)
+            except (minimalmodbus.ModbusException, ValueError):
+                continue
+            best_match = (baud, address, parity)
+            break
+    except (OSError, ValueError) as error:
+        return False, str(error)
+    finally:
+        if dev is not None:
+            dev.serial.close()
 
     if not best_match:
         return False, "Устройство не отвечает. Проверьте питание и подключение."
@@ -332,6 +342,9 @@ def write_device_settings(port, slave, baud, parity, new_slave, new_baud, new_pa
     Записывает адрес (0xA001), скорость (0xA002) и четность (0xA003/40963).
     Все параметры связи отправляются ОДНИМ запросом.
     """
+    if not 1 <= new_slave <= 254:
+        return False, "Modbus address must be between 1 and 254."
+
     parity_letter = PARITY_MAP.get(new_parity, "E")
     new_code = BAUD_CODE_FROM_VAL.get(new_baud, 3)
     current_parity_letter = PARITY_MAP.get(parity, "E")

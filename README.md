@@ -1,7 +1,7 @@
-# Smart Meter Configurator
+# ЭМИС-Интегратор MODBUS
 
 <p align="center">
-  <img src="app.png" alt="Smart Meter Configurator" width="160">
+  <img src="app.png" alt="ЭМИС-Интегратор MODBUS" width="160">
 </p>
 
 [Русская версия](README.ru.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
@@ -29,7 +29,7 @@ Desktop application for configuration, diagnostics, and commissioning of smart e
 
 ## Overview
  
-Smart Meter Configurator is a Python-based desktop application designed for field engineers to simplify smart meter setup, diagnostics, and maintenance.
+EMIS-Integrator MODBUS is a Python-based desktop application designed for field engineers to simplify smart meter setup, diagnostics, and maintenance.
 It provides automatic communication parameter detection, real-time monitoring, device configuration, and multilingual support through a streamlined interface optimized for industrial environments.
 
 ## Download and Run
@@ -191,7 +191,7 @@ The application is designed and tested for EMIS-ELECTRA 977 DC smart electricity
 - Modbus RTU communication over RS-485
 - Automatic detection of device address, baud rate, and parity
 
-The automatic scan checks Modbus addresses from `1` to `10` and the following baud rates:
+Enter a known Modbus address from `1` to `254` in the address field before connecting. The scan tries that address first and also checks addresses `1` through `254` at the following baud rates:
 
 - 1200
 - 2400

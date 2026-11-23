@@ -15,6 +15,7 @@
 
 import tkinter as tk
 from tkinter import ttk, messagebox
+import re
 import time
 import datetime
 import queue
@@ -94,7 +95,8 @@ current_language = "ru"
 TRANSLATIONS = {
     "ru": {
         # Меню
-        "app_title": f"Конфигуратор СКВТ ЭМИС-ЭЛЕКТРА 977 V{APP_VERSION}",
+        "app_name": "ЭМИС-Интегратор MODBUS",
+        "invalid_modbus_address": "Введите адрес Modbus от 1 до 254.",
         "menu_settings": "☰ Настройки программы",
         "menu_help": "Справка",
         "menu_power_supply": "Источник питания",
@@ -108,7 +110,7 @@ TRANSLATIONS = {
         "power_supply_on": "Включён",
         "power_supply_off": "Выключен",
         "power_supply_status": "Напряжение: {voltage:.1f} В · Выход: {output}",
-        "power_supply_read_first": "Сначала прочитайте выбранный источник.",
+        "power_supply_read_first": "Выберите COM-порт источника.",
         "power_supply_invalid_voltage": "Введите напряжение от 0 до 999,9 В с шагом 0,1 В.",
         "power_supply_confirm_enable": "Включить выход источника на порту {port}?",
         "power_supply_busy": "Порт {port} занят другой операцией.",
@@ -124,6 +126,9 @@ TRANSLATIONS = {
         "tab_datetime": "Дата и время",
         "tab_params": "Текущие значения",
         "tab_settings": "Настройки прибора",
+        "tab_tariff": "Тарифное расписание",
+        "tab_archives": "Архивы",
+        "lbl_current_tariff": "Текущий тариф",
 
         # Вкладка "Соединение"
         "lbl_com_port": "COM-порт:",
@@ -151,7 +156,7 @@ TRANSLATIONS = {
 
         # Вкладка "Дата и время"
         "lbl_current_time": "Время и дата счётчика:",
-        "lbl_meter_time_unavailable": "Нет связи",
+        "lbl_meter_time_unavailable": "—",
         "btn_time_settings": "Настроить вручную",
         "btn_sync_pc": "Синхронизировать с ПК",
         "dlg_time_writing": "Идет запись времени...\nПожалуйста, подождите.",
@@ -159,7 +164,7 @@ TRANSLATIONS = {
         # Вкладка "Текущие значения" - одноканальный
         "lbl_energy": "Электроэнергия:",
         "lbl_energy_abs": "Абсолютная активная:",
-        "lbl_energy_pos": "Суммарная положительная:",
+        "lbl_energy_pos": "Суммарная прямая:",
         "lbl_energy_neg": "Суммарная обратная:",
         "lbl_current_params": "Текущие параметры:",
         "lbl_voltage": "Напряжение:",
@@ -180,7 +185,8 @@ TRANSLATIONS = {
         "lbl_channel_a": "Канал A",
         "lbl_channel_b": "Канал B",
         "lbl_abs": "Абсолютная:",
-        "lbl_pos": "Положительная:",
+        "lbl_abs_hint": "(|прямая| + |обратная|)",
+        "lbl_pos": "Прямая:",
         "lbl_neg": "Обратная:",
         "lbl_nom_v": "Номинальное напр.:",
         "lbl_nom_i": "Номинальный ток:",
@@ -253,7 +259,7 @@ TRANSLATIONS = {
         "dlg_exit": "Выход",
         "dlg_exit_confirm": "Тип счётчика не выбран.\nЗакрыть программу?",
         "dlg_search": "Поиск устройства",
-        "dlg_searching": "Выполняется поиск устройства...\nПожалуйста, подождите.",
+        "dlg_searching": "Поиск устройства",
         "dlg_connected": "Подключено",
         "dlg_connected_msg": "Подключено устройство:\nАдрес: {}\nСкорость: {}\nЧётность: {}",
         "dlg_write_params_warning": "Изменение параметров связи приведет к разрыву соединения. Продолжить?",
@@ -335,7 +341,8 @@ TRANSLATIONS = {
 
     "en": {
         # Menu
-        "app_title": f"Configurator SKVT EMIS-ELECTRA 977 V{APP_VERSION}",
+        "app_name": "EMIS-Integrator MODBUS",
+        "invalid_modbus_address": "Enter a Modbus address from 1 to 254.",
         "menu_settings": "☰ Program Settings",
         "menu_help": "Help",
         "menu_power_supply": "Power Supply",
@@ -349,7 +356,7 @@ TRANSLATIONS = {
         "power_supply_on": "On",
         "power_supply_off": "Off",
         "power_supply_status": "Voltage: {voltage:.1f} V · Output: {output}",
-        "power_supply_read_first": "Read the selected power supply first.",
+        "power_supply_read_first": "Select the power supply COM port.",
         "power_supply_invalid_voltage": "Enter a voltage from 0 to 999.9 V in 0.1 V increments.",
         "power_supply_confirm_enable": "Enable power supply output on {port}?",
         "power_supply_busy": "Port {port} is busy with another operation.",
@@ -365,6 +372,9 @@ TRANSLATIONS = {
         "tab_datetime": "Date & Time",
         "tab_params": "Current Values",
         "tab_settings": "Device Settings",
+        "tab_tariff": "Tariff Schedule",
+        "tab_archives": "Archives",
+        "lbl_current_tariff": "Current tariff",
 
         # Connection tab
         "lbl_com_port": "COM Port",
@@ -392,7 +402,7 @@ TRANSLATIONS = {
 
         # Date & Time tab
         "lbl_current_time": "Meter time and date:",
-        "lbl_meter_time_unavailable": "No connection",
+        "lbl_meter_time_unavailable": "—",
         "btn_time_settings": "Set manually",
         "btn_sync_pc": "Sync with PC",
         "dlg_time_writing": "Writing time...\nPlease wait.",
@@ -400,7 +410,7 @@ TRANSLATIONS = {
         # Current Values - single channel
         "lbl_energy": "Energy:",
         "lbl_energy_abs": "Absolute Active:",
-        "lbl_energy_pos": "Total Positive:",
+        "lbl_energy_pos": "Total Forward:",
         "lbl_energy_neg": "Total Negative:",
         "lbl_current_params": "Current Parameters:",
         "lbl_voltage": "Voltage:",
@@ -420,7 +430,8 @@ TRANSLATIONS = {
         "lbl_channel_a": "Channel A",
         "lbl_channel_b": "Channel B",
         "lbl_abs": "Absolute:",
-        "lbl_pos": "Positive:",
+        "lbl_abs_hint": "(|forward| + |reverse|)",
+        "lbl_pos": "Forward:",
         "lbl_neg": "Negative:",
         "lbl_nom_v": "Nom. Voltage:",
         "lbl_nom_i": "Nom. Current:",
@@ -493,7 +504,7 @@ TRANSLATIONS = {
         "dlg_exit": "Exit",
         "dlg_exit_confirm": "Meter type not selected.\nClose program?",
         "dlg_search": "Searching Device",
-        "dlg_searching": "Searching for device...\nPlease wait.",
+        "dlg_searching": "Searching for device",
         "dlg_connected": "Connected",
         "dlg_write_params_warning": "Changing connection parameters will disconnect the device. Continue?",
         "dlg_connected_msg": "Device connected:\nAddress: {}\nBaud: {}\nParity: {}",
@@ -501,6 +512,7 @@ TRANSLATIONS = {
         "dlg_no_port": "COM port not selected",
         "dlg_port_unavailable": "Connection Error",
         "dlg_port_unavailable_msg": "Port {} unavailable.\n\nPossible causes:\n• RS485 (A/B) cable disconnected\n• USB-RS485 adapter not connected\n• Adapter driver not responding\n\nRecommended:\n1. Check physical cable connections\n2. Reconnect USB adapter\n3. Click 'Refresh'",
+        "dlg_change_type_warning": "Changing the meter type requires reconnecting.\nThe meter will now be disconnected.",
         "dlg_warning": "Warning",
         "dlg_connect_first": "Please connect to device first.",
         "dlg_write_success": "Success",
@@ -574,7 +586,8 @@ TRANSLATIONS = {
 
     "zh": {
         # 菜单
-        "app_title": f"配置器 SKVT EMIS-ELECTRA 977 V{APP_VERSION}",
+        "app_name": "EMIS-Integrator MODBUS",
+        "invalid_modbus_address": "请输入 1 至 254 的 Modbus 地址。",
         "menu_settings": "☰ 程序设置",
         "menu_help": "帮助",
         "menu_power_supply": "电源",
@@ -588,7 +601,7 @@ TRANSLATIONS = {
         "power_supply_on": "开启",
         "power_supply_off": "关闭",
         "power_supply_status": "电压：{voltage:.1f} V · 输出：{output}",
-        "power_supply_read_first": "请先读取所选电源。",
+        "power_supply_read_first": "请选择电源的 COM 端口。",
         "power_supply_invalid_voltage": "请输入 0 至 999.9 V 的电压，步进为 0.1 V。",
         "power_supply_confirm_enable": "开启 {port} 上的电源输出？",
         "power_supply_busy": "端口 {port} 正忙。",
@@ -604,6 +617,9 @@ TRANSLATIONS = {
         "tab_datetime": "日期和时间",
         "tab_params": "当前值",
         "tab_settings": "设备设置",
+        "tab_tariff": "费率时段表",
+        "tab_archives": "档案",
+        "lbl_current_tariff": "当前费率",
 
         # 连接选项卡
         "lbl_com_port": "COM端口",
@@ -631,7 +647,7 @@ TRANSLATIONS = {
 
         # 日期时间选项卡
         "lbl_current_time": "电表时间和日期：",
-        "lbl_meter_time_unavailable": "未连接",
+        "lbl_meter_time_unavailable": "—",
         "btn_time_settings": "手动设置",
         "btn_sync_pc": "与电脑同步",
         "dlg_time_writing": "正在写入时间...\n请稍候。",
@@ -658,7 +674,8 @@ TRANSLATIONS = {
         # 当前值 - 双通道
         "lbl_channel_a": "通道A",
         "lbl_channel_b": "通道B",
-        "lbl_abs": "绝对:",
+        "lbl_abs": "绝对值:",
+        "lbl_abs_hint": "（|正向| + |反向|）",
         "lbl_pos": "正向:",
         "lbl_neg": "反向:",
         "lbl_nom_v": "额定电压:",
@@ -728,7 +745,7 @@ TRANSLATIONS = {
         "dlg_exit": "退出",
         "dlg_exit_confirm": "未选择电表类型。\n关闭程序?",
         "dlg_search": "搜索设备",
-        "dlg_searching": "正在搜索设备...\n请稍候。",
+        "dlg_searching": "正在搜索设备",
         "dlg_connected": "已连接",
         "dlg_write_params_warning": "更改连接参数将断开设备连接。继续?",
         "dlg_connected_msg": "设备已连接:\n地址: {}\n波特率: {}\n奇偶校验: {}",
@@ -827,32 +844,52 @@ def toggle_power_supply_panel():
             root.geometry(f"{root.winfo_width()}x{height}")
 
 
-def _create_power_supply_panel(parent):
-    frame = ttk.LabelFrame(parent, text=tr("menu_power_supply"), padding=(10, 6))
-    frame.pack(pady=(8, 6))
+def _numeric_input(parent, *, integer=False, signed=False):
+    pattern = r"[0-9]*" if integer else r"[0-9]*(?:[.,][0-9]*)?"
+    if signed:
+        pattern = "-?" + pattern
+    return {
+        "validate": "key",
+        "validatecommand": (parent.register(
+            lambda value: re.fullmatch(pattern, value) is not None
+        ), "%P"),
+    }
+
+
+def _create_power_supply_panel(parent, *, anchor="center"):
+    global power_supply_port_var
+    if power_supply_port_var is None:
+        power_supply_port_var = tk.StringVar(master=root)
+
+    card = ttk.Frame(parent, style="Emis.Card.TFrame", padding=(12, 8))
+    card.pack(side="bottom", anchor=anchor, pady=(8, 6))
+    ttk.Label(card, text=tr("menu_power_supply"), style="Emis.Heading.TLabel").pack(
+        anchor="w", pady=(0, 5)
+    )
+    frame = ttk.Frame(card)
+    frame.pack(fill="x")
 
     ttk.Label(frame, text="COM").grid(row=0, column=0, padx=(0, 6))
-    port_combo = ttk.Combobox(frame, state="readonly", width=10)
+    port_combo = ttk.Combobox(frame, textvariable=power_supply_port_var, state="readonly", width=10)
     port_combo.grid(row=0, column=1, sticky="w")
     ttk.Label(frame, text=tr("power_supply_setpoint")).grid(
         row=1, column=0, sticky="w", pady=(5, 0),
     )
-    voltage_entry = ttk.Entry(frame, width=12)
+    voltage_entry = ttk.Entry(frame, width=12, **_numeric_input(frame))
     voltage_entry.grid(row=1, column=1, sticky="w", pady=(5, 0))
     status = ttk.Label(frame, wraplength=430)
     status.grid(row=2, column=0, columnspan=4, sticky="w", pady=(5, 0))
 
     verified_port = None
     output_raw = None
+    displayed_voltage = None
 
     def can_write():
         return verified_port is not None and verified_port == port_combo.get()
 
     def update_controls():
-        available = bool(port_combo.get())
         write_state = "normal" if can_write() else "disabled"
         port_combo.config(state="readonly")
-        read_button.config(state="normal" if available else "disabled")
         refresh_button.config(state="normal")
         voltage_entry.config(state=write_state)
         voltage_button.config(state=write_state)
@@ -862,9 +899,10 @@ def _create_power_supply_panel(parent):
         )
 
     def reset_selection(event=None):
-        nonlocal verified_port, output_raw
+        nonlocal verified_port, output_raw, displayed_voltage
         verified_port = None
         output_raw = None
+        displayed_voltage = None
         status.config(text=tr("power_supply_read_first"))
         update_controls()
         voltage_entry.config(state="normal")
@@ -876,8 +914,8 @@ def _create_power_supply_panel(parent):
         ports = [port for port in list_com_ports() if port.upper() != meter_port]
         previous = port_combo.get()
         port_combo.config(values=ports)
-        port_combo.set(previous if previous in ports else (ports[0] if ports else ""))
-        reset_selection()
+        if previous and previous not in ports:
+            power_supply_port_var.set("")
 
     def start_request(operation, *args):
         global power_supply_pending_port
@@ -893,12 +931,12 @@ def _create_power_supply_panel(parent):
             return
 
         power_supply_pending_port = port
-        for control in (
-            port_combo, read_button, refresh_button,
-            voltage_entry, voltage_button, output_button,
-        ):
-            control.config(state="disabled")
-        status.config(text=tr("power_supply_reading"))
+        polling = operation is read_power_supply
+        if not polling:
+            for control in (port_combo, refresh_button, voltage_entry, voltage_button, output_button):
+                control.config(state="disabled")
+        if not polling or not can_write():
+            status.config(text=tr("power_supply_reading"))
         results = queue.Queue()
 
         def worker():
@@ -909,7 +947,7 @@ def _create_power_supply_panel(parent):
 
         def finish():
             global power_supply_pending_port
-            nonlocal verified_port, output_raw
+            nonlocal verified_port, output_raw, displayed_voltage
             try:
                 data, error = results.get_nowait()
             except queue.Empty:
@@ -917,19 +955,27 @@ def _create_power_supply_panel(parent):
                 return
 
             power_supply_pending_port = None
-            if not frame.winfo_exists():
+            if not frame.winfo_exists() or port_combo.get() != port or (conn and port.upper() == conn["port"].upper()):
                 return
             if error is not None:
-                reset_selection()
+                verified_port = None
+                output_raw = None
+                update_controls()
                 status.config(text=f"{tr('dlg_error')}: {error}")
                 return
 
             verified_port = port
             output_raw = data["output_raw"]
             update_controls()
-            if operation is read_power_supply:
+            voltage = f"{data['voltage_v']:.1f}"
+            editing_voltage = voltage_entry.focus_get() is voltage_entry
+            if operation is set_power_supply_voltage or (
+                not editing_voltage
+                and voltage_entry.get() in ("", displayed_voltage)
+            ):
                 voltage_entry.delete(0, "end")
-                voltage_entry.insert(0, f"{data['voltage_v']:.1f}")
+                voltage_entry.insert(0, voltage)
+                displayed_voltage = voltage
             output = {
                 0: tr("power_supply_off"),
                 1: tr("power_supply_on"),
@@ -944,10 +990,15 @@ def _create_power_supply_panel(parent):
     def apply_voltage():
         if not can_write():
             return
+        from decimal import Decimal, InvalidOperation
+
         voltage = voltage_entry.get()
         try:
+            requested = Decimal(voltage.strip().replace(",", "."))
+            if requested.is_finite() and requested >= 1000:
+                voltage = "999.9"
             voltage_to_register(voltage)
-        except ValueError:
+        except (InvalidOperation, ValueError):
             status.config(text=tr("power_supply_invalid_voltage"))
             return
         start_request(set_power_supply_voltage, voltage)
@@ -964,11 +1015,6 @@ def _create_power_supply_panel(parent):
             return
         start_request(set_power_supply_output, enable)
 
-    read_button = ttk.Button(
-        frame, text=tr("power_supply_read"),
-        command=lambda: start_request(read_power_supply),
-    )
-    read_button.grid(row=0, column=2, padx=(6, 0), sticky="ew")
     refresh_button = ttk.Button(
         frame, text=tr("power_supply_refresh"), command=refresh_list,
     )
@@ -977,10 +1023,35 @@ def _create_power_supply_panel(parent):
         frame, text=tr("power_supply_apply"), command=apply_voltage,
     )
     voltage_button.grid(row=1, column=2, padx=(6, 0), pady=(5, 0), sticky="ew")
-    output_button = ttk.Button(frame, command=toggle_output)
+    output_button = ttk.Button(frame, command=toggle_output, style="Emis.Primary.TButton")
     output_button.grid(row=1, column=3, padx=(6, 0), pady=(5, 0), sticky="ew")
-    port_combo.bind("<<ComboboxSelected>>", reset_selection)
+    def select_port(_event):
+        reset_selection()
+        start_request(read_power_supply)
+
+    def poll_source():
+        if not frame.winfo_exists():
+            return
+        port = port_combo.get()
+        if port and power_supply_pending_port is None and search_window_ref is None:
+            if conn and port.upper() == conn["port"].upper():
+                reset_selection()
+                status.config(text=tr("power_supply_busy").format(port=port))
+            else:
+                start_request(read_power_supply)
+        frame.after(1000, poll_source)
+
+    selection_trace = power_supply_port_var.trace_add("write", lambda *_args: reset_selection())
+
+    def remove_selection_trace(event):
+        if event.widget is frame:
+            power_supply_port_var.trace_remove("write", selection_trace)
+
+    frame.bind("<Destroy>", remove_selection_trace)
+    port_combo.bind("<<ComboboxSelected>>", select_port)
     refresh_list()
+    reset_selection()
+    frame.after_idle(poll_source)
 
 
 def set_language(lang_code):
@@ -990,7 +1061,8 @@ def set_language(lang_code):
     current_language = lang_code
 
     # Меняем заголовок главного окна
-    root.title(tr("app_title"))
+    root.title(f"{tr('app_name')} V{APP_VERSION}")
+    app_header_title.configure(text=tr("app_name"))
 
     # Загружаем иконки если ещё не загружены
     if not ICONS:
@@ -1072,6 +1144,11 @@ def set_language(lang_code):
     notebook.tab(tab_time, text=tr("tab_datetime"))
     notebook.tab(tab_params, text=tr("tab_params"))
     notebook.tab(tab_settings, text=tr("tab_settings"))
+    notebook.tab(tab_tariff, text=tr("tab_tariff"))
+    notebook.tab(tab_archives, text=tr("tab_archives"))
+    tariff_title.configure(text=tr("lbl_current_tariff"))
+    tariff_schedule_label.configure(text=tr("lbl_tariff_schedule"))
+    tariff_schedule_button.configure(text=tr("btn_tariff_schedule"))
 
     # 3. Пересоздаём динамические вкладки
     global ui_rebuild_in_progress
@@ -1184,7 +1261,6 @@ settings_max_i_b_label = None
 settings_sens_v_label = None
 settings_sens_i_label = None
 settings_decimal_combo = None
-settings_tariff_button = None
 active_tariff_label = None
 latest_tariff_periods = None
 
@@ -1211,6 +1287,7 @@ param_update_queue = queue.Queue()
 settings_update_queue = queue.Queue()
 info_update_queue = queue.Queue()
 power_supply_visible = False
+power_supply_port_var = None
 power_supply_pending_port = None
 
 measurement_run = None
@@ -1239,7 +1316,6 @@ settings_dialog_open = False
 
 # Глобальные ссылки на модальные окна (для корректного закрытия)
 search_window_ref = None
-search_timeout_id = None
 search_check_id = None
 
 # Метка для картинки типа счётчика во вкладке "Соединение"
@@ -1695,6 +1771,11 @@ def _create_verification_workbook(template_path, output_path, header, nominals, 
                 summary[address].data_type = "s"
 
         readings["J2"] = pulse_constant
+        for row in (24, 34):
+            readings[f"D{row}"] = "Uэт (В)"
+            if not single:
+                readings[f"H{row}"] = "Uэт (В)"
+
 
         for channel, (nominal_voltage, nominal_current) in nominals.items():
             first_column = 9 if channel == "ch1" else 26
@@ -1733,7 +1814,7 @@ def _create_verification_workbook(template_path, output_path, header, nominals, 
         workbook.close()
 
 
-def _save_verification_step(path, channel, stage, index, reference, readings, confirm, period=None, final_channels=()):
+def _save_verification_step(path, channel, stage, index, reference, readings, confirm, period=None, final_channels=(), reference_voltage=None):
     import os
     from pathlib import Path
     from tempfile import NamedTemporaryFile
@@ -1761,9 +1842,9 @@ def _save_verification_step(path, channel, stage, index, reference, readings, co
             f"{reference_col}{row}": reference,
             f"{measured_col}{row}": readings["current"],
             f"{result_col}{power_row}": readings["power"],
-            f"{voltage_col}{power_row}": readings["voltage"],
+            f"{voltage_col}{power_row}": reference_voltage,
             f"{result_col}{period_row}": period,
-            f"{voltage_col}{period_row}": readings["voltage"],
+            f"{voltage_col}{period_row}": reference_voltage,
         }
         expected_rows = {row: label, power_row: label, period_row: label}
     else:
@@ -1879,7 +1960,7 @@ def _ask_verification_header(parent, info, nominals):
         ("humidity", "Влажность, %", ""),
         ("pressure", "Давление, кПа", ""),
     )
-    remembered = ("verifier", "temperature", "humidity", "pressure")
+    remembered = ("protocol_number", "verifier", "temperature", "humidity", "pressure")
     check_keys = {key for key, _ in VERIFICATION_CHECKS}
     fields += tuple((key, label, "") for key, label in VERIFICATION_CHECKS)
     entries = {}
@@ -1893,7 +1974,12 @@ def _ask_verification_header(parent, info, nominals):
         elif key in check_keys:
             entry = ttk.Combobox(content, values=("P", "F"), state="readonly", width=28)
         else:
-            entry = ttk.Entry(content, width=30)
+            options = {}
+            if key in ("temperature", "humidity", "pressure", "production_year"):
+                options = _numeric_input(
+                    window, integer=key == "production_year", signed=key == "temperature"
+                )
+            entry = ttk.Entry(content, width=30, **options)
         entry.grid(row=row, column=1, sticky="ew", pady=3)
         if key != "accuracy_class" and key not in check_keys:
             entry.insert(0, verification_defaults.get(key, default) if key in remembered else default)
@@ -1964,7 +2050,23 @@ def _ask_verification_header(parent, info, nominals):
 
     buttons = ttk.Frame(content)
     buttons.grid(row=variant_row + 1, column=0, columnspan=2, pady=(10, 0))
-    ttk.Button(buttons, text="Далее", command=accept).pack(side="left", padx=(0, 8))
+    next_button = ttk.Button(
+        buttons, text="Далее", command=accept,
+        style="Emis.Primary.TButton", state="disabled",
+    )
+    next_button.pack(side="left", padx=(0, 8))
+
+    def refresh_next_button(*_args):
+        complete = all(entry.get().strip() for entry in entries.values())
+        next_button.configure(state="normal" if complete else "disabled")
+
+    field_variables = []
+    for entry in entries.values():
+        variable = tk.StringVar(master=window, value=entry.get())
+        entry.configure(textvariable=variable)
+        variable.trace_add("write", refresh_next_button)
+        field_variables.append(variable)
+    refresh_next_button()
     ttk.Button(buttons, text="Отмена", command=window.destroy).pack(side="left")
     window.bind("<Escape>", lambda _event: window.destroy())
 
@@ -1978,8 +2080,61 @@ def _ask_verification_header(parent, info, nominals):
     return result
 
 
+def _confirm_protocol_export(
+    parent, heading="Сформировать протокол",
+    message="Все данные проверены. Сформировать протокол?",
+):
+    dialog = tk.Toplevel(parent, background=emis_background)
+    dialog.withdraw()
+    dialog.title("Поверка")
+    dialog.transient(parent)
+    dialog.resizable(False, False)
+
+    confirmed = False
+
+    def accept():
+        nonlocal confirmed
+        confirmed = True
+        dialog.destroy()
+
+    card = ttk.Frame(dialog, style="Emis.Card.TFrame", padding=(18, 14))
+    card.pack(padx=12, pady=12)
+    ttk.Label(card, text=heading, style="Emis.Heading.TLabel").pack(anchor="w")
+    ttk.Label(card, text=message,
+              wraplength=360, justify="left").pack(anchor="w", pady=(8, 12))
+
+    buttons = ttk.Frame(card)
+    buttons.pack(anchor="e")
+    ttk.Button(buttons, text=tr("dlg_yes"), command=accept,
+               style="Emis.Primary.TButton").pack(side="left", padx=(0, 8))
+    cancel = ttk.Button(buttons, text=tr("dlg_no"), command=dialog.destroy)
+    cancel.pack(side="left")
+    dialog.bind("<Escape>", lambda _event: dialog.destroy())
+    dialog.bind("<Return>", lambda event: event.widget.invoke()
+                if isinstance(event.widget, ttk.Button) else None)
+
+    dialog.update_idletasks()
+    x = parent.winfo_rootx() + (parent.winfo_width() - dialog.winfo_reqwidth()) // 2
+    y = parent.winfo_rooty() + (parent.winfo_height() - dialog.winfo_reqheight()) // 2
+    dialog.geometry(f"{x:+d}{y:+d}")
+    dialog.deiconify()
+    dialog.wait_visibility()
+    dialog.grab_set()
+    cancel.focus_set()
+    parent.wait_window(dialog)
+    return confirmed
+
+
+def _period_unit(value, expected_seconds):
+    """Choose the interpretation closest to the expected period in scale."""
+    if value / expected_seconds <= 1000 ** 0.5:
+        return "с", value
+    return "мс", value / 1000
+
+
 def _open_verification():
     import math
+    from statistics import mean, stdev
     from pathlib import Path
     from tkinter import filedialog, messagebox
 
@@ -1989,11 +2144,11 @@ def _open_verification():
         verification_window.lift()
         return
 
-    run = measurement_run
-    if run is None or not run.ready or not _can_start_measurement():
+    connection = conn
+    if not conn or not is_device_ready:
         return
 
-    channels = run.channels
+    channels = ("ch1",) if device_type == "single" else ("ch1", "ch2")
     params = {"ch1": latest_parameters} if device_type == "single" else latest_parameters
     settings = latest_verification_settings
     try:
@@ -2040,7 +2195,7 @@ def _open_verification():
         return
 
     header = _ask_verification_header(root, info, nominals)
-    if header is None or run is not measurement_run:
+    if header is None or conn is not connection:
         return
 
     serial = header["serial_number"]
@@ -2049,215 +2204,484 @@ def _open_verification():
         f"Протокол поверки СКВТ {safe_serial}.xlsx"
         if safe_serial else "Протокол поверки СКВТ.xlsx"
     )
-    path = filedialog.asksaveasfilename(
-        parent=root,
-        title="Сохранить новый протокол",
-        initialfile=filename,
-        defaultextension=".xlsx",
-        filetypes=[("Протокол Excel", "*.xlsx")],
-    )
-    if not path or run is not measurement_run:
-        return
-
-    try:
-        _create_verification_workbook(
-            template_path, path, header, nominals, constants[0]
-        )
-    except PermissionError:
-        messagebox.showerror(
-            "Поверка",
-            "Не удалось сохранить файл. Если он открыт в Excel, закройте его.",
-            parent=root,
-        )
-        return
-    except Exception as error:
-        messagebox.showerror("Ошибка создания протокола", str(error), parent=root)
-        return
-
-    def confirm(parent, addresses):
-        return messagebox.askyesno(
-            "Заменить показания?",
-            f"Заменить значения в ячейках {', '.join(addresses)}?",
-            parent=parent,
-        )
-
-    def save(parent, channel, stage, index, reference, readings, period=None, final_channels=()):
-        try:
-            return _save_verification_step(
-                path, channel, stage, index, reference, readings,
-                lambda addresses: confirm(parent, addresses), period=period, final_channels=final_channels,
-            )
-        except PermissionError:
-            messagebox.showerror("Поверка", "Закройте протокол в Excel и повторите запись.", parent=parent)
-        except Exception as error:
-            messagebox.showerror("Ошибка записи", str(error), parent=parent)
-        return False
+    from tempfile import TemporaryDirectory
 
     window = tk.Toplevel(root)
     verification_window = window
-    window.title("Заполнение протокола поверки")
+    window.title("Поверка СКВТ ЭЭ-977")
     window.transient(root)
-    window.resizable(False, False)
-    content = ttk.Frame(window, padding=14)
-    content.pack()
-    ttk.Label(content, text=Path(path).name, wraplength=380).pack(anchor="w")
-    heading = ttk.Label(content, font=("TkDefaultFont", 10, "bold"))
-    heading.pack(anchor="w", pady=(10, 4))
-    instruction = ttk.Label(content, wraplength=380, justify="left")
-    instruction.pack(anchor="w")
+    window.minsize(980, 560)
 
+    accent = "#009975"
+    content = ttk.Frame(window, padding=14)
+    content.pack(fill="both", expand=True)
+    navigation = ttk.Treeview(content, show="tree", selectmode="browse", height=15)
+    navigation.column("#0", width=245, stretch=False)
+    column_gap = 16
+    navigation.pack(side="left", fill="y", padx=(0, column_gap))
+    details = ttk.Frame(content)
+    details.pack(side="left", fill="y")
+    tk.Frame(content, width=1, bg="gray").pack(side="left", fill="y", padx=column_gap)
+    results_panel = ttk.Frame(content)
+    results_panel.pack(side="left", fill="both", expand=True)
+    title = ttk.Label(details, font=("TkDefaultFont", 13, "bold"), foreground="#00664D")
+    title.pack(anchor="w")
+    instruction = ttk.Label(details, wraplength=320, justify="left")
+    instruction.pack(anchor="w", pady=(6, 12))
+    controls = ttk.Frame(details)
+    controls.pack(anchor="w")
+    display = ttk.Frame(controls)
+    display.grid(row=0, column=0, sticky="nw", padx=(0, 8))
+    reading_labels = []
+    for row in range(2):
+        label = ttk.Label(display, foreground=accent, font=("TkDefaultFont", 13, "bold"))
+        value = ttk.Label(display, foreground=accent, font=("TkDefaultFont", 13, "bold"))
+        label.grid(row=row, column=0, sticky="w", padx=(0, 4))
+        value.grid(row=row, column=1, sticky="w")
+        reading_labels.append((label, value))
+    measurement_actions = ttk.Frame(controls)
+    measurement_actions.grid(row=0, column=1, sticky="nw")
+    count_label = ttk.Label(measurement_actions)
     voltage_text = tk.StringVar(master=window)
     period_text = tk.StringVar(master=window)
-    voltage_row = ttk.Frame(content)
-    ttk.Label(voltage_row, text="Вольтметр, В").pack(side="left", padx=(0, 8))
-    ttk.Entry(voltage_row, textvariable=voltage_text, width=14).pack(side="left")
-    period_row = ttk.Frame(content)
-    ttk.Label(period_row, text="Частотомер, с").pack(side="left", padx=(0, 8))
-    ttk.Entry(period_row, textvariable=period_text, width=14).pack(side="left")
-    status = ttk.Label(content, wraplength=380)
-    status.pack(anchor="w", pady=(8, 0))
-    buttons = ttk.Frame(content)
-    buttons.pack(pady=(10, 0))
+    inputs = ttk.Frame(details)
+    inputs.pack(anchor="w", pady=12)
+    ttk.Label(inputs, text="Uэт, В:", foreground=accent, font=("TkDefaultFont", 13, "bold")).grid(row=0, column=0, sticky="w")
+    voltage_field = ttk.Entry(inputs, textvariable=voltage_text, width=16, **_numeric_input(window))
+    voltage_field.grid(row=0, column=1, padx=8)
+    period_label = ttk.Label(inputs, text="Tизм:", foreground=accent, font=("TkDefaultFont", 13, "bold"))
+    period_label.grid(row=1, column=0, sticky="w", pady=6)
+    period_field = ttk.Entry(inputs, textvariable=period_text, width=16, **_numeric_input(window))
+    period_field.grid(row=1, column=1, padx=8, pady=6)
+    period_unit_label = ttk.Label(inputs, width=4)
+    period_unit_label.grid(row=1, column=2, sticky="w")
 
-    steps = [
-        (channel, stage, index, factor)
-        for channel in channels
-        for stage, factors in (
-            ("voltage", (0.05, 0.25, 0.5, 0.75, 1.0)),
-            ("current", (0.1, 0.3, 0.5, 1.0)),
-        )
-        for index, factor in enumerate(factors)
-    ]
-    step = 0
+
+    if window.tk.call("tk", "windowingsystem") == "win32":
+        def handle_clipboard_shortcut(event):
+            # Windows virtual-key codes stay the same across keyboard layouts.
+            action = {0x43: "<<Copy>>", 0x56: "<<Paste>>"}.get(event.keycode)
+            if action:
+                event.widget.event_generate(action)
+                return "break"
+
+        for field in (voltage_field, period_field):
+            field.bind("<Control-KeyPress>", handle_clipboard_shortcut)
+
+
+    steps = {}
+    for channel in channels:
+        name = tr("lbl_channel_a" if channel == "ch1" else "lbl_channel_b")
+        navigation.insert("", "end", iid=channel, text=name, open=channel == channels[0])
+        for stage, heading, factors in (
+            ("voltage", "Напряжение", (0.05, 0.25, 0.5, 0.75, 1.0)),
+            ("current", "Ток, мощность и период", (1.0, 0.5, 0.3, 0.1)),
+        ):
+            group = f"{channel}-{stage}"
+            navigation.insert(channel, "end", iid=group, text=heading, open=True)
+            for offset, factor in enumerate(factors):
+                index = offset if stage == "voltage" else 3 - offset
+                label = (f"{nominals[channel][0] * factor:g} В" if stage == "voltage"
+                         else f"{75 * factor:g} мВ".replace(".", ","))
+                key = f"{group}-{index}"
+                navigation.insert(group, "end", iid=key, text=label)
+                steps[key] = channel, stage, index, factor, label
+
+    saved = {}
+    saved_inputs = {}
+    drafts = {}
+    selected = None
+    point_run = None
+    captured = None
     timer = None
+    stable = False
+    timed_out = False
+    stable_checks = 0
+    last_checked = 0
+    deadline = 0.0
+    window_size = 5
+    stability_limit = 0.0005  # Trial threshold: 0.05% of the reading.
+    stability_timeout = 45.0
 
-    def parse(text):
+    def number(variable):
         try:
-            value = float(text.get().strip().replace(",", "."))
+            value = float(variable.get().strip().replace(",", "."))
         except ValueError:
             return None
         return value if math.isfinite(value) and value > 0 else None
 
-    def can_save():
-        if step == len(steps) or run is not measurement_run or not _can_start_measurement():
-            return False
-        _, stage, _, _ = steps[step]
-        return parse(voltage_text if stage == "voltage" else period_text) is not None
+    def connected():
+        return conn is connection and is_device_ready
 
-    def refresh(*_args):
-        save_button.configure(state="normal" if can_save() else "disabled")
-        if step == len(steps):
-            status.configure(text="")
-        elif run is not measurement_run:
-            status.configure(text="Измерение остановлено. Откройте протокол после нового замера.")
-        else:
-            status.configure(text="")
+    def active():
+        return point_run is not None and point_run is measurement_run
+
+    def interpreted_period():
+        voltage = number(voltage_text)
+        value = number(period_text)
+        channel, stage, _, factor, _ = steps[selected]
+        if stage != "current" or voltage is None or value is None:
+            return "", None
+        expected = 3600000 / (constants[0] * voltage * nominals[channel][1] * factor)
+        return _period_unit(value, expected)
+
+    def values():
+        voltage = number(voltage_text)
+        _, period = interpreted_period()
+        if captured is None or voltage is None or (steps[selected][1] == "current" and period is None):
+            return None
+        return voltage, period, captured
+
+    def sample_window(channel, quantity):
+        return tuple(point_run.verification_samples[channel, quantity])[-window_size:]
+
+    def evaluate_stability():
+        nonlocal stable, timed_out, stable_checks, last_checked
+        if not active():
+            return
+        channel, stage, _, _, _ = steps[selected]
+        quantities = ("voltage",) if stage == "voltage" else ("voltage", "current", "power")
+        if point_run.count >= window_size and point_run.count != last_checked:
+            last_checked = point_run.count
+
+            def steady(quantity):
+                samples = sample_window(channel, quantity)
+                half = len(samples) // 2
+                limit = abs(mean(samples)) * stability_limit
+                return max(stdev(samples), abs(mean(samples[:half]) - mean(samples[half:]))) <= limit
+
+            has_voltage = all(value > 0 for value in sample_window(channel, "voltage"))
+            stable_checks = stable_checks + 1 if has_voltage and all(steady(q) for q in quantities) else 0
+            stable = stable_checks >= 3
+        if stable or time.monotonic() >= deadline:
+            timed_out = not stable
+            _stop_measurement()
+
+    def refresh():
+        if selected is None:
+            return
+        unit, _ = interpreted_period()
+        period_unit_label.configure(text=unit)
+        channel, stage, _, _, _ = steps[selected]
+        live = latest_parameters or {}
+        readings = live if len(channels) == 1 else live.get(channel, {})
+        if not connected():
+            readings = {}
+        if captured is not None:
+            readings = captured
+        elif point_run is not None and point_run.count:
+            readings = {q: mean(sample_window(channel, q)) for q in MeasurementRun.QUANTITIES}
+        quantities = (("voltage", "В"),) if stage == "voltage" else (("current", "А"), ("power", "кВт"))
+        symbols = {"voltage": "Uсквт", "current": "Iсквт", "power": "Pсквт"}
+        for row, (label_widget, value_widget) in enumerate(reading_labels):
+            if row >= len(quantities):
+                label_widget.grid_remove()
+                value_widget.grid_remove()
+                continue
+            quantity, unit = quantities[row]
+            label_widget.configure(text=f"{symbols[quantity]}:")
+            value_widget.configure(
+                text=f"{readings[quantity]:.4f} {unit}" if quantity in readings else "—"
+            )
+            label_widget.grid()
+            value_widget.grid()
+        count_label.configure(text=f"Отсчётов: {point_run.count if point_run else 0}")
+        stability_status.configure(text=(
+            "Показания стабильны" if stable else
+            "Нет напряжения на канале" if point_run and point_run.count
+            and sample_window(channel, "voltage")[-1] <= 0 else
+            "Показания нестабильны" if timed_out else ""
+        ))
+        measure.configure(text="Остановить" if active() else (
+                              "Повторить измерение" if timed_out else "Измерить"),
+
+                          state="normal" if connected() else "disabled",
+                          style="TButton" if active() else "Emis.Primary.TButton")
+        capture.configure(state="normal" if connected() and captured is None and stable else "disabled")
+        save_button.configure(state="normal" if not active() and values() is not None else "disabled")
+        finish.configure(text=f"Сформировать протокол ({len(saved)}/{len(steps)})")
+        current_inputs = voltage_text.get(), period_text.get(), captured
+        ready = len(saved) == len(steps) and not active() and all(
+            (current_inputs if key == selected else drafts.get(key)) == saved_inputs[key]
+            for key in steps
+        )
+        finish.configure(state="normal" if ready else "disabled")
 
     def tick():
         nonlocal timer
+        evaluate_stability()
         refresh()
-        timer = window.after(200, tick)
+        timer = window.after(150, tick)
 
-    def show_step():
-        voltage_row.pack_forget()
-        period_row.pack_forget()
-        voltage_text.set("")
-        period_text.set("")
-        if step == len(steps):
-            heading.configure(text="Протокол заполнен")
-            instruction.configure(text="Все точки записаны в выбранный файл.")
-            save_button.pack_forget()
-            close_button.configure(text="ОК")
-            refresh()
+    def toggle():
+        nonlocal point_run, captured, stable, timed_out, stable_checks, last_checked, deadline
+        if active():
+            _stop_measurement()
+        elif connected():
+            _start_measurement()
+            point_run = measurement_run
+            if point_run is not None:
+                captured = None
+                stable = timed_out = False
+                stable_checks = last_checked = 0
+                deadline = time.monotonic() + stability_timeout
+        refresh()
+
+    def freeze():
+        nonlocal captured
+        if not connected() or captured is not None or not stable or point_run is None:
             return
-        channel, stage, index, factor = steps[step]
-        nominal_voltage, nominal_current = nominals[channel]
+        channel = steps[selected][0]
+        captured = {q: mean(sample_window(channel, q)) for q in MeasurementRun.QUANTITIES}
+        if active():
+            _stop_measurement()
+        refresh()
+
+    def select_point(_event=None):
+        nonlocal selected, point_run, captured, stable, timed_out
+        selection = navigation.selection()
+        if not selection or selection[0] not in steps or selection[0] == selected:
+            return
+        if selected is not None:
+            drafts[selected] = voltage_text.get(), period_text.get(), captured
+        if active():
+            _stop_measurement()
+        point_run = None
+        stable = timed_out = False
+        selected = selection[0]
+        channel, stage, _, _, label = steps[selected]
+        voltage, period, captured = drafts.get(selected, ("", "", None))
+        voltage_text.set(voltage)
+        period_text.set(period)
         name = tr("lbl_channel_a" if channel == "ch1" else "lbl_channel_b")
-        prefix = f"{name}. " if len(channels) == 2 else ""
+        prefix = f"{name} · " if len(channels) == 2 else ""
         if stage == "voltage":
-            heading.configure(text=f"{prefix}Напряжение. {index + 1} из 5")
-            text = (
-                f"Выставьте {nominal_voltage * factor:g} В на источнике напряжения "
-                "и введите показание вольтметра."
-            )
-            voltage_row.pack(before=status, anchor="w", pady=(8, 0))
+            title.configure(text=f"{prefix}Напряжение · {label}")
+            instruction.configure(text=f"Выставьте {label} на источнике напряжения и введите показание вольтметра в поле Uэт.")
+            period_label.grid_remove()
+            period_field.grid_remove()
+            period_unit_label.grid_remove()
+            save_button.grid_configure(row=0)
         else:
-            heading.configure(text=f"{prefix}Ток, мощность и период. {index + 1} из 4")
-            period_row.pack(before=status, anchor="w", pady=(8, 0))
-            text = (
-                "Оставьте напряжение на Uном. Переключите ЭнИ на точку "
-                f"{nominal_current * factor:g} А и введите период с частотомера."
-            )
-        instruction.configure(text=text)
+            title.configure(text=f"{prefix}Ток, мощность и период · {label}")
+            instruction.configure(text=f"Оставьте напряжение на Uном. Выставьте на калибраторе ЭнИ значение напряжения {label}.")
+            period_label.grid()
+            period_field.grid()
+            period_unit_label.grid()
+            save_button.grid_configure(row=1)
+        update_preview()
         refresh()
 
     def save_point():
-        nonlocal step
-        if not can_save():
+        data = values()
+        if data is None or active():
             return
-        channel, stage, index, factor = steps[step]
-        readings = {
-            quantity: sum(run.verification_samples[(channel, quantity)]) / run.MIN_SAMPLES
-            for quantity in MeasurementRun.QUANTITIES
-        }
-        reference = parse(voltage_text) if stage == "voltage" else nominals[channel][1] * factor
-        period = parse(period_text) if stage == "current" else None
-        final_channels = channels if step + 1 == len(steps) else ()
-        if not save(window, channel, stage, index, reference, readings, period, final_channels):
+        saved[selected] = data
+        saved_inputs[selected] = voltage_text.get(), period_text.get(), captured
+        navigation.item(selected, text=f"✓ {steps[selected][-1]}")
+        update_preview()
+        keys = list(steps)
+        following = keys.index(selected) + 1
+        if following < len(keys):
+            next_key = keys[following]
+            navigation.item(steps[next_key][0], open=True)
+            navigation.selection_set(next_key)
+            navigation.see(next_key)
+            select_point()
+        refresh()
+
+    def update_preview():
+        channel, stage, _, _, _ = steps[selected]
+        tables = ("voltage",) if stage == "voltage" else ("current", "power", "period")
+        for quantity, (panel, _) in previews.items():
+            panel.pack_forget()
+            if quantity in tables:
+                panel.pack(fill="x", pady=(0, 6))
+
+        limits = _verification_limits(header["accuracy_class"])
+        offsets = {"voltage": 0, "current": 5, "power": 9, "period": 13}
+        row_number = 0
+        for key, (point_channel, point_stage, index, factor, label) in steps.items():
+            if (point_channel, point_stage) != (channel, stage):
+                continue
+            row_number += 1
+            if key not in saved:
+                for quantity in tables:
+                    set_preview_row(quantity, row_number, ("", "", ""))
+                continue
+
+            voltage, period, readings = saved[key]
+            if stage == "voltage":
+                measured = readings["voltage"]
+                rows = (("voltage", voltage, measured, (measured - voltage) / voltage),)
+            else:
+                current = nominals[channel][1] * factor
+                power = voltage * current / 1000
+                expected_period = 3600 / (constants[0] * power)
+                rows = (
+                    ("current", current, readings["current"], (readings["current"] - current) / current),
+                    ("power", power, readings["power"], (readings["power"] - power) / power),
+                    ("period", expected_period, period, (expected_period - period) / period),
+                )
+            for quantity, reference, measured, error in rows:
+                percent = error * 100
+                limit = limits[offsets[quantity] + index]
+                color = "#00664D" if abs(percent) <= limit else "#B42318"
+                set_preview_row(
+                    quantity, row_number,
+                    (f"{reference:.8g}", f"{measured:.8g}", f"{percent:+.4f}"),
+                    color,
+                )
+
+    def set_preview_row(quantity, row_number, values, color="#24332F"):
+        for column, (cell, value) in enumerate(zip(previews[quantity][1][row_number - 1], values)):
+            cell.configure(text=value, foreground=color if column == 2 else "#24332F")
+
+    def export():
+        missing = next((key for key in steps if key not in saved), None)
+        if missing is not None:
+            messagebox.showinfo("Поверка", f"Запишите все точки. Готово {len(saved)} из {len(steps)}.", parent=window)
+            navigation.selection_set(missing)
+            navigation.see(missing)
+            select_point()
             return
-        step += 1
-        if step < len(steps) and steps[step][0] != channel:
-            messagebox.showinfo("Следующий канал", "Переключите стенд на канал В.", parent=window)
-        show_step()
+        drafts[selected] = voltage_text.get(), period_text.get(), captured
+        dirty = next((key for key in steps if drafts.get(key) != saved_inputs[key]), None)
+        if dirty is not None or active():
+            messagebox.showinfo("Поверка", "Запишите изменённые точки перед формированием протокола.", parent=window)
+            if dirty is not None and not active():
+                navigation.selection_set(dirty)
+                navigation.see(dirty)
+                select_point()
+            return
+        if not _confirm_protocol_export(window):
+            return
+        path = filedialog.asksaveasfilename(
+            parent=window,
+            title="Сохранить новый протокол",
+            initialfile=filename,
+            defaultextension=".xlsx",
+            filetypes=[("Протокол Excel", "*.xlsx")],
+        )
+        if not path:
+            return
+        destination = Path(path)
+        try:
+            if destination.resolve() == template_path.resolve():
+                raise ValueError("Выберите другое имя для протокола.")
+            with TemporaryDirectory(dir=destination.parent) as folder:
+                draft = Path(folder) / "protocol.xlsx"
+                _create_verification_workbook(template_path, draft, header, nominals, constants[0])
+                for position, (key, (channel, stage, index, factor, _)) in enumerate(steps.items()):
+                    voltage, period, readings = saved[key]
+                    reference = voltage if stage == "voltage" else nominals[channel][1] * factor
+                    _save_verification_step(
+                        draft, channel, stage, index, reference, readings, lambda _: True,
+                        period=period,
+                        final_channels=channels if position == len(steps) - 1 else (),
+                        reference_voltage=voltage,
+                    )
+                os.replace(draft, destination)
+        except PermissionError:
+            messagebox.showerror("Поверка", "Закройте протокол в Excel и повторите сохранение.", parent=window)
+            return
+        except Exception as error:
+            messagebox.showerror("Поверка", str(error), parent=window)
+            return
+        def open_report(dialog):
+            try:
+                os.startfile(str(destination))
+            except OSError as error:
+                messagebox.showerror("Поверка", str(error), parent=dialog)
+                return
+            dialog.destroy()
+            dispose_window()
+
+        _show_emis_notice(
+            "Поверка", "Протокол сформирован.", parent=window, wait=True,
+            action=("Открыть протокол", open_report),
+        )
 
     def close_window():
-        if timer is not None:
-            window.after_cancel(timer)
+        if (saved or captured is not None) and not _confirm_protocol_export(
+            window, "Закрытие поверки", "Закрыть окно поверки?"
+        ):
+            return
+        dispose_window()
+
+    def dispose_window():
+        if active():
+            _stop_measurement()
+        window.after_cancel(timer)
         window.destroy()
 
-    save_button = ttk.Button(buttons, text="Записать", command=save_point)
-    save_button.pack(side="left", padx=(0, 8))
-    close_button = ttk.Button(buttons, text="Закрыть", command=close_window)
-    close_button.pack(side="left")
-    voltage_text.trace_add("write", refresh)
-    period_text.trace_add("write", refresh)
+    measure = ttk.Button(measurement_actions, command=toggle)
+    measure.grid(row=0, column=0, sticky="ew")
+    capture = ttk.Button(measurement_actions, text="Замер", command=freeze, style="Emis.Primary.TButton")
+    capture.grid(row=0, column=1, padx=(8, 0), sticky="ew")
+
+    def wrap_instruction(_event=None):
+        width = capture.winfo_rootx() + capture.winfo_width() - instruction.winfo_rootx()
+        if width > 1 and int(instruction.cget("wraplength")) != width:
+            instruction.configure(wraplength=width)
+
+    capture.bind("<Configure>", wrap_instruction, add="+")
+
+    measurement_actions.bind("<Configure>", wrap_instruction, add="+")
+    count_label.grid(row=1, column=0, sticky="w", pady=(3, 0))
+    stability_status = ttk.Label(details)
+    stability_status.pack(anchor="w")
+    save_button = ttk.Button(
+        inputs, text="Записать точку", command=save_point, style="Emis.Primary.TButton",
+    )
+    save_button.grid(row=0, column=3, padx=(6, 0))
+    finish = ttk.Button(details, command=export, style="Emis.Primary.TButton", state="disabled")
+    finish.pack(side="bottom", pady=(8, 0))
+    _create_power_supply_panel(details, anchor="w")
+    previews = {}
+    for quantity, heading, height in (
+        ("voltage", "Напряжение, В", 5),
+        ("current", "Ток, А", 4),
+        ("power", "Мощность, кВт", 4),
+        ("period", "Период, с", 4),
+    ):
+        panel = ttk.Frame(results_panel)
+        ttk.Label(panel, text=heading, style="Emis.Heading.TLabel").grid(row=0, column=0, columnspan=3, sticky="w")
+        columns = (("Эталон", 10), ("Измерено", 11), ("Погрешность, %", 16))
+        grid = tk.Frame(panel, background="#D4DEDE", padx=1, pady=1)
+        grid.grid(row=1, column=0, sticky="ew", pady=(3, 0))
+        panel.columnconfigure(0, weight=1)
+        for column, (label, width) in enumerate(columns):
+            grid.columnconfigure(column, weight=1)
+            ttk.Label(grid, text=label, width=width, anchor="center", padding=(0, 2)).grid(
+                row=0, column=column, sticky="ew", padx=(0, int(column < 2)), pady=(0, 1)
+            )
+        cells = []
+        for row in range(height):
+            row_cells = []
+            for column, (_, width) in enumerate(columns):
+                cell = ttk.Label(grid, width=width, anchor="center", padding=(0, 2))
+                cell.grid(row=row + 1, column=column, sticky="ew", padx=(0, int(column < 2)),
+                          pady=(0, int(row < height - 1)))
+                row_cells.append(cell)
+            cells.append(row_cells)
+        previews[quantity] = panel, cells
+    navigation.bind("<<TreeviewSelect>>", select_point)
+    navigation.selection_set(next(iter(steps)))
+    select_point()
     window.protocol("WM_DELETE_WINDOW", close_window)
-    window.bind("<Escape>", lambda _event: close_window())
-    show_step()
-    tick()
     window.update_idletasks()
-    x = root.winfo_rootx() + (root.winfo_width() - window.winfo_width()) // 2
-    y = root.winfo_rooty() + (root.winfo_height() - window.winfo_height()) // 2
-    window.geometry(f"{x:+d}{y:+d}")
+    width = max(window.winfo_reqwidth(), window.minsize()[0])
+    height = max(window.winfo_reqheight(), window.minsize()[1])
+    x = max(0, (window.winfo_screenwidth() - width) // 2)
+    y = max(0, (window.winfo_screenheight() - height) // 2)
+    window.geometry(f"{width}x{height}+{x}+{y}")
+    tick()
 
 
 def _refresh_measurement_controls():
-    if measurement_button is None or not measurement_button.winfo_exists():
-        return
-
-    active = measurement_started_at is not None
-
-    measurement_button.config(
-        text=tr("measurement_stop" if active else "measurement_start"),
-        state="normal" if active or _can_start_measurement() else "disabled",
-    )
-
-    run = measurement_run
     if measurement_protocol_button is not None and measurement_protocol_button.winfo_exists():
-        can_capture = run is not None and run.ready and run.device_type == device_type
-        measurement_protocol_button.configure(
-            state="normal" if can_capture else "disabled"
-        )
-    if run is None:
-        status = ""
-    elif not run.ready:
-        status = tr("measurement_progress").format(
-            count=run.count, minimum=run.MIN_SAMPLES
-        )
-    else:
-        status = tr("measurement_running").format(count=run.count)
-
-    measurement_status.config(text=status)
+        measurement_protocol_button.configure(state="normal" if conn and is_device_ready else "disabled")
 
 
 def _refresh_electrical_values(params):
@@ -2394,14 +2818,7 @@ def _update_port_list(ports=None):
     previous_port = port_var.get()
     choices = ports or [tr("status_no_ports")]
 
-    menu = port_menu["menu"]
-    menu.delete(0, "end")
-
-    for port in choices:
-        menu.add_command(
-            label=port,
-            command=lambda value=port: port_var.set(value),
-        )
+    port_menu.configure(values=choices)
 
     if previous_port in choices:
         port_var.set(previous_port)
@@ -2415,23 +2832,66 @@ def refresh_ports():
     _update_port_list(ports)
 
     if ports:
-        messagebox.showinfo(
+        _show_emis_notice(
             tr("dlg_available_ports"),
             tr("dlg_ports_found").format("\n".join(ports)),
+            wait=True,
         )
     else:
-        messagebox.showinfo(
+        _show_emis_notice(
             tr("dlg_available_ports"),
             tr("dlg_no_port"),
+            wait=True,
         )
+
+
+def _valid_modbus_address(value):
+    return (
+        1 <= len(value) <= 3
+        and all(char in "0123456789" for char in value)
+        and 1 <= int(value) <= 254
+    )
+
+
+def _show_emis_notice(title, message, *, parent=None, wait=False, action=None):
+    parent = root if parent is None else parent
+    dialog = tk.Toplevel(parent, background=emis_background)
+    dialog.withdraw()
+    dialog.title(title)
+    dialog.transient(parent)
+    dialog.resizable(False, False)
+
+    card = ttk.Frame(dialog, style="Emis.Card.TFrame", padding=(18, 14))
+    card.pack(padx=12, pady=12, fill="both", expand=True)
+    ttk.Label(card, text=title, style="Emis.Heading.TLabel").pack(anchor="w")
+    ttk.Label(card, text=message, justify="left").pack(anchor="w", pady=(8, 12))
+    button = ttk.Button(card, text="OK", command=dialog.destroy, style="Emis.Primary.TButton")
+    if action is None:
+        button.pack(anchor="e")
+    else:
+        label, callback = action
+        button.configure(text=label, command=lambda: callback(dialog))
+        button.pack(anchor="e")
+
+    dialog.bind("<Escape>", lambda _event: dialog.destroy())
+    dialog.bind("<Return>", lambda _event: button.invoke())
+    dialog.update_idletasks()
+    x = parent.winfo_rootx() + (parent.winfo_width() - dialog.winfo_reqwidth()) // 2
+    y = parent.winfo_rooty() + (parent.winfo_height() - dialog.winfo_reqheight()) // 2
+    dialog.geometry(f"{x:+d}{y:+d}")
+    dialog.deiconify()
+    dialog.wait_visibility()
+    dialog.grab_set()
+    button.focus_set()
+    if wait:
+        parent.wait_window(dialog)
 
 
 def connect_scan():
     global conn, connect_btn, disconnect_btn, status_canvas, status_indicator, is_device_ready
-    global search_window_ref, search_timeout_id, search_check_id
+    global search_window_ref, search_check_id
 
     # Отменяем старые таймеры
-    if search_timeout_id: root.after_cancel(search_timeout_id); search_timeout_id = None
     if search_check_id: root.after_cancel(search_check_id); search_check_id = None
 
     port = port_var.get().strip()
@@ -2443,13 +2903,22 @@ def connect_scan():
         messagebox.showwarning(tr("dlg_warning"), tr("power_supply_busy").format(port=port))
         return
 
+    address = addr_var.get()
+    if not _valid_modbus_address(address):
+        messagebox.showerror(tr("dlg_input_error"), tr("invalid_modbus_address"))
+        return
+    preferred_slave = int(address)
+    preferred_baud = int(speed_var.get())
+    preferred_parity = parity_var.get()
+
     # Создаём окно поиска
     search_window_ref = tk.Toplevel(root)
     search_window_ref.title(tr("dlg_search"))
     search_window_ref.resizable(False, False)
     search_window_ref.transient(root)
     search_window_ref.grab_set()
-    tk.Label(search_window_ref, text=tr("dlg_searching"), padx=20, pady=20).pack()
+    progress_label = tk.Label(search_window_ref, text=tr("dlg_searching"), padx=20, pady=20, width=44)
+    progress_label.pack()
     search_window_ref.update_idletasks()
 
     x = root.winfo_rootx() + (root.winfo_width() - search_window_ref.winfo_width()) // 2
@@ -2461,26 +2930,27 @@ def connect_scan():
 
     scan_result = [None]
     scan_error = [None]
-    scan_cancelled = [False]
-    finalize_connection_id = [None]
+    scan_cancelled = threading.Event()
 
     def do_scan():
         try:
-            success, result = scan_device(port, int(addr_var.get()), int(speed_var.get()), parity_var.get())
+            success, result = scan_device(
+                port, preferred_slave, preferred_baud, preferred_parity,
+                cancelled=scan_cancelled,
+            )
             scan_result[0] = result if success else None
             scan_error[0] = None if success else result
         except Exception as e:
             scan_error[0] = str(e)
 
-    threading.Thread(target=do_scan, daemon=True).start()
+    worker = threading.Thread(target=do_scan, daemon=True)
 
     def do_cleanup(success=False, result_data=None, error_msg=None):
-        global search_window_ref, search_timeout_id, search_check_id
-        if scan_cancelled[0]:
+        global search_window_ref, search_check_id
+        if scan_cancelled.is_set():
             return
         
         # Отмена таймеров
-        if search_timeout_id: root.after_cancel(search_timeout_id); search_timeout_id = None
         if search_check_id: root.after_cancel(search_check_id); search_check_id = None
 
         if success and result_data:
@@ -2489,52 +2959,23 @@ def connect_scan():
             was_ever_connected = True
             is_device_ready = True
 
-            # 1. Обновляем комбобоксы (пока окно ещё висит)
             addr_var.set(str(conn["slave"]))
             speed_var.set(str(conn["baud"]))
             parity_var.set(conn["parity"])
-            parity_combo.set(conn["parity"])
+            search_window_ref.destroy()
+            search_window_ref = None
+            root.config(cursor="")
 
-            # 2. Запускаем поток чтения данных (он начнёт заполнять вкладки прямо сейчас)
+            set_buttons_state("normal")
+            connect_btn.config(state="disabled")
+            refresh_btn.config(state="disabled")
+            disconnect_btn.config(state="normal")
+            status_canvas.itemconfig(status_indicator, fill="#66cc66")
+            update_device_type_display()
             start_time_reader()
-
-            # 3. Планируем финализацию через 1.5 сек
-            def finalize_connection():
-                finalize_connection_id[0] = None
-
-                if scan_cancelled[0]:
-                    return
-                global is_device_ready, search_window_ref
-
-                # Закрываем окно поиска
-                try:
-                    if search_window_ref and search_window_ref.winfo_exists():
-                        search_window_ref.grab_release()
-                        search_window_ref.destroy()
-                except: pass
-                finally:
-                    search_window_ref = None
-
-                # Сбрасываем курсор
-                root.config(cursor="")
-                root.update_idletasks()
-
-                # Показываем сообщение об успехе
-                messagebox.showinfo(tr("dlg_connected"),
-                    tr("dlg_connected_msg").format(conn['slave'], conn['baud'], conn['parity']))
-
-                # Активируем кнопки и индикатор
-                set_buttons_state("normal")
-                connect_btn.config(state="disabled")
-                refresh_btn.config(state="disabled")
-                disconnect_btn.config(state="normal")
-                status_canvas.itemconfig(status_indicator, fill="#66cc66")
-                update_device_type_display()
-
-            # Ждем 6 секунды перед выполнением финализации
-            finalize_connection_id[0] = root.after(
-                6000,
-                finalize_connection,
+            _show_emis_notice(
+                tr("dlg_connected"),
+                tr("dlg_connected_msg").format(result_data["slave"], result_data["baud"], result_data["parity"]),
             )
 
         elif error_msg:
@@ -2555,22 +2996,13 @@ def connect_scan():
 
     def cancel_scan():
         """Отменяет поиск и не даёт его потоку завершить подключение."""
-        global search_window_ref, search_timeout_id, search_check_id
+        global search_window_ref, search_check_id
 
-        scan_cancelled[0] = True
+        scan_cancelled.set()
+        cancel_button.configure(state="disabled")
 
-        if search_timeout_id:
-            root.after_cancel(search_timeout_id)
-            search_timeout_id = None
-
-        if search_check_id:
-            root.after_cancel(search_check_id)
-            search_check_id = None
-
-        if finalize_connection_id[0]:
-            root.after_cancel(finalize_connection_id[0])
-            finalize_connection_id[0] = None
-
+    def close_cancelled_scan():
+        global search_window_ref
         try:
             if search_window_ref and search_window_ref.winfo_exists():
                 search_window_ref.grab_release()
@@ -2583,34 +3015,29 @@ def connect_scan():
         root.config(cursor="")
         root.update_idletasks()
 
-    tk.Button(
+    cancel_button = ttk.Button(
         search_window_ref,
         text=tr("dlg_cancel"),
         command=cancel_scan,
         width=12,
-    ).pack(pady=(0, 15))
+    )
+    cancel_button.pack(pady=(0, 15))
 
     search_window_ref.protocol("WM_DELETE_WINDOW", cancel_scan)
-
-    def on_timeout():
-        global search_timeout_id
-        search_timeout_id = None
-        if scan_result[0] is None and scan_error[0] is None:
-            scan_error[0] = "Превышено время ожидания подключения (45 сек)"
-            do_cleanup(error_msg=scan_error[0])
-
-    search_timeout_id = root.after(45000, on_timeout)
 
     def check_complete():
         global search_check_id
         search_check_id = None
-        if scan_result[0] is not None:
-            do_cleanup(success=True, result_data=scan_result[0])
-        elif scan_error[0] is not None:
-            do_cleanup(error_msg=str(scan_error[0]))
-        else:
+        if worker.is_alive():
             search_check_id = root.after(100, check_complete)
+        elif scan_cancelled.is_set():
+            close_cancelled_scan()
+        elif scan_result[0] is not None:
+            do_cleanup(success=True, result_data=scan_result[0])
+        else:
+            do_cleanup(error_msg=str(scan_error[0] or tr("dlg_error")))
 
+    worker.start()
     search_check_id = root.after(100, check_complete)
 
 
@@ -2648,7 +3075,7 @@ def disconnect_device(show_message=False):
 
     # Показываем сообщение только если было успешное подключение ранее
     if show_message and was_ever_connected:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_disconnected"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_disconnected"), wait=True)
 
     # Обновляем отображение типа
     update_device_type_display()
@@ -2705,6 +3132,12 @@ def write_settings():
     if writing_in_progress:
         return
 
+    address = addr_var.get()
+    if not _valid_modbus_address(address):
+        messagebox.showerror(tr("dlg_input_error"), tr("invalid_modbus_address"))
+        return
+    new_slave = int(address)
+
     # Запрещаем фоновому потоку начинать новые обращения к прибору.
     writing_in_progress = True
 
@@ -2738,7 +3171,6 @@ def write_settings():
     root.update_idletasks()
 
     try:
-        new_slave = int(addr_var.get())
         new_baud = int(speed_var.get())
         new_parity = parity_var.get()
 
@@ -2868,7 +3300,7 @@ def open_time_settings():
     """Открывает окно настройки даты и времени."""
     global conn, is_device_ready
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
     if not is_device_ready:
         messagebox.showwarning(tr("dlg_warning"), tr("dlg_time_writing").split('\n')[0] + "...")
@@ -3008,14 +3440,14 @@ def open_time_settings():
     btn_frame = tk.Frame(win)
     btn_frame.pack(pady=10)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text=tr("dlg_apply"), command=apply_time, width=10).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text=tr("dlg_apply"), command=apply_time, style="Emis.Primary.TButton").pack(side="left", padx=5)
 
 
 def sync_pc_time():
     """Синхронизирует время устройства с текущим временем ПК."""
     global conn, is_device_ready
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
     if not is_device_ready:
         messagebox.showwarning(tr("dlg_warning"), tr("dlg_time_writing").split('\n')[0])  # Используем существующий ключ
@@ -3056,7 +3488,7 @@ def sync_pc_time():
 def clear_energy_values():
     global conn, operation_in_progress
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
 
     pwd_res = _prompt_password()
@@ -3136,7 +3568,7 @@ def _prompt_password():
     btn_frame = tk.Frame(win)
     btn_frame.pack(pady=10)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text="OK", command=on_ok, width=10).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text="OK", command=on_ok, style="Emis.Primary.TButton").pack(side="left", padx=5)
 
     win.update_idletasks()
     x = root.winfo_rootx() + (root.winfo_width() - win.winfo_width()) // 2
@@ -3185,7 +3617,7 @@ def show_help():
     article.columnconfigure(0, weight=1)
     article.rowconfigure(1, weight=1)
 
-    title = ttk.Label(article, font=("TkDefaultFont", 12, "bold"))
+    title = ttk.Label(article, style="Emis.Heading.TLabel")
     title.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
     body = tk.Text(article, wrap="word", font="TkDefaultFont", padx=8, pady=6)
     scrollbar = ttk.Scrollbar(article, orient="vertical", command=body.yview)
@@ -3399,24 +3831,15 @@ def check_for_updates(show_messages=True):
 def _create_measurement_controls(parent):
     global measurement_button, measurement_status, measurement_protocol_button
 
-    button_row = ttk.Frame(parent)
-    button_row.pack(pady=(4, 0))
-    ttk.Label(
-        button_row,
-        text=tr("measurement_label"),
-        font=("TkDefaultFont", 9, "bold"),
-    ).pack(side="left", padx=(0, 10))
-    measurement_button = ttk.Button(button_row, width=12, command=_toggle_measurement)
-    measurement_button.pack(side="left")
     measurement_protocol_button = ttk.Button(
-        button_row,
+        parent,
         text=tr("measurement_protocol"),
         command=_open_verification,
+        style="Emis.Primary.TButton",
         state="disabled",
     )
-    measurement_protocol_button.pack(side="left", padx=(8, 0))
-    measurement_status = ttk.Label(parent, wraplength=360, justify="center")
-    measurement_status.pack(pady=(3, 0))
+    measurement_protocol_button.pack(pady=(4, 0))
+    _refresh_measurement_controls()
 
 
 def create_parameters_tab():
@@ -3431,207 +3854,69 @@ def create_parameters_tab():
     global param_ch2_energy_abs_label, param_ch2_energy_pos_label, param_ch2_energy_neg_label
     global param_ch2_nom_v_label, param_ch2_nom_i_label
 
-    # Очищаем старое содержимое
     for widget in tab_params.winfo_children():
         widget.destroy()
 
-    if device_type == "single":
-        center_frame = tk.Frame(tab_params)
-        center_frame.pack(pady=(20, 0))
+    def channel_card(parent, column, heading=None):
+        card = ttk.Frame(parent, padding=(14, 10), style="Emis.Card.TFrame")
+        card.grid(row=0, column=column, sticky="nsew", padx=5)
+        card.columnconfigure(1, weight=1)
+        row = 0
+        if heading:
+            ttk.Label(card, text=tr(heading), style="Emis.Heading.TLabel").grid(
+                row=row, column=0, columnspan=2, sticky="w", pady=(0, 5)
+            )
+            row += 1
 
-        # Блок 1: Номинальные параметры
-        tk.Label(center_frame, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
+        labels = []
+        for section, keys in (
+            ("lbl_nominal", ("lbl_nom_v", "lbl_nom_i")),
+            ("lbl_energy", ("lbl_abs", "lbl_pos", "lbl_neg")),
+            ("lbl_current_params", ("lbl_voltage", "lbl_current", "lbl_power")),
+        ):
+            if labels:
+                ttk.Separator(card).grid(row=row, column=0, columnspan=2, sticky="ew", pady=5)
+                row += 1
+            ttk.Label(card, text=tr(section), font=("TkDefaultFont", 9, "bold")).grid(
+                row=row, column=0, columnspan=2, sticky="w", pady=(2, 3)
+            )
+            row += 1
+            for key in keys:
+                ttk.Label(card, text=tr(key)).grid(row=row, column=0, sticky="w", padx=(0, 10), pady=1)
+                value = ttk.Label(card, text=tr("status_disconnected"), font=("Consolas", 11))
+                value.grid(row=row, column=1, sticky="w", pady=1)
+                labels.append(value)
+                row += 1
+                if key == "lbl_abs":
+                    ttk.Label(card, text=tr("lbl_abs_hint"), foreground="#53645F").grid(
+                        row=row, column=0, columnspan=2, sticky="w", pady=(0, 2)
+                    )
+                    row += 1
+        return labels
 
-        row_n1 = tk.Frame(center_frame)
-        row_n1.pack(anchor="w", pady=2)
-        tk.Label(row_n1, text=tr("lbl_nom_v")).pack(side="left")
-        param_nom_voltage_label = tk.Label(row_n1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_nom_voltage_label.pack(side="left", padx=(10, 0))
+    single = device_type == "single"
+    cards = ttk.Frame(tab_params, style="Emis.Background.TFrame")
+    cards.pack(fill="x" if not single else "none", padx=15, pady=(14, 8))
+    if single:
+        (
+            param_nom_voltage_label, param_nom_current_label,
+            param_energy_abs_label, param_energy_pos_label, param_energy_neg_label,
+            param_voltage_label, param_current_label, param_power_label,
+        ) = channel_card(cards, 0)
+    else:
+        cards.columnconfigure((0, 1), weight=1, uniform="meter_channels")
+        (
+            param_ch1_nom_v_label, param_ch1_nom_i_label,
+            param_ch1_energy_abs_label, param_ch1_energy_pos_label, param_ch1_energy_neg_label,
+            param_v1_label, param_i1_label, param_p1_label,
+        ) = channel_card(cards, 0, "lbl_channel_a")
+        (
+            param_ch2_nom_v_label, param_ch2_nom_i_label,
+            param_ch2_energy_abs_label, param_ch2_energy_pos_label, param_ch2_energy_neg_label,
+            param_v2_label, param_i2_label, param_p2_label,
+        ) = channel_card(cards, 1, "lbl_channel_b")
 
-        row_n2 = tk.Frame(center_frame)
-        row_n2.pack(anchor="w", pady=2)
-        tk.Label(row_n2, text=tr("lbl_nom_i")).pack(side="left")
-        param_nom_current_label = tk.Label(row_n2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_nom_current_label.pack(side="left", padx=(10, 0))
-
-        tk.Frame(center_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
-
-        # Блок 2: Электроэнергия
-        tk.Label(center_frame, text=tr("lbl_energy"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(0, 4))
-
-        row_e1 = tk.Frame(center_frame)
-        row_e1.pack(anchor="w", pady=2)
-        tk.Label(row_e1, text=tr("lbl_abs")).pack(side="left")
-        param_energy_abs_label = tk.Label(row_e1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_energy_abs_label.pack(side="left", padx=(10, 0))
-
-        row_e2 = tk.Frame(center_frame)
-        row_e2.pack(anchor="w", pady=2)
-        tk.Label(row_e2, text=tr("lbl_pos")).pack(side="left")
-        param_energy_pos_label = tk.Label(row_e2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_energy_pos_label.pack(side="left", padx=(10, 0))
-
-        row_e3 = tk.Frame(center_frame)
-        row_e3.pack(anchor="w", pady=(0, 8))
-        tk.Label(row_e3, text=tr("lbl_neg")).pack(side="left")
-        param_energy_neg_label = tk.Label(row_e3, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_energy_neg_label.pack(side="left", padx=(10, 0))
-
-        tk.Frame(center_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
-
-        # Блок 3: Текущие параметры
-        tk.Label(center_frame, text=tr("lbl_current_params"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        row1 = tk.Frame(center_frame)
-        row1.pack(anchor="w", pady=2)
-        tk.Label(row1, text=tr("lbl_voltage")).pack(side="left")
-        param_voltage_label = tk.Label(row1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_voltage_label.pack(side="left", padx=(10, 0))
-
-        row2 = tk.Frame(center_frame)
-        row2.pack(anchor="w", pady=2)
-        tk.Label(row2, text=tr("lbl_current")).pack(side="left")
-        param_current_label = tk.Label(row2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_current_label.pack(side="left", padx=(10, 0))
-
-        row3 = tk.Frame(center_frame)
-        row3.pack(anchor="w", pady=(0, 8))
-        tk.Label(row3, text=tr("lbl_power")).pack(side="left")
-        param_power_label = tk.Label(row3, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_power_label.pack(side="left", padx=(10, 0))
-
-        controls = ttk.Frame(tab_params)
-        controls.pack()
-        _create_measurement_controls(controls)
-
-    else:   # Двухканальный счетчик
-        main_frame = tk.Frame(tab_params)
-        main_frame.pack(pady=10)
-
-        # --- ЛЕВАЯ КОЛОНКА: КАНАЛ A ---
-        col1 = tk.Frame(main_frame)
-        col1.grid(row=0, column=0, sticky="nw", padx=20, pady=5)
-        tk.Label(col1, text=tr("lbl_channel_a"), font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(0, 10))
-
-        # Блок 1: Номинальные параметры
-        tk.Label(col1, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        rn1 = tk.Frame(col1); rn1.pack(anchor="w", pady=1)
-        tk.Label(rn1, text=tr("lbl_nom_v")).pack(side="left")
-        param_ch1_nom_v_label = tk.Label(rn1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch1_nom_v_label.pack(side="left", padx=(5, 0))
-
-        rn2 = tk.Frame(col1); rn2.pack(anchor="w", pady=1)
-        tk.Label(rn2, text=tr("lbl_nom_i")).pack(side="left")
-        param_ch1_nom_i_label = tk.Label(rn2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch1_nom_i_label.pack(side="left", padx=(5, 0))
-
-        tk.Frame(col1, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
-
-        # Блок 2: Электроэнергия
-        tk.Label(col1, text=tr("lbl_energy"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        r1 = tk.Frame(col1); r1.pack(anchor="w", pady=1)
-        tk.Label(r1, text=tr("lbl_abs")).pack(side="left")
-        param_ch1_energy_abs_label = tk.Label(r1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch1_energy_abs_label.pack(side="left", padx=(5, 0))
-
-        r2 = tk.Frame(col1); r2.pack(anchor="w", pady=1)
-        tk.Label(r2, text=tr("lbl_pos")).pack(side="left")
-        param_ch1_energy_pos_label = tk.Label(r2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch1_energy_pos_label.pack(side="left", padx=(5, 0))
-
-        r3 = tk.Frame(col1); r3.pack(anchor="w", pady=(1, 4))
-        tk.Label(r3, text=tr("lbl_neg")).pack(side="left")
-        param_ch1_energy_neg_label = tk.Label(r3, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch1_energy_neg_label.pack(side="left", padx=(5, 0))
-
-        tk.Frame(col1, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
-
-        # Блок 3: Текущие параметры
-        tk.Label(col1, text=tr("lbl_current_params"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        row_v1 = tk.Frame(col1); row_v1.pack(anchor="w", pady=1)
-        tk.Label(row_v1, text=tr("lbl_voltage")).pack(side="left")
-        param_v1_label = tk.Label(row_v1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_v1_label.pack(side="left", padx=(10, 0))
-
-        row_i1 = tk.Frame(col1); row_i1.pack(anchor="w", pady=1)
-        tk.Label(row_i1, text=tr("lbl_current")).pack(side="left")
-        param_i1_label = tk.Label(row_i1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_i1_label.pack(side="left", padx=(10, 0))
-
-        row_p1 = tk.Frame(col1); row_p1.pack(anchor="w", pady=(1, 4))
-        tk.Label(row_p1, text=tr("lbl_power")).pack(side="left")
-        param_p1_label = tk.Label(row_p1, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_p1_label.pack(side="left", padx=(10, 0))
-
-        separator = tk.Frame(main_frame, width=2, bg="gray")
-        separator.grid(row=0, column=1, sticky="ns", padx=10)
-
-        # --- ПРАВАЯ КОЛОНКА: КАНАЛ B ---
-        col2 = tk.Frame(main_frame)
-        col2.grid(row=0, column=2, sticky="nw", padx=20, pady=5)
-        tk.Label(col2, text=tr("lbl_channel_b"), font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=(0, 10))
-
-        # Блок 1: Номинальные параметры
-        tk.Label(col2, text=tr("lbl_nominal"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        rn1b = tk.Frame(col2); rn1b.pack(anchor="w", pady=1)
-        tk.Label(rn1b, text=tr("lbl_nom_v")).pack(side="left")
-        param_ch2_nom_v_label = tk.Label(rn1b, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch2_nom_v_label.pack(side="left", padx=(5, 0))
-
-        rn2b = tk.Frame(col2); rn2b.pack(anchor="w", pady=1)
-        tk.Label(rn2b, text=tr("lbl_nom_i")).pack(side="left")
-        param_ch2_nom_i_label = tk.Label(rn2b, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch2_nom_i_label.pack(side="left", padx=(5, 0))
-
-        tk.Frame(col2, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
-
-        # Блок 2: Электроэнергия
-        tk.Label(col2, text=tr("lbl_energy"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        r1b = tk.Frame(col2); r1b.pack(anchor="w", pady=1)
-        tk.Label(r1b, text=tr("lbl_abs")).pack(side="left")
-        param_ch2_energy_abs_label = tk.Label(r1b, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch2_energy_abs_label.pack(side="left", padx=(5, 0))
-
-        r2b = tk.Frame(col2); r2b.pack(anchor="w", pady=1)
-        tk.Label(r2b, text=tr("lbl_pos")).pack(side="left")
-        param_ch2_energy_pos_label = tk.Label(r2b, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch2_energy_pos_label.pack(side="left", padx=(5, 0))
-
-        r3b = tk.Frame(col2); r3b.pack(anchor="w", pady=(1, 4))
-        tk.Label(r3b, text=tr("lbl_neg")).pack(side="left")
-        param_ch2_energy_neg_label = tk.Label(r3b, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_ch2_energy_neg_label.pack(side="left", padx=(5, 0))
-
-        tk.Frame(col2, height=2, bd=1, relief="sunken").pack(fill="x", pady=4)
-
-        # Блок 3: Текущие параметры
-        tk.Label(col2, text=tr("lbl_current_params"), font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(4, 0))
-
-        row_v2 = tk.Frame(col2); row_v2.pack(anchor="w", pady=1)
-        tk.Label(row_v2, text=tr("lbl_voltage")).pack(side="left")
-        param_v2_label = tk.Label(row_v2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_v2_label.pack(side="left", padx=(10, 0))
-
-        row_i2 = tk.Frame(col2); row_i2.pack(anchor="w", pady=1)
-        tk.Label(row_i2, text=tr("lbl_current")).pack(side="left")
-        param_i2_label = tk.Label(row_i2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_i2_label.pack(side="left", padx=(10, 0))
-
-        row_p2 = tk.Frame(col2); row_p2.pack(anchor="w", pady=(1, 4))
-        tk.Label(row_p2, text=tr("lbl_power")).pack(side="left")
-        param_p2_label = tk.Label(row_p2, text=tr("status_disconnected"), font=("Consolas", 11))
-        param_p2_label.pack(side="left", padx=(10, 0))
-
-        controls = ttk.Frame(main_frame)
-        controls.grid(row=1, column=0, columnspan=3, pady=(8, 0))
-        _create_measurement_controls(controls)
-
-    _refresh_measurement_controls()
+    _create_measurement_controls(tab_params)
     if power_supply_visible:
         _create_power_supply_panel(tab_params)
 
@@ -3659,7 +3944,7 @@ def choose_device_type_on_start():
 
     win.protocol("WM_DELETE_WINDOW", on_close)
 
-    tk.Label(win, text=tr("dlg_select_type_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 10))
+    ttk.Label(win, text=tr("dlg_select_type_prompt"), style="Emis.Heading.TLabel").pack(pady=(15, 10))
 
     # Контейнер для двух колонок
     container = tk.Frame(win)
@@ -3676,14 +3961,14 @@ def choose_device_type_on_start():
     frame_single.pack(side="left", padx=15)
     if "single" in DEVICE_IMAGES:
         tk.Label(frame_single, image=DEVICE_IMAGES["single"]).pack(pady=5)
-    tk.Button(frame_single, text=tr("dlg_single"), command=lambda: set_type("single"), width=22).pack(pady=5)
+    ttk.Button(frame_single, text=tr("dlg_single"), command=lambda: set_type("single"), width=22).pack(pady=5)
 
     # --- ПРАВАЯ КОЛОНКА: ДВУХКАНАЛЬНЫЙ ---
     frame_dual = tk.Frame(container)
     frame_dual.pack(side="left", padx=15)
     if "dual" in DEVICE_IMAGES:
         tk.Label(frame_dual, image=DEVICE_IMAGES["dual"]).pack(pady=5)
-    tk.Button(frame_dual, text=tr("dlg_dual"), command=lambda: set_type("dual"), width=22).pack(pady=5)
+    ttk.Button(frame_dual, text=tr("dlg_dual"), command=lambda: set_type("dual"), width=22).pack(pady=5)
 
     win.update_idletasks()
     x = root.winfo_x() + (root.winfo_width() - win.winfo_width()) // 2
@@ -3701,7 +3986,7 @@ def create_settings_tab():
     """Создаёт вкладку «Настройки прибора»."""
     global settings_max_i_a_label, settings_max_i_b_label
     global settings_sens_v_label, settings_sens_i_label
-    global settings_decimal_combo, settings_tariff_button, active_tariff_label
+    global settings_decimal_combo
     global settings_pulse_combos
 
     # Очищаем старое содержимое
@@ -3709,11 +3994,11 @@ def create_settings_tab():
         widget.destroy()
 
     # 1. Контейнер на всю площадь вкладки (распорка)
-    main_container = tk.Frame(tab_settings)
+    main_container = tk.Frame(tab_settings, background=emis_background)
     main_container.pack(expand=True, fill="both")
 
     # 2. Центральный блок настроек (автоматически центрируется внутри)
-    center_block = tk.Frame(main_container)
+    center_block = ttk.Frame(main_container, padding=(15, 8), style="Emis.Card.TFrame")
     center_block.pack(pady=20)
 
     # 3. Сетка для строк (размер определяется контентом, не растягивается)
@@ -3801,46 +4086,9 @@ def create_settings_tab():
             pady=5, padx=(10, 0),
         )
 
-    # Тарифное расписание после строк импульсного выхода.
-    tariff_row = 5 + len(channels)
-    tk.Label(
-        grid_frame,
-        text=tr("lbl_tariff_schedule"),
-        anchor="e",
-        width=34,
-        font=("TkDefaultFont", 10),
-    ).grid(
-        row=tariff_row,
-        column=0,
-        sticky="e",
-        pady=5,
-        padx=(0, 12),
-    )
-
-    settings_tariff_button = ttk.Button(
-        grid_frame,
-        text=tr("btn_tariff_schedule"),
-        command=show_tariff_schedule_dialog,
-        width=22,
-    )
-    settings_tariff_button.grid(
-        row=tariff_row,
-        column=1,
-        columnspan=2,
-        sticky="w",
-        pady=5,
-    )
-
-    tk.Label(grid_frame, text=tr("lbl_active_tariff"), font=("TkDefaultFont", 10)).grid(
-        row=tariff_row + 1, column=0, sticky="e", padx=(0, 12), pady=5
-    )
-    active_tariff_label = tk.Label(grid_frame, text="—", font=("TkDefaultFont", 10))
-    active_tariff_label.grid(row=tariff_row + 1, column=1, sticky="w", pady=5)
-    _refresh_active_tariff()
-
     # Разделитель и кнопка очистки (в том же центральном блоке, выравниваются по ширине сетки)
     tk.Frame(center_block, height=2, bd=1, relief="sunken").pack(fill="x", pady=15)
-    ttk.Button(center_block, text=tr("btn_clear_energy"), command=clear_energy_values).pack(pady=(0, 10))
+    ttk.Button(center_block, text=tr("btn_clear_energy"), command=clear_energy_values, style="Emis.Primary.TButton").pack(pady=(0, 10))
 
 
 def create_info_tab():
@@ -3856,11 +4104,11 @@ def create_info_tab():
         widget.destroy()
 
     # 1. Контейнер на всю площадь вкладки (распорка)
-    main_container = tk.Frame(tab_info)
+    main_container = tk.Frame(tab_info, background=emis_background)
     main_container.pack(expand=True, fill="both")
 
     # 2. Центральный блок (автоматически центрируется)
-    center_block = tk.Frame(main_container)
+    center_block = ttk.Frame(main_container, padding=(15, 8), style="Emis.Card.TFrame")
     center_block.pack(pady=20)
 
     # 3. Сетка для строк
@@ -3910,6 +4158,7 @@ def create_info_tab():
         grid_frame,
         text=tr("btn_info_autofill"),
         command=_show_device_info_autofill_dialog,
+        style="Emis.Primary.TButton",
         width=24,
     ).grid(
         row=5,
@@ -3930,10 +4179,10 @@ def create_info_tab():
         pady=(12, 8),
     )
 
-    tk.Label(
+    ttk.Label(
         grid_frame,
         text=tr("lbl_serial_decoding"),
-        font=("TkDefaultFont", 10, "bold"),
+        style="Emis.Heading.TLabel",
         anchor="w",
     ).grid(
         row=7,
@@ -4157,7 +4406,7 @@ def _show_numeric_input_dialog(title, prompt, current_value, write_func=None):
             if write_func:
                 success, msg = write_func(conn["port"], conn["slave"], conn["baud"], conn["parity"], new_value)
                 if success:
-                    messagebox.showinfo(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog)
+                    _show_emis_notice(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog, wait=True)
                 else:
                     messagebox.showerror(tr("dlg_write_error"), msg, parent=dialog)
             settings_dialog_open = False
@@ -4177,7 +4426,7 @@ def _show_numeric_input_dialog(title, prompt, current_value, write_func=None):
     btn_frame = tk.Frame(dialog)
     btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, width=10).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, style="Emis.Primary.TButton").pack(side="left", padx=5)
 
     dialog.update_idletasks()
     x = root.winfo_rootx() + (root.winfo_width() - dialog.winfo_width()) // 2
@@ -4221,7 +4470,7 @@ def _show_confirm_dialog(title, message):
 def _on_change_max_current_a():
     global settings_dialog_open
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
     if settings_dialog_open: return
     settings_dialog_open = True
@@ -4248,7 +4497,7 @@ def _on_change_max_current_a():
 
     tk.Label(dialog, text=tr("dlg_max_current_a_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 5), padx=20)
     value_var = tk.StringVar(value=f"{current_val:.0f}")
-    entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15)
+    entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15, **_numeric_input(dialog, integer=True))
     entry.pack(pady=5); entry.focus(); entry.select_range(0, 'end')
 
     def on_ok():
@@ -4268,7 +4517,7 @@ def _on_change_max_current_a():
                 _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
                 settings_update_queue.put(new_settings)
                 root.after(0, _check_settings_queue)
-                messagebox.showinfo(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog)
+                _show_emis_notice(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog, wait=True)
             else:
                 messagebox.showerror(tr("dlg_write_error"), msg, parent=dialog)
         except Exception as e:
@@ -4281,7 +4530,7 @@ def _on_change_max_current_a():
     entry.bind('<Return>', lambda e: on_ok())
     btn_frame = tk.Frame(dialog); btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, width=10).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, style="Emis.Primary.TButton").pack(side="left", padx=5)
     dialog.update_idletasks()
     dialog.geometry(f"+{root.winfo_rootx() + (root.winfo_width() - dialog.winfo_width()) // 2}+{root.winfo_rooty() + (root.winfo_height() - dialog.winfo_height()) // 2}")
 
@@ -4291,7 +4540,7 @@ def _on_change_max_current_b():
     if device_type != "dual":
         return
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
     if settings_dialog_open:
         return
@@ -4322,7 +4571,7 @@ def _on_change_max_current_b():
 
     tk.Label(dialog, text=tr("dlg_max_current_b_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 5), padx=20)
     value_var = tk.StringVar(value=f"{current_val:.0f}")
-    entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15)
+    entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15, **_numeric_input(dialog, integer=True))
     entry.pack(pady=5)
     entry.focus()
     entry.select_range(0, 'end')
@@ -4344,7 +4593,7 @@ def _on_change_max_current_b():
                 _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
                 settings_update_queue.put(new_settings)
                 root.after(0, _check_settings_queue)
-                messagebox.showinfo(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog)
+                _show_emis_notice(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog, wait=True)
             else:
                 messagebox.showerror(tr("dlg_write_error"), msg, parent=dialog)
         except Exception as e:
@@ -4360,7 +4609,7 @@ def _on_change_max_current_b():
     btn_frame = tk.Frame(dialog)
     btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, width=10).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, style="Emis.Primary.TButton").pack(side="left", padx=5)
 
     dialog.update_idletasks()
     x = root.winfo_rootx() + (root.winfo_width() - dialog.winfo_width()) // 2
@@ -4371,7 +4620,7 @@ def _on_change_max_current_b():
 def _on_change_sens_voltage():
     global settings_dialog_open
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
     if settings_dialog_open:
         return
@@ -4401,7 +4650,7 @@ def _on_change_sens_voltage():
 
     tk.Label(dialog, text=tr("dlg_sens_voltage_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 5), padx=20)
     value_var = tk.StringVar(value=f"{current_val:.2f}")
-    entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15)
+    entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15, **_numeric_input(dialog, integer=False))
     entry.pack(pady=5)
     entry.focus()
     entry.select_range(0, 'end')
@@ -4415,7 +4664,7 @@ def _on_change_sens_voltage():
                 _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
                 settings_update_queue.put(new_settings)
                 root.after(0, _check_settings_queue)
-                messagebox.showinfo(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog)
+                _show_emis_notice(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog, wait=True)
             else:
                 messagebox.showerror(tr("dlg_write_error"), msg, parent=dialog)
         except Exception as e:
@@ -4431,7 +4680,7 @@ def _on_change_sens_voltage():
     btn_frame = tk.Frame(dialog)
     btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, width=10).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, style="Emis.Primary.TButton").pack(side="left", padx=5)
 
     dialog.update_idletasks()
     x = root.winfo_rootx() + (root.winfo_width() - dialog.winfo_width()) // 2
@@ -4442,7 +4691,7 @@ def _on_change_sens_voltage():
 def _on_change_sens_current():
     global settings_dialog_open
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
     if settings_dialog_open:
         return
@@ -4472,7 +4721,7 @@ def _on_change_sens_current():
 
     tk.Label(dialog, text=tr("dlg_sens_current_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 5), padx=20)
     value_var = tk.StringVar(value=f"{current_val:.2f}")
-    entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15)
+    entry = tk.Entry(dialog, textvariable=value_var, font=("Consolas", 12), width=15, **_numeric_input(dialog, integer=False))
     entry.pack(pady=5)
     entry.focus()
     entry.select_range(0, 'end')
@@ -4486,7 +4735,7 @@ def _on_change_sens_current():
                 _, new_settings = read_device_settings_params(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
                 settings_update_queue.put(new_settings)
                 root.after(0, _check_settings_queue)
-                messagebox.showinfo(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog)
+                _show_emis_notice(tr("dlg_write_success"), tr("dlg_value_written"), parent=dialog, wait=True)
             else:
                 messagebox.showerror(tr("dlg_write_error"), msg, parent=dialog)
         except Exception as e:
@@ -4502,7 +4751,7 @@ def _on_change_sens_current():
     btn_frame = tk.Frame(dialog)
     btn_frame.pack(pady=15)
     ttk.Button(btn_frame, text=tr("dlg_cancel"), command=on_cancel, width=10).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, width=10).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text=tr("dlg_apply"), command=on_ok, style="Emis.Primary.TButton").pack(side="left", padx=5)
 
     dialog.update_idletasks()
     x = root.winfo_rootx() + (root.winfo_width() - dialog.winfo_width()) // 2
@@ -4518,7 +4767,7 @@ def _on_change_device_info(field, label_key, value_label):
         return
 
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
 
     settings_dialog_open = True
@@ -4614,7 +4863,7 @@ def _on_change_device_info(field, label_key, value_label):
     cancel_button.pack(side="left", padx=5)
 
     apply_button = ttk.Button(
-        buttons, text=tr("dlg_apply"), command=on_apply,
+        buttons, text=tr("dlg_apply"), command=on_apply, style="Emis.Primary.TButton",
     )
     apply_button.pack(side="left", padx=5)
 
@@ -4639,7 +4888,7 @@ def _show_device_info_autofill_dialog():
         return
 
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
 
     settings_dialog_open = True
@@ -4726,6 +4975,7 @@ def _show_device_info_autofill_dialog():
         buttons,
         text=tr("dlg_apply"),
         command=on_apply,
+        style="Emis.Primary.TButton",
     )
     apply_button.pack(side="left", padx=5)
 
@@ -4910,7 +5160,7 @@ def _on_change_pulse_constant(channel):
         return
 
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
 
     if channel == "b" and device_type != "dual":
@@ -5015,7 +5265,7 @@ def _on_change_decimal_places(event=None):
         str(previous_places) if previous_places in ENERGY_DECIMAL_PLACES else ""
     )
     if not conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_no_connection"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         settings_decimal_combo.set(previous_selection)
         return
     if settings_dialog_open:
@@ -5049,10 +5299,7 @@ def show_tariff_schedule_dialog():
     global settings_dialog_open
 
     if not conn:
-        messagebox.showwarning(
-            tr("dlg_warning"),
-            tr("dlg_no_connection"),
-        )
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_no_connection"), wait=True)
         return
 
     if settings_dialog_open:
@@ -5105,10 +5352,10 @@ def show_tariff_schedule_dialog():
 
     dialog.protocol("WM_DELETE_WINDOW", cleanup_and_close)
 
-    tk.Label(
+    ttk.Label(
         dialog,
         text=tr("dlg_tariff_schedule"),
-        font=("Segoe UI", 11, "bold"),
+        style="Emis.Heading.TLabel",
     ).pack(
         pady=(15, 10),
         padx=20,
@@ -5122,15 +5369,18 @@ def show_tariff_schedule_dialog():
 
     # Здесь храним поля строк, чтобы затем получить введённые значения.
     period_rows = []
+    validate_digits = dialog.register(
+        lambda value: len(value) <= 2 and all(char in "0123456789" for char in value)
+    )
 
     def get_row_values():
         """Возвращает текущие значения всех строк редактора."""
         return [
             (
-                time_entry.get().strip(),
+                f"{hour_entry.get()}:{minute_entry.get()}",
                 tariff_combo.get(),
             )
-            for time_entry, tariff_combo in period_rows
+            for hour_entry, minute_entry, tariff_combo in period_rows
         ]
 
     def redraw_rows(row_values):
@@ -5194,19 +5444,18 @@ def show_tariff_schedule_dialog():
                 pady=3,
             )
 
-            time_entry = ttk.Entry(
-                table_frame,
-                width=14,
-                justify="center",
-                font=("Consolas", 10),
-            )
-            time_entry.insert(0, time_value)
-            time_entry.grid(
-                row=index,
-                column=1,
-                padx=5,
-                pady=3,
-            )
+            time_frame = ttk.Frame(table_frame)
+            time_frame.grid(row=index, column=1, padx=5, pady=3)
+            hour, minute = time_value.split(":")
+            hour_entry = ttk.Entry(time_frame, width=3, justify="center")
+            minute_entry = ttk.Entry(time_frame, width=3, justify="center")
+            hour_entry.insert(0, hour)
+            minute_entry.insert(0, minute)
+            for entry in (hour_entry, minute_entry):
+                entry.configure(validate="key", validatecommand=(validate_digits, "%P"))
+            hour_entry.pack(side="left")
+            ttk.Label(time_frame, text=":").pack(side="left", padx=2)
+            minute_entry.pack(side="left")
 
             tariff_combo = ttk.Combobox(
                 table_frame,
@@ -5239,7 +5488,8 @@ def show_tariff_schedule_dialog():
 
             period_rows.append(
                 (
-                    time_entry,
+                    hour_entry,
+                    minute_entry,
                     tariff_combo,
                 )
             )
@@ -5256,7 +5506,7 @@ def show_tariff_schedule_dialog():
             )
             return
 
-        row_values.append(("", "1"))
+        row_values.append(("00:00", "1"))
         redraw_rows(row_values)
 
     def remove_row(row_index):
@@ -5392,7 +5642,7 @@ def show_tariff_schedule_dialog():
         button_frame,
         text=tr("btn_save_schedule"),
         command=save_schedule,
-        width=18,
+        style="Emis.Primary.TButton",
     ).pack(
         side="left",
         padx=5,
@@ -5460,7 +5710,7 @@ def resize_window_to_content():
 
     # Применяем новый размер
     root.geometry(f"{required_width}x{actual_height}+{x}+{y}")
-    root.resizable(False, True)  # По ширине фикс, по высоте можно тянуть
+    root.resizable(True, True)
 
 
 def choose_device_type_from_menu():
@@ -5468,7 +5718,7 @@ def choose_device_type_from_menu():
     global device_type
 
     if conn:
-        messagebox.showwarning(tr("dlg_warning"), tr("dlg_change_type_warning"))
+        _show_emis_notice(tr("dlg_warning"), tr("dlg_change_type_warning"), wait=True)
         disconnect_device()
         if conn:
             return
@@ -5495,7 +5745,7 @@ def choose_device_type_from_menu():
 
         win.destroy()
 
-    tk.Label(win, text=tr("dlg_select_type_prompt"), font=("Segoe UI", 10)).pack(pady=(15, 10))
+    ttk.Label(win, text=tr("dlg_select_type_prompt"), style="Emis.Heading.TLabel").pack(pady=(15, 10))
 
     # Контейнер для двух колонок
     container = tk.Frame(win)
@@ -5506,14 +5756,14 @@ def choose_device_type_from_menu():
     frame_single.pack(side="left", padx=15)
     if "single" in DEVICE_IMAGES:
         tk.Label(frame_single, image=DEVICE_IMAGES["single"]).pack(pady=5)
-    tk.Button(frame_single, text=tr("dlg_single"), command=lambda: set_type("single"), width=22).pack(pady=5)
+    ttk.Button(frame_single, text=tr("dlg_single"), command=lambda: set_type("single"), width=22).pack(pady=5)
 
     # --- ПРАВАЯ КОЛОНКА: ДВУХКАНАЛЬНЫЙ ---
     frame_dual = tk.Frame(container)
     frame_dual.pack(side="left", padx=15)
     if "dual" in DEVICE_IMAGES:
         tk.Label(frame_dual, image=DEVICE_IMAGES["dual"]).pack(pady=5)
-    tk.Button(frame_dual, text=tr("dlg_dual"), command=lambda: set_type("dual"), width=22).pack(pady=5)
+    ttk.Button(frame_dual, text=tr("dlg_dual"), command=lambda: set_type("dual"), width=22).pack(pady=5)
 
     win.update_idletasks()
     x = root.winfo_x() + (root.winfo_width() - win.winfo_width()) // 2
@@ -5528,7 +5778,7 @@ def choose_device_type_from_menu():
 load_config()
 
 root = tk.Tk()
-root.title(tr("app_title"))
+root.title(f"{tr('app_name')} V{APP_VERSION}")
 # ICO содержит отдельные изображения для разных размеров Windows.
 try:
     app_icon_path = resource_path("app.ico")
@@ -5546,14 +5796,124 @@ except tk.TclError:
         root.iconphoto(True, app_icon_img)
     except tk.TclError:
         pass
-sv_ttk.set_theme("light")
+# Shared palette for the main window, tabs and dialogs.
+emis_background = "#F1F4F3"
+emis_surface = "#FFFFFF"
+emis_text = "#24332F"
+emis_green = "#009975"
+root.configure(background=emis_background)
+root.option_add("*Background", emis_surface)
+root.option_add("*Foreground", emis_text)
+emis_style = ttk.Style(root)
+emis_style.theme_use("clam")
+
+
+def _without_focus_outline(layout):
+    """Keep widget contents while removing the theme's dotted focus element."""
+    result = []
+    for element, options in layout:
+        options = dict(options)
+        children = _without_focus_outline(options.get("children", []))
+        if element.rsplit(".", 1)[-1] == "focus":
+            result.extend(children)
+        else:
+            if "children" in options:
+                options["children"] = children
+            result.append((element, options))
+    return result
+
+
+for widget_style in ("TButton", "TNotebook.Tab", "TCombobox", "TMenubutton", "Treeview.Item"):
+    layout = _without_focus_outline(emis_style.layout(widget_style))
+    emis_style.layout(widget_style, layout)
+
+# Native Tk buttons use their highlight ring instead of a ttk layout element.
+root.option_add("*Button.highlightThickness", 0)
+emis_style.map("TCombobox", bordercolor=[("focus", "#009975")])
+
+emis_style.configure(".", background=emis_surface, foreground=emis_text)
+emis_style.configure("TNotebook", background=emis_background, borderwidth=0)
+emis_style.configure("TNotebook.Tab", padding=(12, 8), background=emis_background)
+emis_style.map("TNotebook.Tab", background=[("selected", "#DDF3EB")],
+               foreground=[("selected", "#00664D")])
+# Stretchable images give ttk controls rounded borders without extra dependencies.
+emis_theme_images = []
+
+
+def _rounded_surface(fill, outline):
+    from math import isqrt
+
+    size, radius = 21, 7
+    image = tk.PhotoImage(master=root, width=size, height=size)
+    for y in range(size):
+        dy = max(radius - y, y - (size - 1 - radius), 0)
+        inset = radius - isqrt(radius * radius - dy * dy)
+        image.put(outline, to=(inset, y, size - inset, y + 1))
+        if 0 < y < size - 1:
+            previous_dy = max(radius - y + 1, y + 1 - (size - 1 - radius), 0)
+            inner = max(inset + 1, radius - isqrt(radius * radius - previous_dy * previous_dy))
+            image.put(fill, to=(inner, y, size - inner, y + 1))
+    emis_theme_images.append(image)
+    return image
+
+
+emis_style.configure("TButton", padding=(10, 6), background="#FFFFFF",
+                     foreground="#00664D", bordercolor="#A0DACC")
+emis_style.map("TButton",
+               background=[("disabled", "#E8EDF0"), ("pressed", "#D5EFE6"), ("active", "#E7F7F1")],
+               foreground=[("disabled", "#62716D")],
+               bordercolor=[("disabled", "#D4DEDE"), ("focus", "#009975")])
+emis_style.configure("Emis.Primary.TButton", background="#007F62",
+                     foreground="#FFFFFF", bordercolor="#007F62")
+emis_style.map("Emis.Primary.TButton",
+               background=[("disabled", "#E8EDF0"), ("pressed", "#005742"), ("active", "#006C54")])
+emis_style.element_create(
+    "Emis.Card.surface", "image", _rounded_surface("#FFFFFF", "#D4DEDE"),
+    border=8, sticky="nsew",
+)
+emis_style.layout("Emis.Card.TFrame", [("Emis.Card.surface", {"sticky": "nsew"})])
+emis_style.configure("Emis.Card.TFrame", background=emis_background)
+emis_style.configure("Emis.Background.TFrame", background=emis_background)
+emis_style.configure("Emis.Header.TLabel", background=emis_background, foreground="#00664D",
+                     font=("TkDefaultFont", 16, "bold"))
+root.option_add("*Entry.selectBackground", "#DDF3EB")
+root.option_add("*Entry.selectForeground", "#00664D")
+root.option_add("*Spinbox.selectBackground", "#DDF3EB")
+root.option_add("*Spinbox.selectForeground", "#00664D")
+emis_style.configure("TEntry", padding=5, fieldbackground="#FFFFFF")
+for input_style in ("TEntry", "TSpinbox", "TCombobox"):
+    emis_style.map(input_style, selectbackground=[("!disabled", "#DDF3EB")],
+                   selectforeground=[("!disabled", "#00664D")])
+root.option_add("*TCombobox*Listbox.selectBackground", "#DDF3EB")
+root.option_add("*TCombobox*Listbox.selectForeground", "#00664D")
+root.option_add("*Menu.activeBackground", "#DDF3EB")
+root.option_add("*Menu.activeForeground", "#00664D")
+emis_style.configure("TCombobox", padding=5, selectbackground="#DDF3EB", selectforeground="#00664D")
+emis_style.map("TCombobox",
+               fieldbackground=[("readonly", "#FFFFFF")],
+               foreground=[("readonly", emis_text)],
+               bordercolor=[("focus", emis_green)])
+emis_style.configure("Emis.Heading.TLabel", foreground="#00664D",
+                     font=("TkDefaultFont", 11, "bold"))
+emis_style.map("Treeview", background=[("selected", "#DDF3EB")],
+               foreground=[("selected", emis_text)])
 
 # Загружаем картинки устройств
 load_device_images()
 
 # Общий статус связи над вкладками.
-connection_status_bar = tk.Frame(root)
-connection_status_bar.pack(fill="x", padx=10, pady=(4, 6))
+app_header = ttk.Frame(root, style="Emis.Background.TFrame")
+app_header.pack(fill="x", padx=16, pady=(12, 10))
+try:
+    logo = tk.PhotoImage(file=resource_path("images/emis-electra-ui.png"))
+    app_logo = logo.subsample(max(1, (logo.width() + 109) // 110))
+    ttk.Label(app_header, image=app_logo, background=emis_background).pack(side="left", padx=(0, 12))
+except tk.TclError:
+    pass
+app_header_title = ttk.Label(app_header, text=tr("app_name"), style="Emis.Header.TLabel")
+app_header_title.pack(side="left")
+connection_status_bar = ttk.Frame(root, padding=(10, 5), style="Emis.Card.TFrame")
+connection_status_bar.pack(anchor="w", padx=16, pady=(0, 8))
 lbl_status = tk.Label(connection_status_bar, text=tr("lbl_status"))
 lbl_status.pack(side="left")
 status_canvas = tk.Canvas(connection_status_bar, width=16, height=16, highlightthickness=0)
@@ -5563,34 +5923,56 @@ status_indicator = status_canvas.create_oval(2, 2, 14, 14, fill="red")
 
 # 1. Cоздаём notebook и вкладки
 notebook = ttk.Notebook(root)
-notebook.pack(fill="both", expand=True)
+notebook.pack(fill="both", expand=True, padx=12, pady=(0, 12))
 
-tab_conn = tk.Frame(notebook)
+tab_conn = tk.Frame(notebook, background=emis_background)
 notebook.add(tab_conn, text="...")
-tab_info = tk.Frame(notebook)
+tab_info = tk.Frame(notebook, background=emis_background)
 notebook.add(tab_info, text="...")
-tab_time = tk.Frame(notebook)
+tab_time = tk.Frame(notebook, background=emis_background)
 notebook.add(tab_time, text="...")
-tab_params = tk.Frame(notebook)
+tab_params = tk.Frame(notebook, background=emis_background)
 notebook.add(tab_params, text="...")
-tab_settings = tk.Frame(notebook)
+tab_settings = tk.Frame(notebook, background=emis_background)
 notebook.add(tab_settings, text="...")
 
+tab_tariff = tk.Frame(notebook, background=emis_background)
+notebook.add(tab_tariff, text=tr("tab_tariff"))
+tab_archives = tk.Frame(notebook, background=emis_background)
+notebook.add(tab_archives, text=tr("tab_archives"))
+
+tariff_panel = ttk.Frame(tab_tariff, padding=(24, 18), style="Emis.Card.TFrame")
+tariff_panel.pack(pady=(28, 0))
+tariff_title = ttk.Label(tariff_panel, text=tr("lbl_current_tariff"), style="Emis.Heading.TLabel")
+tariff_title.pack()
+active_tariff_label = ttk.Label(tariff_panel, text="—", font=("Consolas", 24), anchor="center")
+active_tariff_label.pack(pady=(6, 0))
+
+tariff_actions = ttk.Frame(tariff_panel)
+tariff_actions.pack(pady=(20, 0))
+tariff_schedule_label = ttk.Label(tariff_actions, text=tr("lbl_tariff_schedule"))
+tariff_schedule_label.pack(side="left", padx=(0, 8))
+tariff_schedule_button = ttk.Button(
+    tariff_actions, text=tr("btn_tariff_schedule"),
+    command=show_tariff_schedule_dialog, style="Emis.Primary.TButton",
+)
+tariff_schedule_button.pack(side="left")
+
+
 # 2. Статичные элементы вкладки "Соединение"
-com_controls_frame = tk.Frame(tab_conn)
+com_controls_frame = ttk.Frame(tab_conn, padding=(12, 8), style="Emis.Card.TFrame")
 com_controls_frame.pack(pady=(12, 6), padx=10, fill="x")
 lbl_com_port = tk.Label(com_controls_frame, text=tr("lbl_com_port"))
 lbl_com_port.pack(side="left")
 port_var = tk.StringVar(value=tr("status_no_ports"))
-port_menu = ttk.OptionMenu(com_controls_frame, port_var, tr("status_no_ports"))
-port_menu.config(width=11)
+port_menu = ttk.Combobox(com_controls_frame, textvariable=port_var, state="readonly", width=11)
 port_menu.pack(side="left", padx=(5, 10))
 
 refresh_btn = ttk.Button(com_controls_frame, text=tr("btn_refresh"), command=refresh_ports, width=14)
 refresh_btn.pack(side="left", padx=(0, 8))
-connect_btn = ttk.Button(com_controls_frame, text=tr("btn_connect"), command=connect_scan, width=16)
+connect_btn = ttk.Button(com_controls_frame, text=tr("btn_connect"), command=connect_scan, style="Emis.Primary.TButton", width=16)
 connect_btn.pack(side="left", padx=(0, 8))
-disconnect_btn = ttk.Button(com_controls_frame, text=tr("btn_disconnect"), command=disconnect_device, state="disabled", width=16)
+disconnect_btn = ttk.Button(com_controls_frame, text=tr("btn_disconnect"), command=disconnect_device, style="Emis.Primary.TButton", state="disabled", width=16)
 disconnect_btn.pack(side="left")
 
 # Горизонтальный разделитель
@@ -5598,13 +5980,13 @@ sep = tk.Frame(tab_conn, height=2, bd=1, relief="sunken")
 sep.pack(fill="x", padx=10, pady=6)
 
 # Два столбца: параметры слева, тип счётчика справа
-content_frame = tk.Frame(tab_conn)
+content_frame = ttk.Frame(tab_conn, padding=(12, 10), style="Emis.Card.TFrame")
 content_frame.pack(fill="both", expand=True, padx=10)
 
 # Левая колонка: параметры устройства
 left_frame = tk.Frame(content_frame)
 left_frame.pack(side="left", fill="y", expand=True)
-lbl_modbus_title = tk.Label(left_frame, text=tr("lbl_modbus_params"), font=("TkDefaultFont", 10, "bold"))
+lbl_modbus_title = ttk.Label(left_frame, text=tr("lbl_modbus_params"), style="Emis.Heading.TLabel")
 lbl_modbus_title.pack(anchor="w", pady=(0, 5))
 
 # Адрес
@@ -5613,7 +5995,10 @@ row_addr.pack(fill="x", pady=2)
 lbl_address = tk.Label(row_addr, text=tr("lbl_address"))
 lbl_address.pack(side="left")
 addr_var = tk.StringVar(value="1")
-addr_combo = ttk.Combobox(row_addr, textvariable=addr_var, values=[str(i) for i in range(1, 11)], state="readonly", width=8)
+addr_combo = ttk.Entry(
+    row_addr, textvariable=addr_var, width=8, validate="key",
+    validatecommand=(root.register(lambda value: not value or _valid_modbus_address(value)), "%P"),
+)
 addr_combo.pack(side="right")
 
 # Скорость
@@ -5634,7 +6019,7 @@ parity_var = tk.StringVar(value="Even")
 parity_combo = ttk.Combobox(row_parity, textvariable=parity_var, values=PARITY_LIST, state="readonly", width=8)
 parity_combo.pack(side="right")
 
-write_btn = ttk.Button(left_frame, text="Записать", command=write_settings, state="disabled")
+write_btn = ttk.Button(left_frame, text="Записать", command=write_settings, style="Emis.Primary.TButton", state="disabled")
 write_btn.pack(pady=10)
 
 # Вертикальный разделитель
@@ -5646,8 +6031,8 @@ right_frame = tk.Frame(content_frame)
 right_frame.pack(side="left", fill="y", expand=True)
 
 # Надпись "Тип подключаемого счётчика:" — жирным
-type_label_title = tk.Label(right_frame, text=tr("lbl_device_type"), font=("TkDefaultFont", 10, "bold"))
-type_label_title.pack(anchor="w", pady=(10, 0))
+type_label_title = ttk.Label(right_frame, text=tr("lbl_device_type"), style="Emis.Heading.TLabel")
+type_label_title.pack(anchor="w", pady=(0, 5))
 
 # Контейнер для картинки и текста
 type_display_container = tk.Frame(right_frame)
@@ -5662,13 +6047,13 @@ type_label = tk.Label(type_display_container, text="—", justify="center", font
 type_label.pack(pady=2)
 
 # Кнопка смены типа
-change_type_btn = ttk.Button(right_frame, text=tr("btn_change_type"), command=choose_device_type_from_menu, width=22)
+change_type_btn = ttk.Button(right_frame, text=tr("btn_change_type"), command=choose_device_type_from_menu, style="Emis.Primary.TButton", width=22)
 change_type_btn.pack(pady=5)
 
 # 3. Статичные элементы вкладки "Дата и время"
-clock_panel = ttk.Frame(tab_time, padding=(16, 8))
+clock_panel = ttk.Frame(tab_time, padding=(24, 18), style="Emis.Card.TFrame")
 clock_panel.pack(pady=(28, 0))
-lbl_time_title = ttk.Label(clock_panel, text=tr("lbl_current_time"), font=("TkDefaultFont", 11, "bold"))
+lbl_time_title = ttk.Label(clock_panel, text=tr("lbl_current_time"), style="Emis.Heading.TLabel")
 lbl_time_title.pack()
 current_time_value = ttk.Label(
     clock_panel, text=tr("lbl_meter_time_unavailable"),
@@ -5680,7 +6065,7 @@ time_btn_frame = ttk.Frame(clock_panel)
 time_btn_frame.pack(pady=(20, 0))
 settings_btn = ttk.Button(time_btn_frame, text=tr("btn_time_settings"), state="disabled")
 settings_btn.pack(side="left", padx=(0, 8))
-sync_pc_btn = ttk.Button(time_btn_frame, text=tr("btn_sync_pc"), state="disabled")
+sync_pc_btn = ttk.Button(time_btn_frame, text=tr("btn_sync_pc"), style="Emis.Primary.TButton", state="disabled")
 sync_pc_btn.pack(side="left")
 
 # 4. Вызов set_language — все виджеты и функции уже созданы
@@ -5748,8 +6133,9 @@ screen_height = root.winfo_screenheight()
 max_height = int(screen_height * 0.9)
 actual_height = min(required_height, max_height)
 
+root.minsize(required_width, min(actual_height, 500))
 root.geometry(f"{required_width}x{actual_height}")
-root.resizable(False, True)
+root.resizable(True, True)
 
 # Тихо проверяем обновления после полной инициализации интерфейса.
 # Сообщение появится только при наличии новой версии.
