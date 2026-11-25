@@ -3291,7 +3291,7 @@ def _write_time_to_device(year=None, month=None, day=None, hour=None, minute=Non
         messagebox.showerror(tr("dlg_time_write_error"), msg, parent=parent_win)
         return False, msg
 
-    messagebox.showinfo(tr("dlg_write_success"), tr("dlg_time_written"), parent=parent_win)
+    _show_emis_notice(tr("dlg_write_success"), tr("dlg_time_written"), parent=parent_win, wait=True)
     start_time_reader()
     return True, "OK"
 
@@ -3358,22 +3358,24 @@ def open_time_settings():
             root.config(cursor="watch")
             root.update_idletasks()
 
-            wait_win = tk.Toplevel(root)
+            wait_win = tk.Toplevel(win, background=emis_background)
             wait_win.title(tr("dlg_time_settings"))
             wait_win.resizable(False, False)
-            wait_win.transient(root)
+            wait_win.transient(win)
             wait_win.grab_set()
             wait_win.config(cursor="watch")
 
-            tk.Label(wait_win, text=tr("dlg_time_writing"), padx=25, pady=20,
-                     font=("Segoe UI", 11)).pack()
+            card = ttk.Frame(wait_win, style="Emis.Card.TFrame", padding=(18, 14))
+            card.pack(padx=12, pady=12, fill="both", expand=True)
+            ttk.Label(card, text=wait_win.title(), style="Emis.Heading.TLabel").pack(anchor="w")
+            ttk.Label(card, text=tr("dlg_time_writing"), justify="left").pack(anchor="w", pady=(8, 0))
 
             wait_win.update_idletasks()
             wait_win.lift()
             wait_win.focus_force()
-            wx = root.winfo_rootx() + (root.winfo_width() - wait_win.winfo_width()) // 2
-            wy = root.winfo_rooty() + (root.winfo_height() - wait_win.winfo_height()) // 2
-            wait_win.geometry(f"+{wx}+{wy}")
+            wx = win.winfo_rootx() + (win.winfo_width() - wait_win.winfo_width()) // 2
+            wy = win.winfo_rooty() + (win.winfo_height() - wait_win.winfo_height()) // 2
+            wait_win.geometry(f"{wx:+d}{wy:+d}")
             wait_win.update()
 
             root.attributes('-disabled', True)
@@ -3417,7 +3419,7 @@ def open_time_settings():
                 time_update_queue.put(new_time_str)
                 root.after(0, _check_time_queue)
 
-                messagebox.showinfo(tr("dlg_write_success"), tr("dlg_time_written"), parent=win)
+                _show_emis_notice(tr("dlg_write_success"), tr("dlg_time_written"), parent=win, wait=True)
                 win.destroy()
 
         except Exception as e:
