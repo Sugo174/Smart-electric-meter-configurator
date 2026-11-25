@@ -4132,11 +4132,11 @@ def create_info_tab():
         )
 
     def add_row(row, key):
-        ttk.Label(grid_frame, text=tr(key).rstrip(":："), justify="left").grid(
+        ttk.Label(grid_frame, text=tr(key).rstrip(":："), justify="left", foreground="#53645F").grid(
             row=row, column=0, sticky="w", padx=(0, 14), pady=4
         )
-        value = ttk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=-17, anchor="w")
-        value.grid(row=row, column=1, sticky="w", pady=4)
+        value = ttk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), foreground=emis_text, width=-17, anchor="w")
+        value.grid(row=row, column=1, sticky="nw", pady=4)
         return value
 
     add_heading(0, "lbl_info_heading")
@@ -4165,7 +4165,7 @@ def create_info_tab():
         ).grid(
             row=row,
             column=2,
-            sticky="w",
+            sticky="nw",
             pady=4,
             padx=(10, 0),
         )
