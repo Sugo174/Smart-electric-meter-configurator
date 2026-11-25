@@ -1076,7 +1076,7 @@ def set_language(lang_code):
     current_language = lang_code
 
     # Меняем заголовок главного окна
-    root.title(f"{tr('app_name')} V{APP_VERSION}")
+    _set_app_title(latest_verification_info if conn else None)
     app_header_title.configure(text=tr("app_name"))
 
     # Загружаем иконки если ещё не загружены
@@ -4260,7 +4260,17 @@ def _check_settings_queue():
     root.after(100, _check_settings_queue)
 
 
+def _set_app_title(info=None):
+    title = f"{tr('app_name')} V{APP_VERSION}"
+    serial_number = ((info or {}).get("serial_number") or "").strip()
+    if serial_number:
+        title += f" · № {serial_number}"
+    if root.title() != title:
+        root.title(title)
+
+
 def _update_meter_status_details(info):
+    _set_app_title(info)
     for field, label in meter_status_values.items():
         value = (info or {}).get(field)
         label.config(text=(value or "").strip() or "—")
@@ -5751,7 +5761,7 @@ def choose_device_type_from_menu():
 load_config()
 
 root = tk.Tk()
-root.title(f"{tr('app_name')} V{APP_VERSION}")
+_set_app_title()
 # ICO содержит отдельные изображения для разных размеров Windows.
 try:
     app_icon_path = resource_path("app.ico")
