@@ -4011,59 +4011,54 @@ def create_settings_tab():
     global settings_decimal_combo
     global settings_pulse_combos
 
-    # Очищаем старое содержимое
     for widget in tab_settings.winfo_children():
         widget.destroy()
 
-    # 1. Контейнер на всю площадь вкладки (распорка)
-    main_container = tk.Frame(tab_settings, background=emis_background)
-    main_container.pack(expand=True, fill="both")
-
-    # 2. Центральный блок настроек (автоматически центрируется внутри)
-    center_block = ttk.Frame(main_container, padding=(15, 8), style="Emis.Card.TFrame")
+    center_block = ttk.Frame(tab_settings, padding=(22, 16), style="Emis.Card.TFrame")
     center_block.pack(pady=20)
-
-    # 3. Сетка для строк (размер определяется контентом, не растягивается)
-    grid_frame = tk.Frame(center_block)
+    grid_frame = ttk.Frame(center_block)
     grid_frame.pack()
+    ttk.Label(grid_frame, text=tr("tab_settings"), style="Emis.Heading.TLabel").grid(
+        row=0, column=0, columnspan=3, sticky="w", pady=(0, 8)
+    )
+
+    def add_caption(row, key):
+        ttk.Label(
+            grid_frame, text=tr(key).rstrip(":："), justify="left",
+            foreground="#53645F", wraplength=180,
+        ).grid(row=row, column=0, sticky="w", padx=(0, 14), pady=4)
+
+    def add_editable_row(row, key, command):
+        add_caption(row, key)
+        value = ttk.Label(
+            grid_frame, text=tr("status_disconnected"), font=("Consolas", 11),
+            foreground=emis_text, width=-12, anchor="w",
+        )
+        value.grid(row=row, column=1, sticky="nw", pady=4)
+        ttk.Button(grid_frame, text=tr("btn_change"), command=command, width=10).grid(
+            row=row, column=2, sticky="nw", pady=4, padx=(10, 0)
+        )
+        return value
 
     dual = device_type == "dual"
-    tk.Label(grid_frame, text=tr("lbl_max_current_a" if dual else "lbl_max_current"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=0, column=0, sticky="e", pady=5, padx=(0, 12))
-    settings_max_i_a_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=12, anchor="w")
-    settings_max_i_a_label.grid(row=0, column=1, sticky="w", pady=5)
-    ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_max_current_a, width=10).grid(row=0, column=2, sticky="w", pady=5, padx=(10, 0))
-
+    settings_max_i_a_label = add_editable_row(
+        1, "lbl_max_current_a" if dual else "lbl_max_current", _on_change_max_current_a
+    )
     settings_max_i_b_label = None
     if dual:
-        tk.Label(grid_frame, text=tr("lbl_max_current_b"),
-                 anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=1, column=0, sticky="e", pady=5, padx=(0, 12))
-        settings_max_i_b_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=12, anchor="w")
-        settings_max_i_b_label.grid(row=1, column=1, sticky="w", pady=5)
-        ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_max_current_b, width=10).grid(row=1, column=2, sticky="w", pady=5, padx=(10, 0))
+        settings_max_i_b_label = add_editable_row(2, "lbl_max_current_b", _on_change_max_current_b)
 
-    sensitivity_row = 2 if dual else 1
-    tk.Label(grid_frame, text=tr("lbl_sens_voltage"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=sensitivity_row, column=0, sticky="e", pady=5, padx=(0, 12))
-    settings_sens_v_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=8, anchor="w")
-    settings_sens_v_label.grid(row=sensitivity_row, column=1, sticky="w", pady=5)
-    ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_sens_voltage, width=10).grid(row=sensitivity_row, column=2, sticky="w", pady=5, padx=(10, 0))
-
-    tk.Label(grid_frame, text=tr("lbl_sens_current"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=sensitivity_row + 1, column=0, sticky="e", pady=5, padx=(0, 12))
-    settings_sens_i_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=8, anchor="w")
-    settings_sens_i_label.grid(row=sensitivity_row + 1, column=1, sticky="w", pady=5)
-    ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_sens_current, width=10).grid(row=sensitivity_row + 1, column=2, sticky="w", pady=5, padx=(10, 0))
-
-    tk.Label(grid_frame, text=tr("lbl_decimal"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=sensitivity_row + 2, column=0, sticky="e", pady=5, padx=(0, 12))
+    sensitivity_row = 3 if dual else 2
+    settings_sens_v_label = add_editable_row(sensitivity_row, "lbl_sens_voltage", _on_change_sens_voltage)
+    settings_sens_i_label = add_editable_row(sensitivity_row + 1, "lbl_sens_current", _on_change_sens_current)
+    add_caption(sensitivity_row + 2, "lbl_decimal")
     settings_decimal_combo = ttk.Combobox(
         grid_frame,
         values=tuple(str(value) for value in ENERGY_DECIMAL_PLACES),
         state="readonly",
         width=8,
     )
-    settings_decimal_combo.grid(row=sensitivity_row + 2, column=1, sticky="w", pady=5)
+    settings_decimal_combo.grid(row=sensitivity_row + 2, column=1, sticky="nw", pady=4)
     settings_decimal_combo.bind('<<ComboboxSelected>>', _on_change_decimal_places)
 
     # Постоянная импульсного выхода: один или два канала.
@@ -4074,16 +4069,7 @@ def create_settings_tab():
         channels.append(("b", "lbl_pulse_constant_ch2"))
 
     for row, (channel, label_key) in enumerate(channels, start=sensitivity_row + 3):
-        tk.Label(
-            grid_frame,
-            text=tr(label_key),
-            anchor="e",
-            width=34,
-            font=("TkDefaultFont", 10),
-        ).grid(
-            row=row, column=0, sticky="e",
-            pady=5, padx=(0, 12),
-        )
+        add_caption(row, label_key)
 
         combo = ttk.Combobox(
             grid_frame,
@@ -4091,7 +4077,7 @@ def create_settings_tab():
             state="disabled",
             width=8,
         )
-        combo.grid(row=row, column=1, sticky="w", pady=5)
+        combo.grid(row=row, column=1, sticky="nw", pady=4)
         settings_pulse_combos[channel] = combo
         combo.bind(
             "<<ComboboxSelected>>",
@@ -4103,13 +4089,15 @@ def create_settings_tab():
             grid_frame,
             text=tr("unit_imp_kwh"),
         ).grid(
-            row=row, column=2, sticky="w",
-            pady=5, padx=(10, 0),
+            row=row, column=2, sticky="nw",
+            pady=4, padx=(10, 0),
         )
 
-    # Разделитель и кнопка очистки (в том же центральном блоке, выравниваются по ширине сетки)
-    tk.Frame(center_block, height=2, bd=1, relief="sunken").pack(fill="x", pady=15)
-    ttk.Button(center_block, text=tr("btn_clear_energy"), command=clear_energy_values, style="Emis.Primary.TButton").pack(pady=(0, 10))
+    ttk.Separator(center_block).pack(fill="x", pady=12)
+    ttk.Button(
+        center_block, text=tr("btn_clear_energy"),
+        command=clear_energy_values, style="Emis.Primary.TButton",
+    ).pack()
 
 
 def create_info_tab():
