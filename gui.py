@@ -192,6 +192,7 @@ TRANSLATIONS = {
         "lbl_nom_i": "Номинальный ток:",
 
         # Вкладка "Настройки прибора"
+        "lbl_max_current": "Максимальный ток:",
         "lbl_max_current_a": "Максимальный ток канала A:",
         "lbl_max_current_b": "Максимальный ток канала B:",
         "lbl_sens_voltage": "Порог чувствительности напряжения:",
@@ -437,6 +438,7 @@ TRANSLATIONS = {
         "lbl_nom_i": "Nom. Current:",
 
         # Device Settings tab
+        "lbl_max_current": "Max Current:",
         "lbl_max_current_a": "Max Current Channel A:",
         "lbl_max_current_b": "Max Current Channel B:",
         "lbl_sens_voltage": "Voltage Sensitivity Threshold:",
@@ -682,6 +684,7 @@ TRANSLATIONS = {
         "lbl_nom_i": "额定电流:",
 
         # 设备设置选项卡
+        "lbl_max_current": "最大电流:",
         "lbl_max_current_a": "通道A最大电流:",
         "lbl_max_current_b": "通道B最大电流:",
         "lbl_sens_voltage": "电压灵敏度阈值:",
@@ -4007,44 +4010,43 @@ def create_settings_tab():
     grid_frame = tk.Frame(center_block)
     grid_frame.pack()
 
-    # --- Строка 1 ---
-    tk.Label(grid_frame, text=tr("lbl_max_current_a"),
+    dual = device_type == "dual"
+    tk.Label(grid_frame, text=tr("lbl_max_current_a" if dual else "lbl_max_current"),
              anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=0, column=0, sticky="e", pady=5, padx=(0, 12))
     settings_max_i_a_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=12, anchor="w")
     settings_max_i_a_label.grid(row=0, column=1, sticky="w", pady=5)
     ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_max_current_a, width=10).grid(row=0, column=2, sticky="w", pady=5, padx=(10, 0))
 
-    # --- Строка 2 ---
-    tk.Label(grid_frame, text=tr("lbl_max_current_b"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=1, column=0, sticky="e", pady=5, padx=(0, 12))
-    settings_max_i_b_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=12, anchor="w")
-    settings_max_i_b_label.grid(row=1, column=1, sticky="w", pady=5)
-    ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_max_current_b, width=10).grid(row=1, column=2, sticky="w", pady=5, padx=(10, 0))
+    settings_max_i_b_label = None
+    if dual:
+        tk.Label(grid_frame, text=tr("lbl_max_current_b"),
+                 anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=1, column=0, sticky="e", pady=5, padx=(0, 12))
+        settings_max_i_b_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=12, anchor="w")
+        settings_max_i_b_label.grid(row=1, column=1, sticky="w", pady=5)
+        ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_max_current_b, width=10).grid(row=1, column=2, sticky="w", pady=5, padx=(10, 0))
 
-    # --- Строка 3 ---
+    sensitivity_row = 2 if dual else 1
     tk.Label(grid_frame, text=tr("lbl_sens_voltage"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=2, column=0, sticky="e", pady=5, padx=(0, 12))
+             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=sensitivity_row, column=0, sticky="e", pady=5, padx=(0, 12))
     settings_sens_v_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=8, anchor="w")
-    settings_sens_v_label.grid(row=2, column=1, sticky="w", pady=5)
-    ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_sens_voltage, width=10).grid(row=2, column=2, sticky="w", pady=5, padx=(10, 0))
+    settings_sens_v_label.grid(row=sensitivity_row, column=1, sticky="w", pady=5)
+    ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_sens_voltage, width=10).grid(row=sensitivity_row, column=2, sticky="w", pady=5, padx=(10, 0))
 
-    # --- Строка 4 ---
     tk.Label(grid_frame, text=tr("lbl_sens_current"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=3, column=0, sticky="e", pady=5, padx=(0, 12))
+             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=sensitivity_row + 1, column=0, sticky="e", pady=5, padx=(0, 12))
     settings_sens_i_label = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=8, anchor="w")
-    settings_sens_i_label.grid(row=3, column=1, sticky="w", pady=5)
-    ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_sens_current, width=10).grid(row=3, column=2, sticky="w", pady=5, padx=(10, 0))
+    settings_sens_i_label.grid(row=sensitivity_row + 1, column=1, sticky="w", pady=5)
+    ttk.Button(grid_frame, text=tr("btn_change"), command=_on_change_sens_current, width=10).grid(row=sensitivity_row + 1, column=2, sticky="w", pady=5, padx=(10, 0))
 
-    # --- Строка 5 ---
     tk.Label(grid_frame, text=tr("lbl_decimal"),
-             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=4, column=0, sticky="e", pady=5, padx=(0, 12))
+             anchor="e", width=34, font=("TkDefaultFont", 10)).grid(row=sensitivity_row + 2, column=0, sticky="e", pady=5, padx=(0, 12))
     settings_decimal_combo = ttk.Combobox(
         grid_frame,
         values=tuple(str(value) for value in ENERGY_DECIMAL_PLACES),
         state="readonly",
         width=8,
     )
-    settings_decimal_combo.grid(row=4, column=1, sticky="w", pady=5)
+    settings_decimal_combo.grid(row=sensitivity_row + 2, column=1, sticky="w", pady=5)
     settings_decimal_combo.bind('<<ComboboxSelected>>', _on_change_decimal_places)
 
     # Постоянная импульсного выхода: один или два канала.
@@ -4054,7 +4056,7 @@ def create_settings_tab():
     if device_type == "dual":
         channels.append(("b", "lbl_pulse_constant_ch2"))
 
-    for row, (channel, label_key) in enumerate(channels, start=5):
+    for row, (channel, label_key) in enumerate(channels, start=sensitivity_row + 3):
         tk.Label(
             grid_frame,
             text=tr(label_key),
@@ -5686,10 +5688,6 @@ def update_device_type_display():
         type_image_label.config(image=img)
     else:
         type_image_label.config(image="")
-
-    if settings_max_i_b_label:
-        if device_type == "single":
-            settings_max_i_b_label.config(text=tr("status_disconnected") + " (N/A)")
 
 
 def resize_window_to_content():
