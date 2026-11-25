@@ -337,10 +337,27 @@ def scan_device(port, preferred_slave, preferred_baud, preferred_parity, *, canc
     }
 
 
+def detect_device_type(port, slave, baud, parity):
+    """Определяет исполнение по импульсной постоянной и номинальному напряжению канала B."""
+    dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+    try:
+        pulse_high, pulse_low = dev.read_registers(REG_PULSE_CONSTANT_CH2, 2, functioncode=3)
+        voltage_high, voltage_low = dev.read_registers(0x204A, 2, functioncode=3)
+    finally:
+        dev.serial.close()
+
+    pulse_constant = (pulse_high << 16) | pulse_low
+    nominal_voltage = (voltage_high << 16) | voltage_low
+    if pulse_constant == 0 and nominal_voltage == 0:
+        return "single"
+    if pulse_constant in PULSE_CONSTANT_VALUES and nominal_voltage > 0:
+        return "dual"
+    raise ValueError(f"0xB00A–0xB00B: {pulse_constant}, 0x204A–0x204B: {nominal_voltage * 0.01:g} V")
+
+
 def write_device_settings(port, slave, baud, parity, new_slave, new_baud, new_parity):
     """
     Записывает адрес (0xA001), скорость (0xA002) и четность (0xA003/40963).
-    Все параметры связи отправляются ОДНИМ запросом.
     """
     if not 1 <= new_slave <= 254:
         return False, "Modbus address must be between 1 and 254."
@@ -350,67 +367,70 @@ def write_device_settings(port, slave, baud, parity, new_slave, new_baud, new_pa
     current_parity_letter = PARITY_MAP.get(parity, "E")
     new_parity_val = PARITY_STR_TO_VAL.get(new_parity, 2)
 
-    dev_write = None
-    dev_check = None
-    
+    requested = [new_slave, new_code, new_parity_val]
+    response_error = None
+    verification_stage = f"проверка связи по новому адресу {new_slave} ({new_baud}, {new_parity})"
+    stage = "открытие порта со старыми параметрами"
     try:
-        # 1. Подключаемся по СТАРЫМ (рабочим) параметрам
         dev_write = make_instrument(port, slave, baud, current_parity_letter)
-        dev_write.serial.timeout = 1.0
+        try:
+            dev_write.serial.timeout = 1.0
+            stage = "разблокировка записи по старому адресу"
+            dev_write.write_register(0xA000, 0x5AA5, functioncode=6)
+            time.sleep(0.15)
 
-        # 2. Разблокировка записи
-        dev_write.write_register(0xA000, 0x5AA5, functioncode=6)
-        time.sleep(0.15)
-
-        # 3. Записываем ВСЕ параметры связи ОДНИМ запросом
-        dev_write.write_registers(0xA001, [new_slave, new_code, new_parity_val])
-        time.sleep(0.1)
-
-        # 4. Корректное закрытие порта (без двойного close)
-        if dev_write and dev_write.serial:
+            stage = "отправка новых параметров"
             try:
-                if dev_write.serial.is_open:
-                    dev_write.serial.close()
-            except:
-                pass
-        dev_write = None  # Явно обнуляем ссылку
+                dev_write.write_registers(REG_LOCAL_ADDR, requested)
+            except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError) as error:
+                # Параметры могли примениться до получения ответа на старых настройках.
+                response_error = error
+        finally:
+            dev_write.serial.close()
 
-        # 5. Ждем переконфигурацию UART прибора
         time.sleep(3.0)
-
-        # 6. Переподключаемся по НОВЫМ параметрам для проверки
+        stage = verification_stage
         dev_check = make_instrument(port, new_slave, new_baud, parity_letter)
-        dev_check.serial.timeout = 1.5
-
-        # Пробуем прочитать (3 попытки)
-        for attempt in range(3):
-            try:
-                verify_slave = dev_check.read_register(0xA001, 0, functioncode=3)
-                verify_code = dev_check.read_register(0xA002, 0, functioncode=3)
-                verify_baud = BAUD_VAL_FROM_CODE.get(verify_code, new_baud)
-                return True, {"slave": verify_slave, "baud": verify_baud, "parity": new_parity}
-            except Exception as e:
-                if attempt < 2:
-                    time.sleep(0.5)
-                    continue
-                raise e
-
-    except Exception as e:
-        return False, f"Ошибка: {str(e)}"
-    
-    finally:
-        # Безопасное закрытие всех портов (защита от hEvent)
-        for dev in [dev_write, dev_check]:
-            if dev is not None:
+        try:
+            dev_check.serial.timeout = 1.5
+            for attempt in range(3):
                 try:
-                    if hasattr(dev, 'serial') and dev.serial is not None:
-                        if dev.serial.is_open:
-                            dev.serial.close()
-                except Exception:
-                    pass  # Игнорируем ошибки закрытия
-        # Гарантированно обнуляем ссылки
-        dev_write = None
-        dev_check = None
+                    actual = dev_check.read_registers(0xA001, 3, functioncode=3)
+                    break
+                except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError):
+                    if attempt == 2:
+                        raise
+                    time.sleep(0.5)
+        finally:
+            dev_check.serial.close()
+
+        if actual != requested:
+            return False, (
+                f"Прибор ответил по адресу {new_slave}, но параметры не совпали. "
+                f"Регистры 0xA001–0xA003: записывали {requested}, считали {actual}."
+            )
+
+        return True, {"slave": new_slave, "baud": new_baud, "parity": new_parity}
+
+    except Exception as error:
+        detail = f"Не удалось завершить смену параметров связи.\nЭтап: {stage}.\n{error}"
+        if response_error is not None:
+            detail += f"\nОтвет на запрос записи не получен или некорректен: {response_error}."
+        if stage == verification_stage and (slave, baud, parity) != (new_slave, new_baud, new_parity):
+            try:
+                previous = make_instrument(port, slave, baud, current_parity_letter)
+                try:
+                    previous_address = previous.read_register(0xA001, functioncode=3)
+                finally:
+                    previous.serial.close()
+            except Exception:
+                detail += f"\nПо старым параметрам (адрес {slave}, {baud}, {parity}) ответа тоже нет."
+            else:
+                detail += (
+                    f"\nСчётчик отвечает по старым параметрам (адрес {slave}, {baud}, {parity}). "
+                    f"В регистре адреса 0xA001 сейчас {previous_address}."
+                )
+        return False, detail
 
 
 def read_device_time(port, slave, baud, parity):

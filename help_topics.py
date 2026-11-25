@@ -4,8 +4,8 @@ HELP_TOPICS = {
     "ru": (
         (
             "Подключение",
-            "Выберите одно- или двухканальное исполнение, подключите адаптер USB–RS-485 и подайте питание на СКВТ. Обновите список COM-портов, выберите порт и нажмите «Подключиться». Поиск сначала проверяет введённый адрес с разными параметрами связи, затем перебирает адреса 1–254 по комбинациям скорости и чётности. Поиск можно отменить.\n\n"
-            "Адрес Modbus можно ввести вручную. Чтобы изменить адрес, скорость или чётность на приборе, нажмите «Записать». Рекомендуемая чётность — Even. Статус связи виден над вкладками. Для смены типа счётчика потребуется переподключение.",
+            "Подключите адаптер USB–RS-485 и подайте питание на СКВТ. Обновите список COM-портов, выберите порт и нажмите «Подключиться». Поиск сначала проверяет введённый адрес с разными параметрами связи, затем перебирает адреса 1–254 по комбинациям скорости и чётности. Поиск можно отменить.\n\n"
+            "Адрес Modbus можно ввести вручную. Чтобы изменить адрес, скорость или чётность на приборе, нажмите «Записать». Рекомендуемая чётность — Even. Статус связи виден над вкладками. Исполнение счётчика определяется автоматически при подключении.",
         ),
         (
             "Инфо о приборе",
@@ -55,8 +55,8 @@ HELP_TOPICS = {
     "en": (
         (
             "Connection",
-            "Select a single- or dual-channel meter, connect the USB–RS-485 adapter, and power the meter. Refresh the COM port list, select a port, and click Connect. The scan checks the entered address with different connection settings first, then scans addresses 1–254 for each baud rate and parity combination. You can cancel the scan.\n\n"
-            "Enter a known Modbus address manually. Use Write to change the meter address, baud rate, or parity. Even parity is recommended. Connection status is shown above the tabs. Changing the meter type requires reconnecting.",
+            "Connect the USB–RS-485 adapter and power the meter. Refresh the COM port list, select a port, and click Connect. The scan checks the entered address with different connection settings first, then scans addresses 1–254 for each baud rate and parity combination. You can cancel the scan.\n\n"
+            "Enter a known Modbus address manually. Use Write to change the meter address, baud rate, or parity. Even parity is recommended. Connection status is shown above the tabs. The application detects the meter type automatically when it connects.",
         ),
         (
             "Meter information",
@@ -106,8 +106,8 @@ HELP_TOPICS = {
     "zh": (
         (
             "连接",
-            "选择单通道或双通道电表，连接 USB–RS-485 转换器并给电表供电。刷新 COM 端口列表，选择端口并连接。程序先用不同通信参数检查输入的地址，再按波特率和校验方式的组合扫描 1–254。可取消搜索。\n\n"
-            "已知 Modbus 地址时可直接输入。要修改电表地址、波特率或校验方式，请执行写入。建议使用偶校验。连接状态显示在选项卡上方。更改电表类型后需要重新连接。",
+            "连接 USB–RS-485 转换器并给电表供电。刷新 COM 端口列表，选择端口并连接。程序先用不同通信参数检查输入的地址，再按波特率和校验方式的组合扫描 1–254。可取消搜索。\n\n"
+            "已知 Modbus 地址时可直接输入。要修改电表地址、波特率或校验方式，请执行写入。建议使用偶校验。连接状态显示在选项卡上方。连接时会自动识别电表类型。",
         ),
         (
             "电表信息",

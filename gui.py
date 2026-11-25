@@ -48,6 +48,7 @@ from update_checker import (
 from device import (
     list_com_ports,
     scan_device,
+    detect_device_type,
     write_device_settings,
     read_device_time,
     write_device_time,
@@ -142,6 +143,7 @@ TRANSLATIONS = {
         "lbl_parity": "Чётность:",
         "btn_write": "Записать",
         "lbl_device_type": "Тип подключаемого счётчика:",
+        "dlg_detect_type_error": "Не удалось определить исполнение счётчика.",
         "btn_change_type": "Изменить тип счётчика",
         "device_name": "СКВТ ЭМИС-ЭЛЕКТРА 977",
         "device_single": "(одноканальный)",
@@ -219,6 +221,7 @@ TRANSLATIONS = {
         "err_schedule_time": "Время периода {row} должно иметь формат ЧЧ:ММ.",
         "err_schedule_empty": "Добавьте хотя бы один тарифный период.",
         "err_schedule_limit": "Можно добавить не более 14 тарифных периодов.",
+        "lbl_schedule_important": "Важно:",
         "hint_schedule_order": "Начало каждого периода должно быть позже предыдущего.",
         "err_schedule_order": "Период {row}: укажите время позже {previous}.",
 
@@ -263,12 +266,10 @@ TRANSLATIONS = {
         "dlg_select_type_prompt": "Выберите тип подключаемого счётчика:",
         "dlg_single": "Одноканальный",
         "dlg_dual": "Двухканальный",
-        "dlg_exit": "Выход",
-        "dlg_exit_confirm": "Тип счётчика не выбран.\nЗакрыть программу?",
         "dlg_search": "Поиск устройства",
         "dlg_searching": "Поиск устройства",
         "dlg_connected": "Подключено",
-        "dlg_connected_msg": "Подключено устройство:\nАдрес: {}\nСкорость: {}\nЧётность: {}",
+        "dlg_connected_msg": "Подключено: СКВТ ЭЭ-977 {}\nАдрес: {}\nСкорость: {}\nЧётность: {}",
         "dlg_write_params_warning": "Изменение параметров связи приведет к разрыву соединения. Продолжить?",
         "dlg_error": "Ошибка",
         "dlg_no_port": "COM-порт не выбран",
@@ -395,6 +396,7 @@ TRANSLATIONS = {
         "lbl_parity": "Parity:",
         "btn_write": "Write",
         "lbl_device_type": "Meter Type:",
+        "dlg_detect_type_error": "Could not determine the meter type.",
         "btn_change_type": "Change Meter Type",
         "device_name": "SKVT EMIS-ELECTRA 977",
         "device_single": "(single-channel)",
@@ -471,6 +473,7 @@ TRANSLATIONS = {
         "err_schedule_time": "Period {row} time must use the HH:MM format.",
         "err_schedule_empty": "Add at least one tariff period.",
         "err_schedule_limit": "A maximum of 14 tariff periods is allowed.",
+        "lbl_schedule_important": "Important:",
         "hint_schedule_order": "Each period must start after the previous one.",
         "err_schedule_order": "Period {row}: enter a time later than {previous}.",
 
@@ -515,13 +518,11 @@ TRANSLATIONS = {
         "dlg_select_type_prompt": "Select meter type to connect:",
         "dlg_single": "Single-Channel",
         "dlg_dual": "Dual-Channel",
-        "dlg_exit": "Exit",
-        "dlg_exit_confirm": "Meter type not selected.\nClose program?",
         "dlg_search": "Searching Device",
         "dlg_searching": "Searching for device",
         "dlg_connected": "Connected",
         "dlg_write_params_warning": "Changing connection parameters will disconnect the device. Continue?",
-        "dlg_connected_msg": "Device connected:\nAddress: {}\nBaud: {}\nParity: {}",
+        "dlg_connected_msg": "Connected: SKVT EE-977 {}\nAddress: {}\nBaud: {}\nParity: {}",
         "dlg_error": "Error",
         "dlg_no_port": "COM port not selected",
         "dlg_port_unavailable": "Connection Error",
@@ -647,6 +648,7 @@ TRANSLATIONS = {
         "lbl_parity": "奇偶校验:",
         "btn_write": "写入",
         "lbl_device_type": "电表类型:",
+        "dlg_detect_type_error": "无法识别电表类型。",
         "btn_change_type": "更改电表类型",
         "device_name": "SKVT EMIS-ELECTRA 977",
         "device_single": "(单通道)",
@@ -723,6 +725,7 @@ TRANSLATIONS = {
         "err_schedule_time": "第 {row} 个时段的时间必须使用 HH:MM 格式。",
         "err_schedule_empty": "请至少添加一个费率时段。",
         "err_schedule_limit": "最多允许 14 个费率时段。",
+        "lbl_schedule_important": "重要：",
         "hint_schedule_order": "每个时段的开始时间必须晚于上一个时段。",
         "err_schedule_order": "第 {row} 个时段：请输入晚于 {previous} 的时间。",
 
@@ -763,13 +766,11 @@ TRANSLATIONS = {
         "dlg_select_type_prompt": "选择要连接的电表类型:",
         "dlg_single": "单通道",
         "dlg_dual": "双通道",
-        "dlg_exit": "退出",
-        "dlg_exit_confirm": "未选择电表类型。\n关闭程序?",
         "dlg_search": "搜索设备",
         "dlg_searching": "正在搜索设备",
         "dlg_connected": "已连接",
         "dlg_write_params_warning": "更改连接参数将断开设备连接。继续?",
-        "dlg_connected_msg": "设备已连接:\n地址: {}\n波特率: {}\n奇偶校验: {}",
+        "dlg_connected_msg": "已连接：SKVT EE-977 {}\n地址: {}\n波特率: {}\n奇偶校验: {}",
         "dlg_error": "错误",
         "dlg_no_port": "未选择COM端口",
         "dlg_port_unavailable": "连接错误",
@@ -1198,7 +1199,6 @@ def set_language(lang_code):
         refresh_btn.config(text=tr("btn_refresh"))
         connect_btn.config(text=tr("btn_connect"))
         disconnect_btn.config(text=tr("btn_disconnect"))
-        change_type_btn.config(text=tr("btn_change_type"))
         type_label_title.config(text=tr("lbl_device_type"))
         settings_btn.config(text=tr("btn_time_settings"))
         sync_pc_btn.config(text=tr("btn_sync_pc"))
@@ -1284,6 +1284,8 @@ settings_max_i_b_label = None
 settings_sens_v_label = None
 settings_sens_i_label = None
 settings_decimal_combo = None
+settings_action_buttons = []
+info_action_buttons = []
 active_tariff_label = None
 latest_tariff_periods = None
 
@@ -1320,8 +1322,6 @@ measurement_button = None
 measurement_protocol_button = None
 measurement_status = None
 
-# Глобальный флаг: выбрал ли пользователь тип счётчика
-user_has_chosen_device_type = False
 
 # Флаги фонового потока
 time_reader_active = False
@@ -1329,7 +1329,7 @@ time_reader_thread = None
 disconnect_flag = False  # Флаг обрыва связи для безопасной передачи в GUI
 
 # Состояние устройства и GUI
-device_type = None  # Пока пользователь не выбрал тип
+device_type = None
 was_ever_connected = False
 writing_in_progress = False
 post_write_cooldown_until = 0
@@ -1461,6 +1461,14 @@ def set_buttons_state(state):
     write_btn.config(state=state)
     settings_btn.config(state=state)
     sync_pc_btn.config(state=state)
+    tariff_schedule_button.config(state=state)
+    for button in (*info_action_buttons, *settings_action_buttons):
+        button.config(state=state)
+    if settings_decimal_combo is not None:
+        settings_decimal_combo.config(state="readonly" if state == "normal" else "disabled")
+    if state == "disabled":
+        for combo in settings_pulse_combos.values():
+            combo.config(state="disabled")
 
 
 def start_time_reader() -> bool:
@@ -2887,7 +2895,7 @@ def _show_emis_notice(title, message, *, parent=None, wait=False, action=None):
     card = ttk.Frame(dialog, style="Emis.Card.TFrame", padding=(18, 14))
     card.pack(padx=12, pady=12, fill="both", expand=True)
     ttk.Label(card, text=title, style="Emis.Heading.TLabel").pack(anchor="w")
-    ttk.Label(card, text=message, justify="left").pack(anchor="w", pady=(8, 12))
+    ttk.Label(card, text=message, justify="left", wraplength=460).pack(anchor="w", pady=(8, 12))
     button = ttk.Button(card, text="OK", command=dialog.destroy, style="Emis.Primary.TButton")
     if action is None:
         button.pack(anchor="e")
@@ -2908,6 +2916,55 @@ def _show_emis_notice(title, message, *, parent=None, wait=False, action=None):
     button.focus_set()
     if wait:
         parent.wait_window(dialog)
+
+
+def _choose_meter_type(reason):
+    """Предлагает ручной выбор, когда определение по регистрам не удалось."""
+    selected = None
+    dialog = tk.Toplevel(root, background=emis_background)
+    dialog.withdraw()
+    dialog.title(tr("dlg_select_type"))
+    dialog.transient(root)
+    dialog.resizable(False, False)
+
+    def select(meter_type):
+        nonlocal selected
+        selected = meter_type
+        dialog.destroy()
+
+    card = ttk.Frame(dialog, style="Emis.Card.TFrame", padding=(18, 14))
+    card.pack(padx=12, pady=12, fill="both", expand=True)
+    ttk.Label(card, text=tr("dlg_select_type_prompt").rstrip(":："), style="Emis.Heading.TLabel").pack(anchor="w")
+    ttk.Label(card, text=reason, wraplength=360, justify="left", foreground="#53645F").pack(
+        anchor="w", pady=(8, 12)
+    )
+
+    choices = ttk.Frame(card)
+    choices.pack(fill="x")
+    for column, (meter_type, label) in enumerate((("single", tr("dlg_single")), ("dual", tr("dlg_dual")))):
+        choices.columnconfigure(column, weight=1, uniform="meter_choices")
+        frame = ttk.Frame(choices)
+        frame.grid(row=0, column=column, padx=6, sticky="ew")
+        image = DEVICE_IMAGES.get(meter_type)
+        if image:
+            ttk.Label(frame, image=image).pack(pady=(0, 6))
+        ttk.Button(
+            frame, text=label, command=lambda value=meter_type: select(value),
+            style="Emis.Primary.TButton", width=18,
+        ).pack()
+    cancel_button = ttk.Button(card, text=tr("dlg_cancel"), command=dialog.destroy)
+    cancel_button.pack(anchor="e", pady=(12, 0))
+    dialog.bind("<Escape>", lambda _event: dialog.destroy())
+    dialog.update_idletasks()
+    x = root.winfo_rootx() + (root.winfo_width() - dialog.winfo_reqwidth()) // 2
+    y = root.winfo_rooty() + (root.winfo_height() - dialog.winfo_reqheight()) // 2
+    dialog.geometry(f"{x:+d}{y:+d}")
+    dialog.deiconify()
+    dialog.wait_visibility()
+    dialog.grab_set()
+    cancel_button.focus_set()
+    root.wait_window(dialog)
+    return selected
 
 
 def connect_scan():
@@ -2961,6 +3018,13 @@ def connect_scan():
                 port, preferred_slave, preferred_baud, preferred_parity,
                 cancelled=scan_cancelled,
             )
+            if success and not scan_cancelled.is_set():
+                try:
+                    result["device_type"] = detect_device_type(
+                        result["port"], result["slave"], result["baud"], result["parity"]
+                    )
+                except Exception as error:
+                    result["type_detection_error"] = tr("dlg_detect_type_error") + f"\n{error}"
             scan_result[0] = result if success else None
             scan_error[0] = None if success else result
         except Exception as e:
@@ -2977,18 +3041,31 @@ def connect_scan():
         if search_check_id: root.after_cancel(search_check_id); search_check_id = None
 
         if success and result_data:
-            global conn, was_ever_connected, is_device_ready
+            global conn, was_ever_connected, is_device_ready, device_type
+            search_window_ref.destroy()
+            search_window_ref = None
+            root.config(cursor="")
+
+            detected_type = result_data.get("device_type")
+            selected_type = detected_type
+            if selected_type is None:
+                selected_type = _choose_meter_type(result_data["type_detection_error"])
+                if selected_type is None:
+                    return
+
             conn = result_data
+            conn["device_type"] = selected_type
+            conn["device_type_confirmed"] = detected_type is not None
+            device_type = selected_type
             was_ever_connected = True
             is_device_ready = True
 
             addr_var.set(str(conn["slave"]))
             speed_var.set(str(conn["baud"]))
             parity_var.set(conn["parity"])
-            search_window_ref.destroy()
-            search_window_ref = None
-            root.config(cursor="")
 
+            create_parameters_tab()
+            create_settings_tab()
             set_buttons_state("normal")
             connect_btn.config(state="disabled")
             refresh_btn.config(state="disabled")
@@ -2996,10 +3073,15 @@ def connect_scan():
             status_canvas.itemconfig(status_indicator, fill="#66cc66")
             meter_status_details.pack(side="left")
             update_device_type_display()
+            root.update_idletasks()
+            root.minsize(root.winfo_reqwidth(), min(root.winfo_reqheight(), 500))
             start_time_reader()
+            meter_type = tr("device_dual" if selected_type == "dual" else "device_single")
             _show_emis_notice(
                 tr("dlg_connected"),
-                tr("dlg_connected_msg").format(result_data["slave"], result_data["baud"], result_data["parity"]),
+                tr("dlg_connected_msg").format(
+                    meter_type, result_data["slave"], result_data["baud"], result_data["parity"]
+                ),
             )
 
         elif error_msg:
@@ -3014,9 +3096,9 @@ def connect_scan():
             root.update_idletasks()
 
             if "could not open port" in error_msg or "FileNotFoundError" in error_msg:
-                messagebox.showerror(tr("dlg_port_unavailable"), tr("dlg_port_unavailable_msg").format(port))
+                _show_emis_notice(tr("dlg_port_unavailable"), tr("dlg_port_unavailable_msg").format(port), wait=True)
             else:
-                messagebox.showerror(tr("dlg_error"), error_msg)
+                _show_emis_notice(tr("dlg_error"), error_msg, wait=True)
 
     def cancel_scan():
         """Отменяет поиск и не даёт его потоку завершить подключение."""
@@ -3066,7 +3148,7 @@ def connect_scan():
 
 
 def disconnect_device(show_message=False):
-    global conn, connect_btn, disconnect_btn, status_canvas, status_indicator, was_ever_connected, is_device_ready
+    global conn, connect_btn, disconnect_btn, status_canvas, status_indicator, was_ever_connected, is_device_ready, device_type
     if not stop_time_reader():
         messagebox.showwarning(
             tr("dlg_warning"),
@@ -3074,6 +3156,7 @@ def disconnect_device(show_message=False):
         )
         return
     conn = None
+    device_type = None
     meter_status_details.pack_forget()
     _update_meter_status_details(None)
     _stop_measurement()
@@ -3129,6 +3212,9 @@ def write_settings():
     """
     global conn, writing_in_progress, post_write_cooldown_until
 
+    if writing_in_progress:
+        return
+
     if not conn:
         messagebox.showwarning(
             tr("dlg_warning"),
@@ -3142,74 +3228,70 @@ def write_settings():
     ):
         return
 
-    # Сохраняем исходный текст кнопки и сразу показываем начало операции.
-    original_write_button_text = write_btn.cget("text")
-
-    write_btn.config(
-        text=tr("btn_writing"),
-        state="disabled",
-        cursor="watch",
-    )
-    root.config(cursor="watch")
-    root.update_idletasks()
-    root.update()
-
-    # Не допускаем повторный запуск записи двойным нажатием.
-    if writing_in_progress:
-        return
-
     address = addr_var.get()
     if not _valid_modbus_address(address):
-        messagebox.showerror(tr("dlg_input_error"), tr("invalid_modbus_address"))
+        _show_emis_notice(tr("dlg_input_error"), tr("invalid_modbus_address"), wait=True)
         return
     new_slave = int(address)
 
-    # Запрещаем фоновому потоку начинать новые обращения к прибору.
+    original_write_button_text = write_btn.cget("text")
     writing_in_progress = True
-
-    # Показываем ожидание до начала операций с COM-портом.
-    # update() нужен, чтобы Windows успела отрисовать новый курсор
-    # до возможного ожидания завершения фонового потока.
-    root.config(cursor="watch")
-    write_btn.config(cursor="watch")
-    root.update_idletasks()
-    root.update()
-
-    if not stop_time_reader():
-        writing_in_progress = False
-        root.config(cursor="")
-        write_btn.config(cursor="")
-        root.update_idletasks()
-
-        write_btn.config(
-            text=original_write_button_text,
-            state="normal",
-            cursor="",
-        )
-
-        messagebox.showerror(
-            tr("dlg_write_error"),
-            tr("dlg_port_not_initialized"),
-        )
-        return
-
-    root.config(cursor="watch")
-    root.update_idletasks()
+    reader_stopped = False
+    write_btn.config(text=tr("btn_writing"), state="disabled")
 
     try:
         new_baud = int(speed_var.get())
         new_parity = parity_var.get()
+        connection = conn.copy()
+        result_queue = queue.Queue()
+        finished = tk.BooleanVar(master=root, value=False)
 
-        _stop_measurement()
-        success, result = write_device_settings(
-            conn["port"],
-            conn["slave"],
-            conn["baud"],
-            conn["parity"],
-            new_slave,
-            new_baud,
-            new_parity,
-        )
+        def write_in_background():
+            stopped = False
+            try:
+                stopped = stop_time_reader()
+                success, result = (False, None)
+                if stopped:
+                    success, result = write_device_settings(
+                        connection["port"], connection["slave"], connection["baud"], connection["parity"],
+                        new_slave, new_baud, new_parity,
+                    )
+            except Exception as error:
+                success, result = False, error
+            result_queue.put((stopped, success, result))
+
+        def check_write_result():
+            if result_queue.empty():
+                root.after(40, check_write_result)
+            else:
+                finished.set(True)
+
+        root_cursor = root.cget("cursor")
+        button_cursor = write_btn.cget("cursor")
+        root.tk.call("tk", "busy", "hold", root._w, "-cursor", "watch")
+        try:
+            root.config(cursor="watch")
+            write_btn.config(cursor="watch")
+            _stop_measurement()
+            threading.Thread(target=write_in_background, daemon=True).start()
+            root.after(40, check_write_result)
+            root.wait_variable(finished)
+            reader_stopped, success, result = result_queue.get_nowait()
+        finally:
+            root.tk.call("tk", "busy", "forget", root._w)
+            root.config(cursor=root_cursor)
+            write_btn.config(cursor=button_cursor)
+
+        if isinstance(result, Exception):
+            raise result
+
+        if not reader_stopped:
+            _show_emis_notice(
+                tr("dlg_write_error"),
+                tr("dlg_port_not_initialized"),
+                wait=True,
+            )
+            return
 
         if not success:
             # Возвращаем в интерфейс последние рабочие параметры.
@@ -3218,9 +3300,10 @@ def write_settings():
             parity_var.set(conn["parity"])
             parity_combo.set(conn["parity"])
 
-            messagebox.showerror(
+            _show_emis_notice(
                 tr("dlg_write_error"),
                 result,
+                wait=True,
             )
             return
 
@@ -3240,39 +3323,40 @@ def write_settings():
         # Короткая защита перед первым фоновым чтением.
         post_write_cooldown_until = time.time() + 1.0
 
-        messagebox.showinfo(
+        _show_emis_notice(
             tr("dlg_write_success"),
             tr("dlg_write_success_msg").format(
                 result["slave"],
                 result["baud"],
                 result["parity"],
             ),
+            wait=True,
         )
 
     except (TypeError, ValueError, KeyError) as error:
-        messagebox.showerror(
+        _show_emis_notice(
             tr("dlg_write_error"),
             str(error),
+            wait=True,
         )
 
     except Exception as error:
-        messagebox.showerror(
+        _show_emis_notice(
             tr("dlg_write_error"),
             str(error),
+            wait=True,
         )
 
     finally:
         writing_in_progress = False
-        root.config(cursor="")
         write_btn.config(
             text=original_write_button_text,
             state="normal" if conn and is_device_ready else "disabled",
-            cursor="",
         )
         root.update_idletasks()
 
         # Чтение возобновляется как после успеха, так и после ошибки.
-        if conn:
+        if reader_stopped and conn:
             start_time_reader()
 
 
@@ -3536,7 +3620,7 @@ def clear_energy_values():
         if not local_conn:
             raise Exception(tr("dlg_no_connection"))
 
-        if not messagebox.askyesno(
+        if not _show_confirm_dialog(
             tr("dlg_clear_confirm"),
             tr("dlg_clear_confirm_msg")
         ):
@@ -3549,7 +3633,7 @@ def clear_energy_values():
             messagebox.showerror(tr("dlg_clear_error"), msg)
             return
 
-        messagebox.showinfo(tr("dlg_write_success"), tr("dlg_clear_success"))
+        _show_emis_notice(tr("dlg_write_success"), tr("dlg_clear_success"), wait=True)
 
         # Сбрасываем только актуальную очередь настроек
         settings_update_queue.put(None)
@@ -3882,6 +3966,9 @@ def create_parameters_tab():
     global param_ch2_energy_abs_label, param_ch2_energy_pos_label, param_ch2_energy_neg_label
     global param_ch2_nom_v_label, param_ch2_nom_i_label
 
+    if device_type is None:
+        return
+
     for widget in tab_params.winfo_children():
         widget.destroy()
 
@@ -3951,67 +4038,6 @@ def create_parameters_tab():
         _create_power_supply_panel(tab_params)
 
 
-def on_close_attempt(win):
-    """Обработка закрытия окна выбора типа счётчика."""
-    if messagebox.askyesno(tr("dlg_exit"), tr("dlg_exit_confirm")):
-        win.destroy()
-        root.destroy()
-        sys.exit()
-
-
-def choose_device_type_on_start():
-    """Отображает окно выбора типа счётчика при запуске программы."""
-    global device_type, user_has_chosen_device_type
-    win = tk.Toplevel(root)
-    win.title(tr("dlg_select_type"))
-    win.grab_set()
-    win.resizable(False, False)
-
-    def on_close():
-        if messagebox.askyesno(tr("dlg_exit"), tr("dlg_exit_confirm")):
-            win.destroy()
-            root.quit()
-
-    win.protocol("WM_DELETE_WINDOW", on_close)
-
-    ttk.Label(win, text=tr("dlg_select_type_prompt"), style="Emis.Heading.TLabel").pack(pady=(15, 10))
-
-    # Контейнер для двух колонок
-    container = tk.Frame(win)
-    container.pack(padx=20, pady=5)
-
-    def set_type(t):
-        global device_type, user_has_chosen_device_type
-        device_type = t
-        user_has_chosen_device_type = True
-        win.destroy()
-
-    # --- ЛЕВАЯ КОЛОНКА: ОДНОКАНАЛЬНЫЙ ---
-    frame_single = tk.Frame(container)
-    frame_single.pack(side="left", padx=15)
-    if "single" in DEVICE_IMAGES:
-        tk.Label(frame_single, image=DEVICE_IMAGES["single"]).pack(pady=5)
-    ttk.Button(frame_single, text=tr("dlg_single"), command=lambda: set_type("single"), width=22).pack(pady=5)
-
-    # --- ПРАВАЯ КОЛОНКА: ДВУХКАНАЛЬНЫЙ ---
-    frame_dual = tk.Frame(container)
-    frame_dual.pack(side="left", padx=15)
-    if "dual" in DEVICE_IMAGES:
-        tk.Label(frame_dual, image=DEVICE_IMAGES["dual"]).pack(pady=5)
-    ttk.Button(frame_dual, text=tr("dlg_dual"), command=lambda: set_type("dual"), width=22).pack(pady=5)
-
-    win.update_idletasks()
-    x = root.winfo_x() + (root.winfo_width() - win.winfo_width()) // 2
-    y = root.winfo_y() + (root.winfo_height() - win.winfo_height()) // 2
-    win.geometry(f"+{x}+{y}")
-
-    win.wait_window()
-
-    # ПОСЛЕ ВЫБОРА ТИПА - ОБНОВЛЯЕМ ОТОБРАЖЕНИЕ
-    if user_has_chosen_device_type:
-        update_device_type_display()
-
-
 def create_settings_tab():
     """Создаёт вкладку «Настройки прибора»."""
     global settings_max_i_a_label, settings_max_i_b_label
@@ -4019,8 +4045,13 @@ def create_settings_tab():
     global settings_decimal_combo
     global settings_pulse_combos
 
+    if device_type is None:
+        return
+
     for widget in tab_settings.winfo_children():
         widget.destroy()
+    settings_action_buttons.clear()
+    control_state = "normal" if conn and is_device_ready else "disabled"
 
     center_block = ttk.Frame(tab_settings, padding=(22, 16), style="Emis.Card.TFrame")
     center_block.pack(pady=20)
@@ -4043,9 +4074,11 @@ def create_settings_tab():
             foreground=emis_text, width=-12, anchor="w",
         )
         value.grid(row=row, column=1, sticky="nw", pady=4)
-        ttk.Button(grid_frame, text=tr("btn_change"), command=command, width=10).grid(
-            row=row, column=2, sticky="nw", pady=4, padx=(10, 0)
+        button = ttk.Button(
+            grid_frame, text=tr("btn_change"), command=command, width=10, state=control_state,
         )
+        button.grid(row=row, column=2, sticky="nw", pady=4, padx=(10, 0))
+        settings_action_buttons.append(button)
         return value
 
     dual = device_type == "dual"
@@ -4063,7 +4096,7 @@ def create_settings_tab():
     settings_decimal_combo = ttk.Combobox(
         grid_frame,
         values=tuple(str(value) for value in ENERGY_DECIMAL_PLACES),
-        state="readonly",
+        state="readonly" if control_state == "normal" else "disabled",
         width=8,
     )
     settings_decimal_combo.grid(row=sensitivity_row + 2, column=1, sticky="nw", pady=4)
@@ -4102,10 +4135,12 @@ def create_settings_tab():
         )
 
     ttk.Separator(center_block).pack(fill="x", pady=12)
-    ttk.Button(
+    clear_button = ttk.Button(
         center_block, text=tr("btn_clear_energy"),
-        command=clear_energy_values, style="Emis.Primary.TButton",
-    ).pack()
+        command=clear_energy_values, style="Emis.Primary.TButton", state=control_state,
+    )
+    clear_button.pack()
+    settings_action_buttons.append(clear_button)
 
 
 def create_info_tab():
@@ -4118,6 +4153,8 @@ def create_info_tab():
 
     for widget in tab_info.winfo_children():
         widget.destroy()
+    info_action_buttons.clear()
+    control_state = "normal" if conn and is_device_ready else "disabled"
 
     grid_frame = ttk.Frame(tab_info, padding=(22, 16), style="Emis.Card.TFrame")
     grid_frame.pack(pady=20)
@@ -4152,13 +4189,16 @@ def create_info_tab():
     )
 
     for row, (field, label_key, value_label) in enumerate(editable_fields, start=1):
-        ttk.Button(
+        button = ttk.Button(
             grid_frame,
             text=tr("btn_change"),
             command=lambda field=field, key=label_key, label=value_label:
                 _on_change_device_info(field, key, label),
             width=10,
-        ).grid(
+            state=control_state,
+        )
+        info_action_buttons.append(button)
+        button.grid(
             row=row,
             column=2,
             sticky="nw",
@@ -4167,13 +4207,16 @@ def create_info_tab():
         )
 
     # Автозаполнение по отсканированному серийному номеру.
-    ttk.Button(
+    autofill_button = ttk.Button(
         grid_frame,
         text=tr("btn_info_autofill"),
         command=_show_device_info_autofill_dialog,
         style="Emis.Primary.TButton",
         width=24,
-    ).grid(
+        state=control_state,
+    )
+    info_action_buttons.append(autofill_button)
+    autofill_button.grid(
         row=6,
         column=0,
         columnspan=3,
@@ -4236,7 +4279,7 @@ def _check_settings_queue():
                     # Во время операции выбор остаётся заблокированным.
                     combo.configure(
                         state="disabled"
-                        if settings_dialog_open or operation_in_progress
+                        if not conn or settings_dialog_open or operation_in_progress
                         else "readonly"
                     )
             if settings is None:
@@ -4428,36 +4471,41 @@ def _show_numeric_input_dialog(title, prompt, current_value, write_func=None):
 
 
 def _show_confirm_dialog(title, message):
-    """Показывает модальное окно подтверждения с переведенными кнопками."""
-    result = [False]
-    win = tk.Toplevel(root)
+    """Показывает подтверждение в стиле ЭМИС."""
+    confirmed = False
+    win = tk.Toplevel(root, background=emis_background)
+    win.withdraw()
     win.title(title)
     win.transient(root)
-    win.grab_set()
     win.resizable(False, False)
 
-    tk.Label(win, text=message, font=("Segoe UI", 10), padx=20, pady=15, justify="center").pack()
+    card = ttk.Frame(win, style="Emis.Card.TFrame", padding=(18, 14))
+    card.pack(padx=12, pady=12, fill="both", expand=True)
+    ttk.Label(card, text=title, style="Emis.Heading.TLabel").pack(anchor="w")
+    ttk.Label(card, text=message, justify="left", wraplength=360).pack(anchor="w", pady=(8, 12))
+    buttons = ttk.Frame(card)
+    buttons.pack(anchor="e")
 
-    btn_frame = tk.Frame(win)
-    btn_frame.pack(pady=10)
-
-    def on_yes():
-        result[0] = True
+    def accept():
+        nonlocal confirmed
+        confirmed = True
         win.destroy()
-    def on_no():
-        result[0] = False
-        win.destroy()
 
-    ttk.Button(btn_frame, text=tr("dlg_yes"), command=on_yes, width=10).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text=tr("dlg_no"), command=on_no, width=10).pack(side="left", padx=5)
+    ttk.Button(buttons, text=tr("dlg_yes"), command=accept, style="Emis.Primary.TButton").pack(side="left", padx=(0, 8))
+    cancel = ttk.Button(buttons, text=tr("dlg_no"), command=win.destroy)
+    cancel.pack(side="left")
+    win.bind("<Escape>", lambda _event: win.destroy())
 
     win.update_idletasks()
-    x = root.winfo_rootx() + (root.winfo_width() - win.winfo_width()) // 2
-    y = root.winfo_rooty() + (root.winfo_height() - win.winfo_height()) // 2
-    win.geometry(f"+{x}+{y}")
-
+    x = root.winfo_rootx() + (root.winfo_width() - win.winfo_reqwidth()) // 2
+    y = root.winfo_rooty() + (root.winfo_height() - win.winfo_reqheight()) // 2
+    win.geometry(f"{x:+d}{y:+d}")
+    win.deiconify()
+    win.wait_visibility()
+    win.grab_set()
+    cancel.focus_set()
     root.wait_window(win)
-    return result[0]
+    return confirmed
 
 
 def _on_change_max_current_a():
@@ -5354,6 +5402,15 @@ def show_tariff_schedule_dialog():
         padx=20,
     )
 
+    hint_frame = ttk.Frame(dialog)
+    hint_frame.pack(anchor="w", padx=20, pady=(0, 8))
+    hint_font = ("TkDefaultFont", 9)
+    ttk.Label(
+        hint_frame, text=tr("lbl_schedule_important"), font=(*hint_font, "bold"), foreground="#00664D",
+    ).pack(side="left", anchor="n", padx=(0, 6))
+    schedule_hint = ttk.Label(hint_frame, font=hint_font, wraplength=260, justify="left")
+    schedule_hint.pack(side="left", anchor="n")
+
     table_frame = tk.Frame(dialog)
     table_frame.pack(
         padx=20,
@@ -5577,7 +5634,7 @@ def show_tariff_schedule_dialog():
             save_button.config(state="disabled")
             return None
 
-        schedule_hint.config(text=tr("hint_schedule_order"), foreground="#53645F")
+        schedule_hint.config(text=tr("hint_schedule_order"), foreground="#437467")
         save_button.config(state="normal")
         return periods_to_write
 
@@ -5633,9 +5690,6 @@ def show_tariff_schedule_dialog():
     ).pack(
         pady=(0, 5),
     )
-
-    schedule_hint = ttk.Label(dialog, wraplength=320, justify="left")
-    schedule_hint.pack(anchor="w", padx=20, pady=(3, 0))
 
     button_frame = tk.Frame(dialog)
     button_frame.pack(
@@ -5721,63 +5775,6 @@ def resize_window_to_content():
     root.geometry(f"{required_width}x{actual_height}+{x}+{y}")
     root.resizable(True, True)
 
-
-def choose_device_type_from_menu():
-    """Позволяет изменить тип счётчика через меню (с картинками)."""
-    global device_type
-
-    if conn:
-        _show_emis_notice(tr("dlg_warning"), tr("dlg_change_type_warning"), wait=True)
-        disconnect_device()
-        if conn:
-            return
-
-    win = tk.Toplevel(root)
-    win.title(tr("dlg_select_type"))
-    win.grab_set()
-    win.resizable(False, False)
-
-    def set_type(t):
-        global device_type, latest_parameters
-
-        latest_parameters = None
-        _stop_measurement()
-        device_type = t
-
-        # Пересоздаём вкладки под новый тип
-        create_parameters_tab()
-        create_settings_tab()
-        create_info_tab()
-
-        # Обновляем отображение типа (картинка + текст)
-        update_device_type_display()
-
-        win.destroy()
-
-    ttk.Label(win, text=tr("dlg_select_type_prompt"), style="Emis.Heading.TLabel").pack(pady=(15, 10))
-
-    # Контейнер для двух колонок
-    container = tk.Frame(win)
-    container.pack(padx=20, pady=5)
-
-    # --- ЛЕВАЯ КОЛОНКА: ОДНОКАНАЛЬНЫЙ ---
-    frame_single = tk.Frame(container)
-    frame_single.pack(side="left", padx=15)
-    if "single" in DEVICE_IMAGES:
-        tk.Label(frame_single, image=DEVICE_IMAGES["single"]).pack(pady=5)
-    ttk.Button(frame_single, text=tr("dlg_single"), command=lambda: set_type("single"), width=22).pack(pady=5)
-
-    # --- ПРАВАЯ КОЛОНКА: ДВУХКАНАЛЬНЫЙ ---
-    frame_dual = tk.Frame(container)
-    frame_dual.pack(side="left", padx=15)
-    if "dual" in DEVICE_IMAGES:
-        tk.Label(frame_dual, image=DEVICE_IMAGES["dual"]).pack(pady=5)
-    ttk.Button(frame_dual, text=tr("dlg_dual"), command=lambda: set_type("dual"), width=22).pack(pady=5)
-
-    win.update_idletasks()
-    x = root.winfo_x() + (root.winfo_width() - win.winfo_width()) // 2
-    y = root.winfo_y() + (root.winfo_height() - win.winfo_height()) // 2
-    win.geometry(f"+{x}+{y}")
 
 # =============================================================================
 # 6. Создание графического интерфейса
@@ -5978,7 +5975,7 @@ tariff_schedule_label = ttk.Label(tariff_actions, text=tr("lbl_tariff_schedule")
 tariff_schedule_label.pack(side="left", padx=(0, 8))
 tariff_schedule_button = ttk.Button(
     tariff_actions, text=tr("btn_tariff_schedule"),
-    command=show_tariff_schedule_dialog, style="Emis.Primary.TButton",
+    command=show_tariff_schedule_dialog, style="Emis.Primary.TButton", state="disabled",
 )
 tariff_schedule_button.pack(side="left")
 
@@ -6070,9 +6067,6 @@ type_image_label.pack(pady=2)
 type_label = tk.Label(type_display_container, text="—", justify="center", font=("TkDefaultFont", 10))
 type_label.pack(pady=2)
 
-# Кнопка смены типа
-change_type_btn = ttk.Button(right_frame, text=tr("btn_change_type"), command=choose_device_type_from_menu, style="Emis.Primary.TButton", width=22)
-change_type_btn.pack(pady=5)
 
 # 3. Статичные элементы вкладки "Дата и время"
 clock_panel = ttk.Frame(tab_time, padding=(24, 18), style="Emis.Card.TFrame")
@@ -6112,6 +6106,8 @@ root.geometry(f"{width}x{height}+{x}+{y}")
 
 def on_closing():
     """Обработка закрытия главного окна."""
+    if writing_in_progress:
+        return
     if power_supply_pending_port:
         messagebox.showwarning(
             tr("dlg_warning"),
@@ -6126,12 +6122,6 @@ root.protocol("WM_DELETE_WINDOW", on_closing)
 
 # Инициализация
 _update_port_list()
-choose_device_type_on_start()
-
-if not user_has_chosen_device_type:
-    root.destroy()
-    sys.exit()
-
 # Создание динамических вкладок
 create_parameters_tab()
 create_settings_tab()
