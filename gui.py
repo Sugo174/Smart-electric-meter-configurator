@@ -3899,7 +3899,7 @@ def create_parameters_tab():
             if labels:
                 ttk.Separator(card).grid(row=row, column=0, columnspan=2, sticky="ew", pady=7)
                 row += 1
-            ttk.Label(card, text=tr(section).rstrip(":："), foreground="#00664D", font=("TkDefaultFont", 9, "bold")).grid(
+            ttk.Label(card, text=tr(section).rstrip(":："), style="Emis.Heading.TLabel").grid(
                 row=row, column=0, columnspan=2, sticky="w", pady=(2, 3)
             )
             row += 1
