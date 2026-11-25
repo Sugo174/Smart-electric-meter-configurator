@@ -5,11 +5,11 @@ HELP_TOPICS = {
         (
             "Подключение",
             "Подключите адаптер USB–RS-485 и подайте питание на СКВТ. Обновите список COM-портов, выберите порт и нажмите «Подключиться». Поиск сначала проверяет введённый адрес с разными параметрами связи, затем перебирает адреса 1–254 по комбинациям скорости и чётности. Поиск можно отменить.\n\n"
-            "Адрес Modbus можно ввести вручную. Чтобы изменить адрес, скорость или чётность на приборе, нажмите «Записать». Рекомендуемая чётность — Even. Статус связи виден над вкладками. Исполнение счётчика определяется автоматически при подключении.",
+            "Адрес Modbus можно ввести вручную. Чтобы изменить адрес, скорость или чётность на приборе, нажмите «Записать». Рекомендуемая чётность — Even. Над вкладками виден статус связи. После подключения там же отображаются серийный номер и версия ПО. Если программа не определит исполнение автоматически, выберите число каналов в открывшемся окне или нажмите «Отмена», чтобы прервать подключение.",
         ),
         (
             "Инфо о приборе",
-            "Здесь можно прочитать и изменить серийный номер, производителя, тип, версию метрологического ПО и дату. Серийный номер должен содержать 12 цифр. Для номеров серии 977 отображается расшифровка исполнения.\n\n"
+            "Здесь можно прочитать и изменить серийный номер, производителя, тип, версию метрологического ПО и дату. Редактирование и автозаполнение доступны после подключения. При изменении серийного номера введите 12 цифр. Для номеров серии 977 отображается расшифровка исполнения.\n\n"
             "В «Автозаполнении» отсканируйте или введите номер и нажмите Enter или «Применить». Программа синхронизирует часы с ПК и запишет сведения о приборе. В поле даты записывается дата ввода номера. При сбое часть полей может быть уже записана.",
         ),
         (
@@ -29,7 +29,7 @@ HELP_TOPICS = {
         (
             "Тарифное расписание",
             "«Текущий тариф» рассчитывается по часам счётчика и сохранённому суточному расписанию. Если расписание пустое или данные недоступны, отображается «—».\n\n"
-            "Нажмите «Настроить расписание», чтобы прочитать и отредактировать периоды тарифов 1–4. Новый период начинается с 00:00. Часы и минуты вводятся цифрами в отдельных полях. Расположите периоды по возрастанию времени и нажмите «Записать расписание».",
+            "Нажмите «Настроить расписание», чтобы прочитать и отредактировать периоды тарифов 1–4. Новый период начинается с 00:00. Часы и минуты вводятся цифрами в отдельных полях. Начало каждого периода должно быть позже предыдущего. Если время повторяется или идёт в обратном порядке, редактор покажет подсказку рядом с таблицей и заблокирует запись до исправления.",
         ),
         (
             "Архивы",
@@ -39,7 +39,7 @@ HELP_TOPICS = {
             "Протокол поверки",
             "На вкладке «Текущие значения» нажмите «Заполнить протокол». Проверьте данные прибора, заполните сведения о поверке, выберите класс точности 0,5 или 1 и укажите результаты четырёх проверок.\n\n"
             "Для каждого канала предусмотрено пять точек напряжения и четыре точки тока, мощности и периода. Слева можно выбрать любую точку. На точках напряжения выставьте указанную уставку и введите показание внешнего вольтметра в Uэт. На точках тока оставьте напряжение на Uном, выставляйте на ЭнИ 75 → 37,5 → 22,5 → 7,5 мВ и вводите Uэт и Tизм с частотомера. В двухканальном исполнении физически переключайте стенд на нужный канал.\n\n"
-            "«Измерить» запускает усреднение для выбранной точки. Когда показания стабилизируются, усреднение останавливается автоматически и становится доступен «Замер». Если показания остались нестабильными, повторите измерение. Заполните поля и нажмите «Записать точку». К записанной точке можно вернуться и сохранить исправления.\n\n"
+            "«Измерить» запускает усреднение для выбранной точки. Когда показания стабилизируются, усреднение останавливается автоматически и становится доступен «Замер». Если показания остались нестабильными, повторите измерение. Программа определяет, введён ли период в секундах или миллисекундах, по расчётному периоду точки и показывает единицу рядом с полем. Заполните поля и нажмите «Записать точку». К записанной точке можно вернуться и сохранить исправления.\n\n"
             "Когда все точки записаны, нажмите «Сформировать протокол», подтвердите действие и выберите имя и папку файла Excel. Если Excel блокирует сохранение, закройте файл и повторите попытку. После пересчёта итог P означает, что все четыре проверки пройдены и погрешности в допуске. В остальных случаях итог F.",
         ),
         (
@@ -56,11 +56,11 @@ HELP_TOPICS = {
         (
             "Connection",
             "Connect the USB–RS-485 adapter and power the meter. Refresh the COM port list, select a port, and click Connect. The scan checks the entered address with different connection settings first, then scans addresses 1–254 for each baud rate and parity combination. You can cancel the scan.\n\n"
-            "Enter a known Modbus address manually. Use Write to change the meter address, baud rate, or parity. Even parity is recommended. Connection status is shown above the tabs. The application detects the meter type automatically when it connects.",
+            "Enter a known Modbus address manually. Use Write to change the meter address, baud rate, or parity. Even parity is recommended. Connection status appears above the tabs. Once connected, the serial number and software version appear there as well. If automatic detection fails, select the channel count in the dialog or click Cancel to stop connecting.",
         ),
         (
             "Meter information",
-            "Read or edit the serial number, manufacturer, meter type, metrological firmware version, and date. Serial numbers must contain 12 digits. The app decodes the configuration encoded in series 977 serial numbers.\n\n"
+            "Read or edit the serial number, manufacturer, meter type, metrological firmware version, and date. Editing and auto-fill become available after connecting. Enter 12 digits when editing the serial number. The app decodes the configuration encoded in series 977 serial numbers.\n\n"
             "For auto-fill, scan or enter the serial number, then press Enter or click Apply. The app synchronizes the clock with the PC and writes the meter details. The date field records when the serial number was entered. If the operation fails, some fields may already have been written.",
         ),
         (
@@ -80,7 +80,7 @@ HELP_TOPICS = {
         (
             "Tariff schedule",
             "Current tariff is calculated from the meter clock and the stored daily schedule. A dash is displayed if the schedule is empty or the data is unavailable.\n\n"
-            "Click Configure schedule to read or edit periods for tariffs 1–4. New periods start at 00:00. Enter hours and minutes as digits in separate fields. Order the periods by start time, then write the schedule to the meter.",
+            "Click Configure schedule to read or edit periods for tariffs 1–4. New periods start at 00:00. Enter hours and minutes as digits in separate fields. Each period must start after the previous one. If a time is repeated or out of order, the editor shows an inline hint and disables Write schedule until you fix it.",
         ),
         (
             "Archives",
@@ -90,7 +90,7 @@ HELP_TOPICS = {
             "Verification report",
             "On Live readings, click Fill in protocol. Check the meter details, complete the report form, select accuracy class 0.5 or 1, and enter the outcomes of the four checks.\n\n"
             "Each channel has five voltage points and four current, power, and period points. Select any point from the list on the left. For voltage points, set the specified voltage and enter the external voltmeter reading in Uэт. For current points, keep the source at nominal voltage and set the EnI calibrator to 75 → 37.5 → 22.5 → 7.5 mV. Enter the external voltmeter reading in Uэт and the frequency counter period in Tизм. For a dual-channel meter, switch the bench connections to the channel being tested.\n\n"
-            "Start averaging with «Измерить» (Measure). Once the readings stabilize, averaging stops automatically and «Замер» (Capture) becomes available. If the readings remain unstable, repeat the measurement. Enter the required readings and save the point. You can return to a saved point and save corrections.\n\n"
+            "Start averaging with «Измерить» (Measure). Once the readings stabilize, averaging stops automatically and «Замер» (Capture) becomes available. If the readings remain unstable, repeat the measurement. The app uses the expected period for the point to interpret seconds or milliseconds and displays the unit next to the field. Enter the required readings and save the point. You can return to a saved point and save corrections.\n\n"
             "After saving all points, select «Сформировать протокол» (Generate report), confirm, and choose a name and folder for the Excel file. If Excel locks the file, close it and retry. After recalculation, P indicates that all four checks passed and all measurement errors are within tolerance. Otherwise the result is F.",
         ),
         (
@@ -107,11 +107,11 @@ HELP_TOPICS = {
         (
             "连接",
             "连接 USB–RS-485 转换器并给电表供电。刷新 COM 端口列表，选择端口并连接。程序先用不同通信参数检查输入的地址，再按波特率和校验方式的组合扫描 1–254。可取消搜索。\n\n"
-            "已知 Modbus 地址时可直接输入。要修改电表地址、波特率或校验方式，请执行写入。建议使用偶校验。连接状态显示在选项卡上方。连接时会自动识别电表类型。",
+            "已知 Modbus 地址时可直接输入。要修改电表地址、波特率或校验方式，请执行写入。建议使用偶校验。连接状态显示在选项卡上方。连接后，同一位置还会显示序列号和软件版本。若无法自动识别电表类型，请在弹窗中选择通道数，或点击「取消」停止连接。",
         ),
         (
             "电表信息",
-            "可以读取或修改序列号、制造商、电表类型、计量固件版本和日期。序列号必须为 12 位数字。界面会解析 977 系列序列号中的配置信息。\n\n"
+            "可以读取或修改序列号、制造商、电表类型、计量固件版本和日期。连接后可以修改信息或使用自动填写。修改序列号时须输入 12 位数字。界面会解析 977 系列序列号中的配置信息。\n\n"
             "自动填写时，扫描或输入序列号，然后按 Enter 或点击应用。程序将电表时钟与电脑同步，并将序列号录入日期写入日期字段。如果操作失败，部分字段可能已写入。",
         ),
         (
@@ -131,7 +131,7 @@ HELP_TOPICS = {
         (
             "费率时段表",
             "当前费率根据电表时钟和已保存的每日时段表计算。时段表为空或数据不可用时显示「—」。\n\n"
-            "打开时段设置可读取和编辑费率 1–4 的时段。新增时段默认为 00:00。小时和分钟分别输入数字。按开始时间升序排列后写入电表。",
+            "打开时段设置可读取和编辑费率 1–4 的时段。新增时段默认为 00:00。小时和分钟分别输入数字。每个时段的开始时间必须晚于上一个时段。如果时间重复或顺序有误，界面会在表格旁提示，并停用写入按钮，直到修正为止。",
         ),
         (
             "档案",
@@ -141,7 +141,7 @@ HELP_TOPICS = {
             "检定记录",
             "在实时读数选项卡打开检定记录。核对电表信息，填写检定数据，选择 0.5 或 1 级准确度，并填写四项检查结果。\n\n"
             "每个通道有五个电压点和四个电流、功率与周期点。可从左侧列表选择任意检定点。电压点按提示设置电压，将外部电压表读数填入 Uэт。电流点保持电压源为额定电压，将 ЭнИ 校准器依次设置为 75、37.5、22.5、7.5 mV，填入外部电压表读数 Uэт 和频率计测得的周期 Tизм。双通道电表需将试验台接线切换至正在检定的通道。\n\n"
-            "点击「Измерить」开始采集平均值。读数稳定后，程序自动停止采集，此时可点击「Замер」锁定平均值。如果读数仍不稳定，请重新测量。填写所需读数后保存检定点。可以返回已保存的点，修改后重新保存。\n\n"
+            "点击「Измерить」开始采集平均值。读数稳定后，程序自动停止采集，此时可点击「Замер」锁定平均值。如果读数仍不稳定，请重新测量。程序根据该检定点的预期周期判断输入值使用秒还是毫秒，并在输入框旁显示单位。填写所需读数后保存检定点。可以返回已保存的点，修改后重新保存。\n\n"
             "记录所有点后，点击「Сформировать протокол」，确认后选择 Excel 文件名和保存位置。若文件被 Excel 锁定，请关闭文件后重试。Excel 重新计算后，四项检查均通过且所有测量误差均在允许范围内时显示 P，否则显示 F。",
         ),
         (
