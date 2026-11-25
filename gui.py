@@ -225,6 +225,9 @@ TRANSLATIONS = {
         "lbl_manufacturer": "Производитель:",
         "lbl_meter_type": "Тип счетчика:",
         "lbl_sw_version": "Версия метрологического ПО:",
+        "lbl_info_heading": "Сведения о приборе",
+        "lbl_info_sw_version": "Версия\nметрологического ПО",
+        "lbl_info_channels": "Измерительные\nканалы",
         "lbl_status_sw_version": "Версия ПО:",
         "lbl_release_date": "Дата:",
         "info_serial_prompt": "Введите ровно 12 цифр (0–9).",
@@ -472,6 +475,9 @@ TRANSLATIONS = {
         "lbl_manufacturer": "Manufacturer:",
         "lbl_meter_type": "Meter Type:",
         "lbl_sw_version": "Metrological SW Version:",
+        "lbl_info_heading": "Device information",
+        "lbl_info_sw_version": "Metrological\nsoftware version",
+        "lbl_info_channels": "Measurement\nchannels",
         "lbl_status_sw_version": "SW Version:",
         "lbl_release_date": "Date:",
         "info_serial_prompt": "Enter exactly 12 digits (0–9).",
@@ -719,6 +725,9 @@ TRANSLATIONS = {
         "lbl_manufacturer": "制造商:",
         "lbl_meter_type": "电表类型:",
         "lbl_sw_version": "计量软件版本:",
+        "lbl_info_heading": "设备信息",
+        "lbl_info_sw_version": "计量软件版本",
+        "lbl_info_channels": "测量通道",
         "lbl_status_sw_version": "软件版本:",
         "lbl_release_date": "日期:",
         "info_serial_prompt": "请输入恰好12位数字（0–9）。",
@@ -4111,36 +4120,32 @@ def create_info_tab():
     global info_power_supply_label, info_manufacture_date_label
     global info_sequence_number_label
 
-    # Очищаем старое содержимое
     for widget in tab_info.winfo_children():
         widget.destroy()
 
-    # 1. Контейнер на всю площадь вкладки (распорка)
-    main_container = tk.Frame(tab_info, background=emis_background)
-    main_container.pack(expand=True, fill="both")
+    grid_frame = ttk.Frame(tab_info, padding=(22, 16), style="Emis.Card.TFrame")
+    grid_frame.pack(pady=20)
 
-    # 2. Центральный блок (автоматически центрируется)
-    center_block = ttk.Frame(main_container, padding=(15, 8), style="Emis.Card.TFrame")
-    center_block.pack(pady=20)
+    def add_heading(row, key):
+        ttk.Label(grid_frame, text=tr(key).rstrip(":："), style="Emis.Heading.TLabel").grid(
+            row=row, column=0, columnspan=3, sticky="w", pady=(0, 8)
+        )
 
-    # 3. Сетка для строк
-    grid_frame = tk.Frame(center_block)
-    grid_frame.pack()
+    def add_row(row, key):
+        ttk.Label(grid_frame, text=tr(key).rstrip(":："), justify="left").grid(
+            row=row, column=0, sticky="w", padx=(0, 14), pady=4
+        )
+        value = ttk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=-17, anchor="w")
+        value.grid(row=row, column=1, sticky="w", pady=4)
+        return value
 
-    # Вспомогательная функция для создания строки
-    def _add_row(row, label_key, label_ref):
-        tk.Label(grid_frame, text=tr(label_key),
-                 anchor="e", width=35, font=("TkDefaultFont", 10)).grid(row=row, column=0, sticky="e", pady=6, padx=(0, 15))
-        lbl = tk.Label(grid_frame, text=tr("status_disconnected"), font=("Consolas", 11), width=20, anchor="w")
-        lbl.grid(row=row, column=1, sticky="w", pady=6)
-        return lbl
+    add_heading(0, "lbl_info_heading")
+    info_serial_label = add_row(1, "lbl_serial")
+    info_manufacturer_label = add_row(2, "lbl_manufacturer")
+    info_meter_type_label = add_row(3, "lbl_meter_type")
+    info_sw_version_label = add_row(4, "lbl_info_sw_version")
+    info_release_date_label = add_row(5, "lbl_release_date")
 
-    # Создаём метки и сохраняем их в глобальные переменные
-    info_serial_label = _add_row(0, "lbl_serial", None)
-    info_manufacturer_label = _add_row(1, "lbl_manufacturer", None)
-    info_meter_type_label = _add_row(2, "lbl_meter_type", None)
-    info_sw_version_label = _add_row(3, "lbl_sw_version", None)
-    info_release_date_label = _add_row(4, "lbl_release_date", None)
     # Кнопки редактирования только для верхних информационных полей.
     editable_fields = (
         ("serial_number", "lbl_serial", info_serial_label),
@@ -4150,7 +4155,7 @@ def create_info_tab():
         ("release_date", "lbl_release_date", info_release_date_label),
     )
 
-    for row, (field, label_key, value_label) in enumerate(editable_fields):
+    for row, (field, label_key, value_label) in enumerate(editable_fields, start=1):
         ttk.Button(
             grid_frame,
             text=tr("btn_change"),
@@ -4161,7 +4166,7 @@ def create_info_tab():
             row=row,
             column=2,
             sticky="w",
-            pady=6,
+            pady=4,
             padx=(10, 0),
         )
 
@@ -4173,58 +4178,20 @@ def create_info_tab():
         style="Emis.Primary.TButton",
         width=24,
     ).grid(
-        row=5,
+        row=6,
         column=0,
         columnspan=3,
         pady=(12, 5),
     )
 
-    # Разделитель перед расшифровкой номера прибора.
-    ttk.Separator(
-        grid_frame,
-        orient="horizontal",
-    ).grid(
-        row=6,
-        column=0,
-        columnspan=3,
-        sticky="ew",
-        pady=(12, 8),
-    )
+    ttk.Separator(grid_frame).grid(row=7, column=0, columnspan=3, sticky="ew", pady=12)
 
-    ttk.Label(
-        grid_frame,
-        text=tr("lbl_serial_decoding"),
-        style="Emis.Heading.TLabel",
-        anchor="w",
-    ).grid(
-        row=7,
-        column=0,
-        columnspan=3,
-        sticky="w",
-        pady=(0, 5),
-    )
-
-    info_series_label = _add_row(8, "lbl_meter_series", None)
-    info_channels_label = _add_row(
-        9,
-        "lbl_channel_configuration",
-        None,
-    )
-    info_power_supply_label = _add_row(
-        10,
-        "lbl_power_supply",
-        None,
-    )
-    info_manufacture_date_label = _add_row(
-        11,
-        "lbl_manufacture_date",
-        None,
-    )
-    info_sequence_number_label = _add_row(
-        12,
-        "lbl_sequence_number",
-        None,
-    )
+    add_heading(8, "lbl_serial_decoding")
+    info_series_label = add_row(9, "lbl_meter_series")
+    info_channels_label = add_row(10, "lbl_info_channels")
+    info_power_supply_label = add_row(11, "lbl_power_supply")
+    info_manufacture_date_label = add_row(12, "lbl_manufacture_date")
+    info_sequence_number_label = add_row(13, "lbl_sequence_number")
 
 
 def widget_exists(w):
