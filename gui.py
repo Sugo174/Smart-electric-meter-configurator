@@ -5486,11 +5486,12 @@ def show_tariff_schedule_dialog():
         row_values = get_row_values()
 
         if len(row_values) >= 14:
-            messagebox.showwarning(
+            _show_emis_notice(
                 tr("dlg_warning"),
                 tr("err_schedule_limit"),
-                parent=dialog,
+                parent=dialog, wait=True,
             )
+            dialog.grab_set()
             return
 
         row_values.append(("00:00", "1"))
@@ -5583,10 +5584,10 @@ def show_tariff_schedule_dialog():
             )
             return
 
-        messagebox.showinfo(
+        _show_emis_notice(
             tr("dlg_write_success"),
             tr("dlg_schedule_saved"),
-            parent=dialog,
+            parent=dialog, wait=True,
         )
 
         cleanup_and_close()
