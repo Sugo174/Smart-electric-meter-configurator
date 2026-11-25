@@ -3880,13 +3880,13 @@ def create_parameters_tab():
         widget.destroy()
 
     def channel_card(parent, column, heading=None):
-        card = ttk.Frame(parent, padding=(14, 10), style="Emis.Card.TFrame")
+        card = ttk.Frame(parent, padding=(16, 14), style="Emis.Card.TFrame")
         card.grid(row=0, column=column, sticky="nsew", padx=5)
         card.columnconfigure(1, weight=1)
         row = 0
         if heading:
             ttk.Label(card, text=tr(heading), style="Emis.Heading.TLabel").grid(
-                row=row, column=0, columnspan=2, sticky="w", pady=(0, 5)
+                row=row, column=0, columnspan=2, sticky="w", pady=(0, 7)
             )
             row += 1
 
@@ -3897,16 +3897,18 @@ def create_parameters_tab():
             ("lbl_current_params", ("lbl_voltage", "lbl_current", "lbl_power")),
         ):
             if labels:
-                ttk.Separator(card).grid(row=row, column=0, columnspan=2, sticky="ew", pady=5)
+                ttk.Separator(card).grid(row=row, column=0, columnspan=2, sticky="ew", pady=7)
                 row += 1
-            ttk.Label(card, text=tr(section), font=("TkDefaultFont", 9, "bold")).grid(
+            ttk.Label(card, text=tr(section).rstrip(":："), foreground="#00664D", font=("TkDefaultFont", 9, "bold")).grid(
                 row=row, column=0, columnspan=2, sticky="w", pady=(2, 3)
             )
             row += 1
             for key in keys:
-                ttk.Label(card, text=tr(key)).grid(row=row, column=0, sticky="w", padx=(0, 10), pady=1)
-                value = ttk.Label(card, text=tr("status_disconnected"), font=("Consolas", 11))
-                value.grid(row=row, column=1, sticky="w", pady=1)
+                ttk.Label(card, text=tr(key).rstrip(":："), foreground="#53645F").grid(
+                    row=row, column=0, sticky="w", padx=(0, 12), pady=3
+                )
+                value = ttk.Label(card, text=tr("status_disconnected"), font=("Consolas", 11), foreground=emis_text)
+                value.grid(row=row, column=1, sticky="nw", pady=3)
                 labels.append(value)
                 row += 1
                 if key == "lbl_abs":
