@@ -225,6 +225,7 @@ TRANSLATIONS = {
         "lbl_manufacturer": "Производитель:",
         "lbl_meter_type": "Тип счетчика:",
         "lbl_sw_version": "Версия метрологического ПО:",
+        "lbl_status_sw_version": "Версия ПО:",
         "lbl_release_date": "Дата:",
         "info_serial_prompt": "Введите ровно 12 цифр (0–9).",
         "info_ascii_prompt": "Введите от 1 до 16 печатных символов ASCII: латиница, цифры и знаки.",
@@ -471,6 +472,7 @@ TRANSLATIONS = {
         "lbl_manufacturer": "Manufacturer:",
         "lbl_meter_type": "Meter Type:",
         "lbl_sw_version": "Metrological SW Version:",
+        "lbl_status_sw_version": "SW Version:",
         "lbl_release_date": "Date:",
         "info_serial_prompt": "Enter exactly 12 digits (0–9).",
         "info_ascii_prompt": "Enter 1–16 printable ASCII characters: Latin letters, digits and symbols.",
@@ -717,6 +719,7 @@ TRANSLATIONS = {
         "lbl_manufacturer": "制造商:",
         "lbl_meter_type": "电表类型:",
         "lbl_sw_version": "计量软件版本:",
+        "lbl_status_sw_version": "软件版本:",
         "lbl_release_date": "日期:",
         "info_serial_prompt": "请输入恰好12位数字（0–9）。",
         "info_ascii_prompt": "请输入1至16个可打印ASCII字符：拉丁字母、数字或符号。",
@@ -1171,6 +1174,8 @@ def set_language(lang_code):
             _show_meter_time("")
         lbl_com_port.config(text=tr("lbl_com_port"))
         lbl_status.config(text=tr("lbl_status"))
+        for key, label in meter_status_captions.items():
+            label.config(text=tr(key))
         lbl_address.config(text=tr("lbl_address"))
         lbl_baud.config(text=tr("lbl_baud"))
         lbl_parity.config(text=tr("lbl_parity"))
@@ -2974,6 +2979,7 @@ def connect_scan():
             refresh_btn.config(state="disabled")
             disconnect_btn.config(state="normal")
             status_canvas.itemconfig(status_indicator, fill="#66cc66")
+            meter_status_details.pack(side="left")
             update_device_type_display()
             start_time_reader()
             _show_emis_notice(
@@ -3053,6 +3059,8 @@ def disconnect_device(show_message=False):
         )
         return
     conn = None
+    meter_status_details.pack_forget()
+    _update_meter_status_details(None)
     _stop_measurement()
     is_device_ready = False
     set_buttons_state("disabled")
@@ -4295,12 +4303,20 @@ def _check_settings_queue():
     root.after(100, _check_settings_queue)
 
 
+def _update_meter_status_details(info):
+    for field, label in meter_status_values.items():
+        value = (info or {}).get(field)
+        label.config(text=(value or "").strip() or "—")
+
+
 def _check_info_queue():
     """Обрабатывает очередь обновления информации о приборе."""
     global latest_verification_info
     try:
         while True:
             info = info_update_queue.get_nowait()
+            if conn or info is None:
+                _update_meter_status_details(info)
             latest_verification_info = info
             if info is None:
                 if info_serial_label: info_serial_label.config(text=tr("status_disconnected"))
@@ -5912,13 +5928,28 @@ except tk.TclError:
     pass
 app_header_title = ttk.Label(app_header, text=tr("app_name"), style="Emis.Header.TLabel")
 app_header_title.pack(side="left")
-connection_status_bar = ttk.Frame(root, padding=(10, 5), style="Emis.Card.TFrame")
-connection_status_bar.pack(anchor="w", padx=16, pady=(0, 8))
+status_row = ttk.Frame(root, style="Emis.Background.TFrame")
+status_row.pack(anchor="w", padx=16, pady=(0, 8))
+connection_status_bar = ttk.Frame(status_row, padding=(10, 5), style="Emis.Card.TFrame")
+connection_status_bar.pack(side="left")
 lbl_status = tk.Label(connection_status_bar, text=tr("lbl_status"))
 lbl_status.pack(side="left")
 status_canvas = tk.Canvas(connection_status_bar, width=16, height=16, highlightthickness=0)
 status_canvas.pack(side="left", padx=(3, 0))
 status_indicator = status_canvas.create_oval(2, 2, 14, 14, fill="red")
+
+meter_status_details = ttk.Frame(status_row, style="Emis.Background.TFrame")
+meter_status_values = {}
+meter_status_captions = {}
+for field, caption in (("serial_number", "lbl_serial"), ("sw_version", "lbl_status_sw_version")):
+    badge = ttk.Frame(meter_status_details, padding=(10, 5), style="Emis.Card.TFrame")
+    badge.pack(side="left", padx=(8, 0))
+    caption_label = tk.Label(badge, text=tr(caption))
+    caption_label.pack(side="left")
+    meter_status_captions[caption] = caption_label
+    value_label = tk.Label(badge, text="—", font=("Consolas", 10))
+    value_label.pack(side="left", padx=(3, 0))
+    meter_status_values[field] = value_label
 
 
 # 1. Cоздаём notebook и вкладки
