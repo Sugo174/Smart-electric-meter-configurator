@@ -2,6 +2,24 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
+## [V1.13] - 2026-11-25
+
+### Added
+
+- Added per-channel verification tables with reference values, measured readings, and errors highlighted against the selected accuracy class tolerances.
+-
+- Added automatic averaging based on reading stability. Once the readings stabilize, the operator can capture the result and save the test point.
+- Added automatic interpretation of frequency-counter readings in seconds or milliseconds based on the expected period for the selected test point.
+- Added a dedicated Tariff Schedule tab that displays the current tariff calculated from the meter clock and the stored schedule.
+
+### Changed
+
+- Renamed the application to EMIS-Integrator MODBUS and redesigned the interface with EMIS branding.
+- Reworked verification navigation so operators can revisit and correct any test point before generating the Excel report.
+- Added voltage source controls to the verification window and automatic source polling after COM port selection.
+- Extended Modbus discovery to addresses 1–254 and added manual address entry.
+- Updated the built-in help in English, Russian, and Simplified Chinese.
+
 ## [V1.12.1] - 2026-11-13
 
 ### Added

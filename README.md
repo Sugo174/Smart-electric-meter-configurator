@@ -1,7 +1,7 @@
-# ЭМИС-Интегратор MODBUS
+# Smart Meter Configurator
 
 <p align="center">
-  <img src="app.png" alt="ЭМИС-Интегратор MODBUS" width="160">
+  <img src="app.png" alt="Smart Meter Configurator" width="160">
 </p>
 
 [Русская версия](README.ru.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
@@ -29,8 +29,10 @@ Desktop application for configuration, diagnostics, and commissioning of smart e
 
 ## Overview
  
-EMIS-Integrator MODBUS is a Python-based desktop application designed for field engineers to simplify smart meter setup, diagnostics, and maintenance.
+Smart Meter Configurator is a Python-based desktop application designed for field engineers to simplify smart meter setup, diagnostics, and maintenance.
 It provides automatic communication parameter detection, real-time monitoring, device configuration, and multilingual support through a streamlined interface optimized for industrial environments.
+
+The application is displayed as EMIS-Integrator MODBUS.
 
 ## Download and Run
 
@@ -290,6 +292,14 @@ Reduce commissioning time and eliminate manual communication setup by introducin
 #### Device Settings
 
 ![Smart meter configuration settings](assets/screenshots/Device_Settings.PNG)
+
+#### Tariff Schedule
+
+![Tariff Schedule](assets/screenshots/Tariff_Schedule.PNG)
+
+#### Verification
+
+![Verification](assets/screenshots/Verification.PNG)
 
 ## Contributing
 

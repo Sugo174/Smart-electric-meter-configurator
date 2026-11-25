@@ -1,7 +1,7 @@
-# ЭМИС-Интегратор MODBUS
+# Smart Meter Configurator
 
 <p align="center">
-  <img src="app.png" alt="ЭМИС-Интегратор MODBUS" width="160">
+  <img src="app.png" alt="Smart Meter Configurator" width="160">
 </p>
 
 [English version](README.md) · [История изменений](CHANGELOG.md) · [Безопасность](SECURITY.md)
@@ -20,6 +20,8 @@
 
 Поддерживаются одноканальные и двухканальные исполнения.
 Интерфейс доступен на русском, английском и китайском языках.
+
+В интерфейсе программа называется «ЭМИС-Интегратор MODBUS».
 
 ## Содержание
 
@@ -275,6 +277,14 @@ py -3.8 -m venv .venv-win7
 ### Настройки прибора
 
 ![Настройки прибора](assets/screenshots/Device_Settings.PNG)
+
+#### Тарифное расписание
+
+![Тарифное расписание](assets/screenshots/Tariff_Schedule.PNG)
+
+#### Поверка
+
+![Поверка](assets/screenshots/Verification.PNG)
 
 ## Участие в разработке
 

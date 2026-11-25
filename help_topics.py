@@ -39,7 +39,7 @@ HELP_TOPICS = {
             "Протокол поверки",
             "На вкладке «Текущие значения» нажмите «Заполнить протокол». Проверьте данные прибора, заполните сведения о поверке, выберите класс точности 0,5 или 1 и укажите результаты четырёх проверок.\n\n"
             "Для каждого канала предусмотрено пять точек напряжения и четыре точки тока, мощности и периода. Слева можно выбрать любую точку. На точках напряжения выставьте указанную уставку и введите показание внешнего вольтметра в Uэт. На точках тока оставьте напряжение на Uном, выставляйте на ЭнИ 75 → 37,5 → 22,5 → 7,5 мВ и вводите Uэт и Tизм с частотомера. В двухканальном исполнении физически переключайте стенд на нужный канал.\n\n"
-            "«Измерить» запускает усреднение для выбранной точки. После первого успешного отсчёта доступен «Замер», который фиксирует среднее. Усреднение можно предварительно остановить. Заполните поля и нажмите «Записать точку». К записанной точке можно вернуться и сохранить исправления.\n\n"
+            "«Измерить» запускает усреднение для выбранной точки. Когда показания стабилизируются, усреднение останавливается автоматически и становится доступен «Замер». Если показания остались нестабильными, повторите измерение. Заполните поля и нажмите «Записать точку». К записанной точке можно вернуться и сохранить исправления.\n\n"
             "Когда все точки записаны, нажмите «Сформировать протокол», подтвердите действие и выберите имя и папку файла Excel. Если Excel блокирует сохранение, закройте файл и повторите попытку. После пересчёта итог P означает, что все четыре проверки пройдены и погрешности в допуске. В остальных случаях итог F.",
         ),
         (
@@ -90,7 +90,7 @@ HELP_TOPICS = {
             "Verification report",
             "On Live readings, click Fill in protocol. Check the meter details, complete the report form, select accuracy class 0.5 or 1, and enter the outcomes of the four checks.\n\n"
             "Each channel has five voltage points and four current, power, and period points. Select any point from the list on the left. For voltage points, set the specified voltage and enter the external voltmeter reading in Uэт. For current points, keep the source at nominal voltage and set the EnI calibrator to 75 → 37.5 → 22.5 → 7.5 mV. Enter the external voltmeter reading in Uэт and the frequency counter period in Tизм. For a dual-channel meter, switch the bench connections to the channel being tested.\n\n"
-            "Start averaging with «Измерить» (Measure). After the first successful reading, «Замер» (Capture) freezes the average. You can stop averaging separately before capturing. Enter the required readings and save the point. You can return to a saved point and save corrections.\n\n"
+            "Start averaging with «Измерить» (Measure). Once the readings stabilize, averaging stops automatically and «Замер» (Capture) becomes available. If the readings remain unstable, repeat the measurement. Enter the required readings and save the point. You can return to a saved point and save corrections.\n\n"
             "After saving all points, select «Сформировать протокол» (Generate report), confirm, and choose a name and folder for the Excel file. If Excel locks the file, close it and retry. After recalculation, P indicates that all four checks passed and all measurement errors are within tolerance. Otherwise the result is F.",
         ),
         (
@@ -141,7 +141,7 @@ HELP_TOPICS = {
             "检定记录",
             "在实时读数选项卡打开检定记录。核对电表信息，填写检定数据，选择 0.5 或 1 级准确度，并填写四项检查结果。\n\n"
             "每个通道有五个电压点和四个电流、功率与周期点。可从左侧列表选择任意检定点。电压点按提示设置电压，将外部电压表读数填入 Uэт。电流点保持电压源为额定电压，将 ЭнИ 校准器依次设置为 75、37.5、22.5、7.5 mV，填入外部电压表读数 Uэт 和频率计测得的周期 Tизм。双通道电表需将试验台接线切换至正在检定的通道。\n\n"
-            "点击「Измерить」开始采集平均值。第一次成功采集后，可点击「Замер」锁定平均值，也可先停止采集再锁定。填写所需读数后保存检定点。可以返回已保存的点，修改后重新保存。\n\n"
+            "点击「Измерить」开始采集平均值。读数稳定后，程序自动停止采集，此时可点击「Замер」锁定平均值。如果读数仍不稳定，请重新测量。填写所需读数后保存检定点。可以返回已保存的点，修改后重新保存。\n\n"
             "记录所有点后，点击「Сформировать протокол」，确认后选择 Excel 文件名和保存位置。若文件被 Excel 锁定，请关闭文件后重试。Excel 重新计算后，四项检查均通过且所有测量误差均在允许范围内时显示 P，否则显示 F。",
         ),
         (
