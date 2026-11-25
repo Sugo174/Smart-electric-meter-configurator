@@ -219,6 +219,8 @@ TRANSLATIONS = {
         "err_schedule_time": "Время периода {row} должно иметь формат ЧЧ:ММ.",
         "err_schedule_empty": "Добавьте хотя бы один тарифный период.",
         "err_schedule_limit": "Можно добавить не более 14 тарифных периодов.",
+        "hint_schedule_order": "Начало каждого периода должно быть позже предыдущего.",
+        "err_schedule_order": "Период {row}: укажите время позже {previous}.",
 
         # Вкладка "Информация о приборе"
         "lbl_serial": "Серийный номер:",
@@ -469,6 +471,8 @@ TRANSLATIONS = {
         "err_schedule_time": "Period {row} time must use the HH:MM format.",
         "err_schedule_empty": "Add at least one tariff period.",
         "err_schedule_limit": "A maximum of 14 tariff periods is allowed.",
+        "hint_schedule_order": "Each period must start after the previous one.",
+        "err_schedule_order": "Period {row}: enter a time later than {previous}.",
 
         # Device Info tab
         "lbl_serial": "Serial Number:",
@@ -719,6 +723,8 @@ TRANSLATIONS = {
         "err_schedule_time": "第 {row} 个时段的时间必须使用 HH:MM 格式。",
         "err_schedule_empty": "请至少添加一个费率时段。",
         "err_schedule_limit": "最多允许 14 个费率时段。",
+        "hint_schedule_order": "每个时段的开始时间必须晚于上一个时段。",
+        "err_schedule_order": "第 {row} 个时段：请输入晚于 {previous} 的时间。",
 
         # 设备信息选项卡
         "lbl_serial": "序列号:",
@@ -5367,7 +5373,7 @@ def show_tariff_schedule_dialog():
                 f"{hour_entry.get()}:{minute_entry.get()}",
                 tariff_combo.get(),
             )
-            for hour_entry, minute_entry, tariff_combo in period_rows
+            for hour_entry, minute_entry, tariff_combo, _, _ in period_rows
         ]
 
     def redraw_rows(row_values):
@@ -5434,10 +5440,10 @@ def show_tariff_schedule_dialog():
             time_frame = ttk.Frame(table_frame)
             time_frame.grid(row=index, column=1, padx=5, pady=3)
             hour, minute = time_value.split(":")
-            hour_entry = ttk.Entry(time_frame, width=3, justify="center")
-            minute_entry = ttk.Entry(time_frame, width=3, justify="center")
-            hour_entry.insert(0, hour)
-            minute_entry.insert(0, minute)
+            hour_var = tk.StringVar(master=dialog, value=hour)
+            minute_var = tk.StringVar(master=dialog, value=minute)
+            hour_entry = ttk.Entry(time_frame, width=3, justify="center", textvariable=hour_var)
+            minute_entry = ttk.Entry(time_frame, width=3, justify="center", textvariable=minute_var)
             for entry in (hour_entry, minute_entry):
                 entry.configure(validate="key", validatecommand=(validate_digits, "%P"))
             hour_entry.pack(side="left")
@@ -5478,8 +5484,14 @@ def show_tariff_schedule_dialog():
                     hour_entry,
                     minute_entry,
                     tariff_combo,
+                    hour_var,
+                    minute_var,
                 )
             )
+            hour_var.trace_add("write", refresh_schedule_validation)
+            minute_var.trace_add("write", refresh_schedule_validation)
+
+        refresh_schedule_validation()
 
     def add_row():
         """Добавляет пустой тарифный период в конец таблицы."""
@@ -5515,6 +5527,7 @@ def show_tariff_schedule_dialog():
             raise ValueError(tr("err_schedule_empty"))
 
         parsed_periods = []
+        previous_minutes = -1
 
         for index, (time_value, tariff_value) in enumerate(
             row_values,
@@ -5540,6 +5553,12 @@ def show_tariff_schedule_dialog():
                     tr("err_schedule_time").format(row=index)
                 )
 
+            start_minutes = hour * 60 + minute
+            if start_minutes <= previous_minutes:
+                previous = f"{previous_minutes // 60:02d}:{previous_minutes % 60:02d}"
+                raise ValueError(tr("err_schedule_order").format(row=index, previous=previous))
+            previous_minutes = start_minutes
+
             parsed_periods.append(
                 (
                     hour,
@@ -5550,16 +5569,22 @@ def show_tariff_schedule_dialog():
 
         return parsed_periods
 
-    def save_schedule():
-        """Проверяет и записывает тарифное расписание в счётчик."""
+    def refresh_schedule_validation(*_args):
         try:
             periods_to_write = get_periods_to_write()
         except ValueError as error:
-            messagebox.showerror(
-                tr("dlg_input_error"),
-                str(error),
-                parent=dialog,
-            )
+            schedule_hint.config(text=str(error), foreground="#9C2929")
+            save_button.config(state="disabled")
+            return None
+
+        schedule_hint.config(text=tr("hint_schedule_order"), foreground="#53645F")
+        save_button.config(state="normal")
+        return periods_to_write
+
+    def save_schedule():
+        """Проверяет и записывает тарифное расписание в счётчик."""
+        periods_to_write = refresh_schedule_validation()
+        if periods_to_write is None:
             return
 
         try:
@@ -5600,8 +5625,6 @@ def show_tariff_schedule_dialog():
         for hour, minute, tariff_number in periods
     ]
 
-    redraw_rows(initial_rows)
-
     ttk.Button(
         dialog,
         text=tr("btn_add_period"),
@@ -5610,6 +5633,9 @@ def show_tariff_schedule_dialog():
     ).pack(
         pady=(0, 5),
     )
+
+    schedule_hint = ttk.Label(dialog, wraplength=320, justify="left")
+    schedule_hint.pack(anchor="w", padx=20, pady=(3, 0))
 
     button_frame = tk.Frame(dialog)
     button_frame.pack(
@@ -5626,16 +5652,15 @@ def show_tariff_schedule_dialog():
         padx=5,
     )
 
-    ttk.Button(
+    save_button = ttk.Button(
         button_frame,
         text=tr("btn_save_schedule"),
         command=save_schedule,
         style="Emis.Primary.TButton",
-    ).pack(
-        side="left",
-        padx=5,
     )
+    save_button.pack(side="left", padx=5)
 
+    redraw_rows(initial_rows)
     dialog.update_idletasks()
 
     x = root.winfo_rootx() + (
