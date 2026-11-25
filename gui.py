@@ -3472,7 +3472,7 @@ def sync_pc_time():
                 messagebox.showerror(tr("dlg_sync_error"), result)
             return
 
-        messagebox.showinfo(tr("dlg_write_success"), tr("dlg_sync_success").format(result))
+        _show_emis_notice(tr("dlg_write_success"), tr("dlg_sync_success").format(result), wait=True)
         _show_meter_time(result)
         # Принудительно обновляем очередь времени
         time_update_queue.put(result)
