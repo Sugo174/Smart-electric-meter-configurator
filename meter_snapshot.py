@@ -1,5 +1,7 @@
 """Ключи инженера и загрузка зашифрованного снимка прибора."""
 
+import base64
+import binascii
 import json
 from pathlib import Path
 
@@ -9,7 +11,8 @@ from nacl.public import PrivateKey, SealedBox
 from snapshot_windows_key import load_windows_key
 
 
-EXPORT_HEADER = b"EMIS-SNAPSHOT\x01"
+LEGACY_EXPORT_HEADER = b"EMIS-SNAPSHOT\x01"
+EXPORT_HEADER = b"EMIS-SNAPSHOT-2\n"
 KEY_HEADER = b"EMIS-ENGINEER-KEY\x01"
 PRIVATE_KEY_NAME = "emis_export_engineer.key"
 MAX_SNAPSHOT_SIZE = 1024 * 1024
@@ -63,12 +66,19 @@ def _read_portable_key(key_path, password):
 
 
 def load_snapshot(path, key_path=None, password=None):
-    encrypted = _read_bounded(path, MAX_SNAPSHOT_SIZE)
-    if not encrypted.startswith(EXPORT_HEADER):
+    data = _read_bounded(path, MAX_SNAPSHOT_SIZE)
+    if data.startswith(EXPORT_HEADER):
+        try:
+            encrypted = base64.b64decode(data[len(EXPORT_HEADER):].rstrip(b"\r\n"), validate=True)
+        except binascii.Error as error:
+            raise ValueError("Текстовая выгрузка ЭМИС повреждена.") from error
+    elif data.startswith(LEGACY_EXPORT_HEADER):
+        encrypted = data[len(LEGACY_EXPORT_HEADER):]
+    else:
         raise ValueError("Файл не является выгрузкой настроек ЭМИС поддерживаемой версии.")
     key = load_windows_key() if key_path is None else _read_portable_key(key_path, password)
     try:
-        payload = SealedBox(key).decrypt(encrypted[len(EXPORT_HEADER):])
+        payload = SealedBox(key).decrypt(encrypted)
     except exceptions.CryptoError as error:
         raise SnapshotKeyError("Выгрузка повреждена или зашифрована другим ключом.") from error
     data = json.loads(payload)
