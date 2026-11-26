@@ -3760,9 +3760,13 @@ def _open_meter_simulation():
         periods = []
 
     window = tk.Toplevel(root, background=emis_background)
+    window.withdraw()
     window.title(title)
     window.transient(root)
-    window.geometry("680x480")
+    width, height = 680, 480
+    x = root.winfo_rootx() + (root.winfo_width() - width) // 2
+    y = root.winfo_rooty() + (root.winfo_height() - height) // 2
+    window.geometry(f"{width}x{height}+{x}+{y}")
     window.minsize(520, 340)
     card = ttk.Frame(window, padding=(16, 12), style="Emis.Card.TFrame")
     card.pack(fill="both", expand=True, padx=14, pady=14)
@@ -3819,6 +3823,8 @@ def _open_meter_simulation():
 
     for name, value in snapshot.items():
         add_value("", name, value)
+
+    window.deiconify()
 
 
 def show_help():
