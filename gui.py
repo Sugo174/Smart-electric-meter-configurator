@@ -24,6 +24,7 @@ import serial
 import sys
 import json
 import os
+from tempfile import NamedTemporaryFile
 import webbrowser
 
 # Сторонние библиотеки
@@ -40,7 +41,9 @@ from constants import (
     ENERGY_DECIMAL_PLACES,
 )
 
+from meter_export import encrypt_snapshot
 from meter_snapshot import load_snapshot
+from virtual_meter import VirtualMeter
 from snapshot_report import create_snapshot_pdf, snapshot_children, snapshot_value
 
 from update_checker import (
@@ -69,6 +72,7 @@ from device import (
     write_tariff_schedule,
     read_device_info,
     read_device_service_info,
+    read_device_export,
     write_device_info_field,
     validate_meter_serial_number,
     validate_scanned_serial_number,
@@ -105,6 +109,9 @@ TRANSLATIONS = {
         "menu_settings": "☰ Настройки программы",
         "menu_help": "Справка",
         "menu_read_emis_export": "Чтение выгрузки EMIS",
+        "menu_virtual_meter": "Подключить виртуальный счётчик",
+        "status_virtual_meter": "Статус: эмуляция",
+        "msg_disconnect_for_virtual_meter": "Сначала отключите текущий счётчик.",
         "menu_power_supply": "Источник питания",
         "power_supply_read": "Прочитать",
         "power_supply_reading": "Обмен с источником…",
@@ -213,7 +220,12 @@ TRANSLATIONS = {
         "lbl_decimal": "Десятичных знаков энергии:",
         "lbl_tariff": "Тарифных отрезков:",
         "btn_change": "Изменить",
-        "btn_clear_energy": "Очистить значения энергии",
+        "lbl_save_settings_file": "Сохранение параметров в файл",
+        "btn_save_settings_file": "Сохранить настройки",
+        "lbl_clear_energy": "Очистка показаний электроэнергии",
+        "btn_clear_energy": "Очистить",
+        "msg_export_type_required": "Выгрузка доступна после автоматического определения типа счётчика.",
+        "msg_export_retry": "Опрос ещё завершается. Повторите сохранение.",
 
         # Тарифное расписание
         "lbl_active_tariff": "Тариф по расписанию:",
@@ -362,6 +374,9 @@ TRANSLATIONS = {
         "menu_settings": "☰ Program Settings",
         "menu_help": "Help",
         "menu_read_emis_export": "Read EMIS export",
+        "menu_virtual_meter": "Connect virtual meter",
+        "status_virtual_meter": "Status: emulation",
+        "msg_disconnect_for_virtual_meter": "Disconnect the current meter first.",
         "menu_power_supply": "Power Supply",
         "power_supply_read": "Read",
         "power_supply_reading": "Communicating with power supply…",
@@ -469,7 +484,12 @@ TRANSLATIONS = {
         "lbl_decimal": "Energy Decimal Places:",
         "lbl_tariff": "Tariff Periods:",
         "btn_change": "Change",
-        "btn_clear_energy": "Clear Energy Values",
+        "lbl_save_settings_file": "Save settings to a file",
+        "btn_save_settings_file": "Save settings",
+        "lbl_clear_energy": "Clear energy readings",
+        "btn_clear_energy": "Clear",
+        "msg_export_type_required": "Export is available after automatic meter type detection.",
+        "msg_export_retry": "Polling is still stopping. Try saving again.",
 
         # Tariff schedule
         "lbl_active_tariff": "Tariff by schedule:",
@@ -618,6 +638,9 @@ TRANSLATIONS = {
         "menu_settings": "☰ 程序设置",
         "menu_help": "帮助",
         "menu_read_emis_export": "读取 EMIS 导出文件",
+        "menu_virtual_meter": "连接虚拟电表",
+        "status_virtual_meter": "状态：仿真",
+        "msg_disconnect_for_virtual_meter": "请先断开当前电表。",
         "menu_power_supply": "电源",
         "power_supply_read": "读取",
         "power_supply_reading": "正在与电源通信…",
@@ -725,7 +748,12 @@ TRANSLATIONS = {
         "lbl_decimal": "电能小数位数:",
         "lbl_tariff": "费率时段数:",
         "btn_change": "更改",
-        "btn_clear_energy": "清除电能值",
+        "lbl_save_settings_file": "将参数保存到文件",
+        "btn_save_settings_file": "保存设置",
+        "lbl_clear_energy": "清除电能读数",
+        "btn_clear_energy": "清除",
+        "msg_export_type_required": "自动识别电表类型后才能导出。",
+        "msg_export_retry": "轮询尚未停止，请重试。",
 
         # 费率时段表
         "lbl_active_tariff": "按时段表计算的费率：",
@@ -948,7 +976,7 @@ def _create_power_supply_panel(parent, *, anchor="center"):
         voltage_entry.config(state="disabled")
 
     def refresh_list():
-        meter_port = conn["port"].upper() if conn else None
+        meter_port = str(conn["port"]).upper() if conn else None
         ports = [port for port in list_com_ports() if port.upper() != meter_port]
         previous = port_combo.get()
         port_combo.config(values=ports)
@@ -963,7 +991,7 @@ def _create_power_supply_panel(parent, *, anchor="center"):
         if (
             power_supply_pending_port is not None
             or search_window_ref is not None
-            or (conn and port.upper() == conn["port"].upper())
+            or (conn and port.upper() == str(conn["port"]).upper())
         ):
             status.config(text=tr("power_supply_busy").format(port=port))
             return
@@ -993,7 +1021,7 @@ def _create_power_supply_panel(parent, *, anchor="center"):
                 return
 
             power_supply_pending_port = None
-            if not frame.winfo_exists() or port_combo.get() != port or (conn and port.upper() == conn["port"].upper()):
+            if not frame.winfo_exists() or port_combo.get() != port or (conn and port.upper() == str(conn["port"]).upper()):
                 return
             if error is not None:
                 verified_port = None
@@ -1072,7 +1100,7 @@ def _create_power_supply_panel(parent, *, anchor="center"):
             return
         port = port_combo.get()
         if port and power_supply_pending_port is None and search_window_ref is None:
-            if conn and port.upper() == conn["port"].upper():
+            if conn and port.upper() == str(conn["port"]).upper():
                 reset_selection()
                 status.config(text=tr("power_supply_busy").format(port=port))
             else:
@@ -1160,6 +1188,7 @@ def set_language(lang_code):
         label=tr("menu_read_emis_export"), command=_open_emis_export,
         image=ICONS.get("read_export"), compound="left",
     )
+    settings_m.add_command(label=tr("menu_virtual_meter"), command=_connect_virtual_meter)
     settings_m.add_separator()
     settings_m.add_command(
         label=tr("menu_help"),
@@ -1214,7 +1243,7 @@ def set_language(lang_code):
         if not conn:
             _show_meter_time("")
         lbl_com_port.config(text=tr("lbl_com_port"))
-        lbl_status.config(text=tr("lbl_status"))
+        lbl_status.config(text=tr("status_virtual_meter" if _virtual_connection() else "lbl_status"))
         for key, label in meter_status_captions.items():
             label.config(text=tr(key))
         lbl_address.config(text=tr("lbl_address"))
@@ -2738,11 +2767,13 @@ def _open_verification():
 
 def _refresh_measurement_controls():
     if measurement_protocol_button is not None and measurement_protocol_button.winfo_exists():
-        measurement_protocol_button.configure(state="normal" if conn and is_device_ready else "disabled")
+        measurement_protocol_button.configure(state="normal" if conn and is_device_ready and not _virtual_connection() else "disabled")
 
 
 def _refresh_electrical_values(params):
     """Обновляет напряжение, ток и мощность в существующих полях."""
+    if _virtual_connection():
+        return
     if device_type == "single":
         readings = {"ch1": params}
         channel_labels = {
@@ -2820,11 +2851,11 @@ def _check_param_queue():
                 latest_parameters = params
                 _refresh_electrical_values(params)
                 if device_type == "single":
-                    if param_energy_abs_label and param_energy_abs_label.winfo_exists():
+                    if not _virtual_connection() and param_energy_abs_label and param_energy_abs_label.winfo_exists():
                         param_energy_abs_label.config(text=f"{params.get('energy_abs', 0):.{energy_decimals}f} {tr('unit_kwh')}")
-                    if param_energy_pos_label and param_energy_pos_label.winfo_exists():
+                    if not _virtual_connection() and param_energy_pos_label and param_energy_pos_label.winfo_exists():
                         param_energy_pos_label.config(text=f"{params.get('energy_pos', 0):.{energy_decimals}f} {tr('unit_kwh')}")
-                    if param_energy_neg_label and param_energy_neg_label.winfo_exists():
+                    if not _virtual_connection() and param_energy_neg_label and param_energy_neg_label.winfo_exists():
                         param_energy_neg_label.config(text=f"{params.get('energy_neg', 0):.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_nom_voltage_label and param_nom_voltage_label.winfo_exists():
                         param_nom_voltage_label.config(text=f"{params.get('nom_voltage', 0):.0f} {tr('unit_v')}")
@@ -2832,22 +2863,22 @@ def _check_param_queue():
                         param_nom_current_label.config(text=f"{params.get('nom_current', 0):.0f} {tr('unit_a')}")
                 else:
                     # Канал 1
-                    if param_ch1_energy_abs_label and param_ch1_energy_abs_label.winfo_exists():
+                    if not _virtual_connection() and param_ch1_energy_abs_label and param_ch1_energy_abs_label.winfo_exists():
                         param_ch1_energy_abs_label.config(text=f"{params['ch1']['energy_abs']:.{energy_decimals}f} {tr('unit_kwh')}")
-                    if param_ch1_energy_pos_label and param_ch1_energy_pos_label.winfo_exists():
+                    if not _virtual_connection() and param_ch1_energy_pos_label and param_ch1_energy_pos_label.winfo_exists():
                         param_ch1_energy_pos_label.config(text=f"{params['ch1']['energy_pos']:.{energy_decimals}f} {tr('unit_kwh')}")
-                    if param_ch1_energy_neg_label and param_ch1_energy_neg_label.winfo_exists():
+                    if not _virtual_connection() and param_ch1_energy_neg_label and param_ch1_energy_neg_label.winfo_exists():
                         param_ch1_energy_neg_label.config(text=f"{params['ch1']['energy_neg']:.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_ch1_nom_v_label and param_ch1_nom_v_label.winfo_exists():
                         param_ch1_nom_v_label.config(text=f"{params['ch1']['nom_voltage']:.0f} {tr('unit_v')}")
                     if param_ch1_nom_i_label and param_ch1_nom_i_label.winfo_exists():
                         param_ch1_nom_i_label.config(text=f"{params['ch1']['nom_current']:.0f} {tr('unit_a')}")
                     # Канал 2
-                    if param_ch2_energy_abs_label and param_ch2_energy_abs_label.winfo_exists():
+                    if not _virtual_connection() and param_ch2_energy_abs_label and param_ch2_energy_abs_label.winfo_exists():
                         param_ch2_energy_abs_label.config(text=f"{params['ch2']['energy_abs']:.{energy_decimals}f} {tr('unit_kwh')}")
-                    if param_ch2_energy_pos_label and param_ch2_energy_pos_label.winfo_exists():
+                    if not _virtual_connection() and param_ch2_energy_pos_label and param_ch2_energy_pos_label.winfo_exists():
                         param_ch2_energy_pos_label.config(text=f"{params['ch2']['energy_pos']:.{energy_decimals}f} {tr('unit_kwh')}")
-                    if param_ch2_energy_neg_label and param_ch2_energy_neg_label.winfo_exists():
+                    if not _virtual_connection() and param_ch2_energy_neg_label and param_ch2_energy_neg_label.winfo_exists():
                         param_ch2_energy_neg_label.config(text=f"{params['ch2']['energy_neg']:.{energy_decimals}f} {tr('unit_kwh')}")
                     if param_ch2_nom_v_label and param_ch2_nom_v_label.winfo_exists():
                         param_ch2_nom_v_label.config(text=f"{params['ch2']['nom_voltage']:.0f} {tr('unit_v')}")
@@ -2993,6 +3024,63 @@ def _choose_meter_type(reason):
     return selected
 
 
+def _virtual_connection():
+    return conn is not None and isinstance(conn["port"], VirtualMeter)
+
+
+def _activate_meter_connection(result, meter_type, *, confirmed):
+    global conn, device_type, was_ever_connected, is_device_ready
+
+    conn = result
+    conn["device_type"] = meter_type
+    conn["device_type_confirmed"] = confirmed
+    device_type = meter_type
+    was_ever_connected = True
+    is_device_ready = True
+
+    _show_service_info(result["service_info"])
+    addr_var.set(str(conn["slave"]))
+    speed_var.set(str(conn["baud"]))
+    parity_var.set(conn["parity"])
+
+    create_parameters_tab()
+    create_settings_tab()
+    set_buttons_state("normal")
+    connect_btn.config(state="disabled")
+    refresh_btn.config(state="disabled")
+    disconnect_btn.config(state="normal")
+    lbl_status.config(text=tr("status_virtual_meter" if _virtual_connection() else "lbl_status"))
+    status_canvas.itemconfig(status_indicator, fill="#8054BE" if _virtual_connection() else "#66cc66")
+    meter_status_details.pack(side="left")
+    update_device_type_display()
+    _refresh_measurement_controls()
+    root.update_idletasks()
+    root.minsize(root.winfo_reqwidth(), min(root.winfo_reqheight(), 500))
+    start_time_reader()
+
+
+def _connect_virtual_meter():
+    title = tr("menu_virtual_meter")
+    if conn or search_window_ref is not None or power_supply_pending_port:
+        _show_emis_notice(title, tr("msg_disconnect_for_virtual_meter"), wait=True)
+        return
+    path = filedialog.askopenfilename(parent=root, title=title, filetypes=[("ЭМИС", "*.emis")])
+    if not path:
+        return
+    try:
+        meter = VirtualMeter(load_snapshot(path))
+        service = read_device_service_info(meter, meter.slave, meter.baud, meter.parity)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, OverflowError) as error:
+        _show_emis_notice(title, str(error), wait=True)
+        return
+
+    _activate_meter_connection(
+        {"port": meter, "slave": meter.slave, "baud": meter.baud, "parity": meter.parity,
+         "service_info": service},
+        meter.device_type, confirmed=True,
+    )
+
+
 def connect_scan():
     global conn, connect_btn, disconnect_btn, status_canvas, status_indicator, is_device_ready
     global search_window_ref, search_check_id
@@ -3071,7 +3159,6 @@ def connect_scan():
         if search_check_id: root.after_cancel(search_check_id); search_check_id = None
 
         if success and result_data:
-            global conn, was_ever_connected, is_device_ready, device_type
             search_window_ref.destroy()
             search_window_ref = None
             root.config(cursor="")
@@ -3083,30 +3170,7 @@ def connect_scan():
                 if selected_type is None:
                     return
 
-            conn = result_data
-            conn["device_type"] = selected_type
-            conn["device_type_confirmed"] = detected_type is not None
-            device_type = selected_type
-            _show_service_info(result_data["service_info"])
-            was_ever_connected = True
-            is_device_ready = True
-
-            addr_var.set(str(conn["slave"]))
-            speed_var.set(str(conn["baud"]))
-            parity_var.set(conn["parity"])
-
-            create_parameters_tab()
-            create_settings_tab()
-            set_buttons_state("normal")
-            connect_btn.config(state="disabled")
-            refresh_btn.config(state="disabled")
-            disconnect_btn.config(state="normal")
-            status_canvas.itemconfig(status_indicator, fill="#66cc66")
-            meter_status_details.pack(side="left")
-            update_device_type_display()
-            root.update_idletasks()
-            root.minsize(root.winfo_reqwidth(), min(root.winfo_reqheight(), 500))
-            start_time_reader()
+            _activate_meter_connection(result_data, selected_type, confirmed=detected_type is not None)
             meter_type = tr("device_dual" if selected_type == "dual" else "device_single")
             _show_emis_notice(
                 tr("dlg_connected"),
@@ -3187,6 +3251,7 @@ def disconnect_device(show_message=False):
         )
         return
     conn = None
+    lbl_status.config(text=tr("lbl_status"))
     device_type = None
     meter_status_details.pack_forget()
     _show_service_info({})
@@ -4225,8 +4290,65 @@ def create_parameters_tab():
         ) = channel_card(cards, 1, "lbl_channel_b")
 
     _create_measurement_controls(tab_params)
-    if power_supply_visible:
+    if power_supply_visible and not _virtual_connection():
         _create_power_supply_panel(tab_params)
+
+
+def _export_device_settings():
+    if not conn or not is_device_ready:
+        return
+    if not conn["device_type_confirmed"]:
+        _show_emis_notice(
+            tr("btn_save_settings_file"), tr("msg_export_type_required"), wait=True
+        )
+        return
+    if not stop_time_reader():
+        _show_emis_notice(tr("btn_save_settings_file"), tr("msg_export_retry"), wait=True)
+        return
+
+    root.config(cursor="watch")
+    root.update_idletasks()
+    try:
+        data = read_device_export(conn["port"], conn["slave"], conn["baud"], conn["parity"], device_type)
+    except Exception as error:
+        _show_emis_notice(tr("dlg_input_error"), str(error), wait=True)
+        return
+    finally:
+        start_time_reader()
+        root.config(cursor="")
+
+    serial_number = data["Сведения о приборе"]["Серийный номер"] or ""
+    safe_serial = "".join(char for char in serial_number if char.isalnum() or char in "-_")
+    date = data["Дата и время счётчика"].split(" ", 1)[0]
+    destination = filedialog.asksaveasfilename(
+        parent=root, title=tr("btn_save_settings_file"), defaultextension=".emis",
+        filetypes=[("ЭМИС", "*.emis")],
+        initialfile=f"Настройки СКВТ {safe_serial or 'без номера'} {date}.emis",
+    )
+    if not destination:
+        return
+
+    temporary_path = None
+    try:
+        encrypted = encrypt_snapshot(data)
+        with NamedTemporaryFile(
+            mode="wb", dir=os.path.dirname(destination),
+            suffix=".tmp", delete=False,
+        ) as stream:
+            temporary_path = stream.name
+            stream.write(encrypted)
+        os.replace(temporary_path, destination)
+    except (OSError, RuntimeError, ValueError) as error:
+        _show_emis_notice(tr("dlg_write_error"), str(error), wait=True)
+    else:
+        temporary_path = None
+        _show_emis_notice(tr("dlg_write_success"), os.path.basename(destination), wait=True)
+    finally:
+        if temporary_path is not None:
+            try:
+                os.unlink(temporary_path)
+            except OSError:
+                pass
 
 
 def create_settings_tab():
@@ -4326,12 +4448,21 @@ def create_settings_tab():
         )
 
     ttk.Separator(center_block).pack(fill="x", pady=12)
-    clear_button = ttk.Button(
-        center_block, text=tr("btn_clear_energy"),
-        command=clear_energy_values, style="Emis.Primary.TButton", state=control_state,
-    )
-    clear_button.pack()
-    settings_action_buttons.append(clear_button)
+    actions = ttk.Frame(center_block)
+    actions.pack(fill="x")
+    actions.columnconfigure(0, weight=1)
+    for row, (caption, text, command) in enumerate((
+        ("lbl_save_settings_file", "btn_save_settings_file", _export_device_settings),
+        ("lbl_clear_energy", "btn_clear_energy", clear_energy_values),
+    )):
+        ttk.Label(actions, text=tr(caption), foreground="#53645F").grid(
+            row=row, column=0, sticky="w", padx=(0, 14), pady=4
+        )
+        button = ttk.Button(
+            actions, text=tr(text), command=command, style="Emis.Primary.TButton", state=control_state,
+        )
+        button.grid(row=row, column=1, sticky="ew", pady=4)
+        settings_action_buttons.append(button)
 
 
 def create_info_tab():

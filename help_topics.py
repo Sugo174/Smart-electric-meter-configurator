@@ -24,7 +24,7 @@ HELP_TOPICS = {
         (
             "Настройки прибора",
             "Здесь можно изменить максимальный ток, пороги чувствительности, постоянную импульсного выхода и разрядность энергии (0, 2 или 3 знака). Максимальный ток вводится целыми амперами. Импульсная постоянная задаётся отдельно для каждого доступного канала. Выбор значения в выпадающем списке запускает запись в прибор.\n\n"
-            "«Очистить значения энергии» сбрасывает накопленные показания. Для этого требуются пароль и подтверждение.",
+            "«Сохранить настройки» выгружает зашифрованный файл .emis после автоматического определения исполнения. Кнопка «Очистить» сбрасывает накопленные показания. Для этого требуются пароль и подтверждение.",
         ),
         (
             "Тарифное расписание",
@@ -56,6 +56,10 @@ HELP_TOPICS = {
             "В меню настроек выберите «Чтение выгрузки EMIS». Откройте выгрузку .emis. Внутренняя сборка ЭМИС открывает выгрузки автоматически. Счётчик для просмотра не требуется. Дата, время и текущий тариф показаны на момент выгрузки.",
         ),
         (
+            "Эмуляция счётчика",
+            "В меню настроек выберите «Подключить виртуальный счётчик» и откройте файл .emis. Сохранённые параметры появятся в обычных вкладках. COM-порт при эмуляции не используется, а изменения сохраняются только в памяти до отключения. Для показаний, которых нет в файле, отображается тире.",
+        ),
+        (
             "Обновления",
             "Проверка выполняется при запуске. Её также можно запустить вручную через «Настройки программы». Если есть новая версия, программа предложит открыть страницу релиза. Выберите архив под свою версию Windows.",
         ),
@@ -83,7 +87,7 @@ HELP_TOPICS = {
         (
             "Device settings",
             "Set maximum current, sensitivity thresholds, the pulse output constant, and energy decimal places (0, 2, or 3). Enter maximum current in whole amperes. Set the pulse constant for each available channel. Selecting a value from a settings list writes it to the meter.\n\n"
-            "Clearing accumulated energy readings requires a password and confirmation.",
+            "Save settings exports an encrypted .emis file after automatic meter type detection. Clear resets accumulated energy readings and requires a password and confirmation.",
         ),
         (
             "Tariff schedule",
@@ -115,6 +119,10 @@ HELP_TOPICS = {
             "Use Read EMIS export in the program settings menu. Select the .emis export. The internal EMIS build opens exports automatically. No meter is required. The date, time, and current tariff reflect the moment of export.",
         ),
         (
+            "Meter emulation",
+            "Select Connect virtual meter in the program settings menu and open an .emis file. Saved data appears in the normal tabs. No COM port is used. Changes are held in memory until you disconnect, and missing readings appear as dashes.",
+        ),
+        (
             "Updates",
             "The app checks for updates at startup. You can also check manually from the program settings menu. When a new version is available, open its release page and choose the package for your Windows version.",
         ),
@@ -142,7 +150,7 @@ HELP_TOPICS = {
         (
             "电表设置",
             "可设置最大电流、灵敏度阈值、脉冲输出常数和电能小数位数（0、2 或 3 位）。最大电流以整数安培输入。各可用通道可分别设置脉冲常数。从设置列表选择值后，程序会写入电表。\n\n"
-            "清除累计电能读数需要密码和确认。",
+            "自动识别电表类型后，点击「保存设置」可导出加密的 .emis 文件。点击「清除」可重置累计电能读数，需要密码和确认。",
         ),
         (
             "费率时段表",
@@ -172,6 +180,10 @@ HELP_TOPICS = {
         (
             "读取 EMIS 导出文件",
             "在程序设置菜单中选择「读取 EMIS 导出文件」。打开 .emis 导出文件。EMIS 内部版本会自动打开导出文件。无需连接电表。日期、时间和当前费率为导出时的记录。",
+        ),
+        (
+            "电表仿真",
+            "在程序设置菜单中选择「连接虚拟电表」并打开 .emis 文件。保存的参数会显示在常规选项卡中。仿真不使用 COM 端口，修改仅保留在内存中，断开连接后丢弃。缺少的读数以破折号显示。",
         ),
         (
             "更新",

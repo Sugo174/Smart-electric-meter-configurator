@@ -18,6 +18,8 @@ import serial
 import time
 import datetime
 
+from virtual_meter import VirtualMeter
+
 from constants import (
     REG_EN_PROG,
     REG_LOCAL_ADDR,
@@ -85,6 +87,8 @@ def make_instrument(port, slave, baud, parity_letter):
     Возвращает:
         minimalmodbus.Instrument: Настроенный объект для обмена данными.
     """
+    if isinstance(port, VirtualMeter):
+        return port.connect(slave, baud, parity_letter)
     dev = minimalmodbus.Instrument(port, slave, mode=minimalmodbus.MODE_RTU)
     dev.serial.baudrate = baud
     dev.serial.bytesize = 8
@@ -779,8 +783,8 @@ def read_device_settings_params(port, slave, baud, parity, device_type):
         return False, str(e)
 
 
-def _read_device_info_string(dev, address):
-    registers = dev.read_registers(address, DEVICE_INFO_REGISTER_COUNT, functioncode=3)
+def _read_device_info_string(dev, address, register_count=DEVICE_INFO_REGISTER_COUNT):
+    registers = dev.read_registers(address, register_count, functioncode=3)
     data = b"".join(register.to_bytes(2, "big") for register in registers)
     return "".join(chr(byte) for byte in data.split(b"\x00", 1)[0] if 32 <= byte < 127).rstrip()
 
@@ -1145,6 +1149,98 @@ def write_decimal_places(port, slave, baud, parity, value):
                 dev.serial.close()
             except Exception:
                 pass
+
+
+def read_device_export(port, slave, baud, parity, device_type):
+    """Собирает данные счётчика для выгрузки без записи регистров."""
+    connection = (port, slave, baud, parity)
+    read_parameters = read_device_parameters_dual if device_type == "dual" else read_device_parameters
+    readings = {}
+    for key, reader, arguments in (
+        ("дата и время", read_device_time, connection),
+        ("сведения о приборе", read_device_info, connection),
+        ("настройки прибора", read_device_settings_params, (*connection, device_type)),
+        ("номинальные параметры", read_parameters, connection),
+    ):
+        success, result = reader(*arguments)
+        if not success:
+            raise ValueError(f"Не удалось прочитать «{key}»: {result}")
+        readings[key] = result
+
+    dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+    try:
+        service_info = {
+            name: _read_device_info_string(dev, address, register_count) or None
+            for name, address, register_count in (
+                ("Тех. версия ПО", 0xAB90, 8),
+                ("Дата компиляции тех. ПО", 0xABA0, 8),
+                ("Тех. версия протокола", 0xABA8, 8),
+                ("Тег прибора", 0xABF0, 16),
+                ("Тех. модель счётчика", 0xAB80, 16),
+            )
+        }
+        sign_word = dev.read_register(0xA00B, functioncode=3)
+        energy_decimals = dev.read_register(0xA011, functioncode=3)
+        tariff_registers = dev.read_registers(
+            REG_TARIFF_SCHEDULE_START, TARIFF_SCHEDULE_RECORD_COUNT * 2, functioncode=3
+        )
+    finally:
+        dev.serial.close()
+
+    clock = readings["дата и время"]["formatted"]
+    info = readings["сведения о приборе"]
+    settings = readings["настройки прибора"]
+    params = readings["номинальные параметры"]
+
+    channels = {}
+    for letter, key, index in (("A", "a", 1), ("B", "b", 2)):
+        if index == 2 and device_type != "dual":
+            break
+        channel_params = params[f"ch{index}"] if device_type == "dual" else params
+        channels[letter] = {
+            "Максимальный ток, А": settings[f"max_current_{key}"],
+            "Номинальное напряжение, В": channel_params["nom_voltage"],
+            "Постоянная импульсного выхода, имп/кВт·ч": settings[f"pulse_constant_ch{index}"],
+        }
+
+    tariff = {"Исходные регистры": tariff_registers}
+    try:
+        periods = parse_tariff_schedule_registers(tariff_registers)
+        tariff["Периоды"] = [
+            {"Начало": f"{hour:02d}:{minute:02d}", "Тариф": number}
+            for hour, minute, number in periods
+        ]
+        tariff["Текущий тариф"] = get_tariff_at_time(periods, datetime.datetime.fromisoformat(clock))
+    except ValueError as error:
+        tariff["Ошибка расшифровки"] = str(error)
+
+    return {
+        "Версия формата": 2,
+        "Подключение": {"Адрес Modbus": slave, "Скорость, бит/с": baud, "Чётность": parity},
+        "Сведения о приборе": {
+            "Серийный номер": info["serial_number"] or None,
+            "Производитель": info["manufacturer"] or None,
+            "Тип счётчика": info["meter_type"] or None,
+            "Версия метрологического ПО": info["sw_version"] or None,
+        },
+        "Дата и время счётчика": clock,
+        "Настройки прибора": {
+            "Число каналов": 2 if device_type == "dual" else 1,
+            "Каналы": channels,
+            "Порог чувствительности напряжения, %": settings["sens_voltage"],
+            "Порог чувствительности тока, %": settings["sens_current"],
+            "Десятичные знаки энергии на дисплее": settings["decimal_places"],
+        },
+        "Тарифное расписание": tariff,
+        "Сервисное инфо": service_info,
+        "Дополнительные регистры": {
+            "Знак действительных значений": {
+                "Слово регистра": sign_word,
+                "Напряжение со знаком": not bool(sign_word & 0x01),
+                "Ток со знаком": not bool(sign_word & 0x02),
+            },
+        },
+    }
 
 
 def build_tariff_schedule_registers(periods):
