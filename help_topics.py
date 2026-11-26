@@ -48,6 +48,10 @@ HELP_TOPICS = {
             "При выборе порта программа автоматически считывает напряжение и состояние выхода. Введите уставку и нажмите «Задать». При вводе 1000 В и выше отправляется 999,9 В. Выход можно включить или выключить кнопкой. Включение требует подтверждения.",
         ),
         (
+            "Симуляция по файлу",
+            "В меню настроек выберите «Симуляция по файлу». Откройте выгрузку .emis и закрытый ключ инженера, затем введите пароль ключа. Счётчик для просмотра не требуется. Измените время симуляции, чтобы проверить тариф по сохранённому расписанию. Для первичной настройки выберите «Создать ключи выгрузки». Для сборки клиентской программы нужен только открытый ключ emis_export_public.key.",
+        ),
+        (
             "Обновления",
             "Проверка выполняется при запуске. Её также можно запустить вручную через «Настройки программы». Если есть новая версия, программа предложит открыть страницу релиза. Выберите архив под свою версию Windows.",
         ),
@@ -99,6 +103,10 @@ HELP_TOPICS = {
             "When you select the port, the app automatically reads the voltage and output state. Enter a setpoint and apply it. Values of 1000 V or higher are sent as 999.9 V. Use the output button to switch the output on or off. Switching it on requires confirmation.",
         ),
         (
+            "Simulate from file",
+            "Use Simulate from file in the program settings menu. Select the .emis export and the engineer private key, then enter the key password. No meter is required. Change the simulated time to check the tariff against the saved schedule. Use Create export keys for initial setup. Only emis_export_public.key is needed to build the client edition.",
+        ),
+        (
             "Updates",
             "The app checks for updates at startup. You can also check manually from the program settings menu. When a new version is available, open its release page and choose the package for your Windows version.",
         ),
@@ -148,6 +156,10 @@ HELP_TOPICS = {
             "电压源",
             "检定窗口始终显示电压源面板。实时读数选项卡中的面板可通过程序设置菜单显示或隐藏。两个面板共享所选 COM 端口。\n\n"
             "选择端口后，程序自动读取电压和输出状态。输入设定值并应用。输入 1000 V 或更高时，程序发送 999.9 V。可用按钮开启或关闭输出，开启输出需确认。",
+        ),
+        (
+            "从文件模拟",
+            "在程序设置菜单中选择「从文件模拟」。打开 .emis 导出文件和工程师私钥，然后输入密钥密码。无需连接电表。可更改模拟时间，查看保存的时段表对应的费率。首次使用时请选择「创建导出密钥」。构建客户端只需公钥文件 emis_export_public.key。",
         ),
         (
             "更新",

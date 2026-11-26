@@ -14,7 +14,7 @@
 # =============================================================================
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import filedialog, messagebox, simpledialog, ttk
 import re
 import time
 import datetime
@@ -39,6 +39,8 @@ from constants import (
     DEVICE_INFO_REGISTER_COUNT,
     ENERGY_DECIMAL_PLACES,
 )
+
+from meter_snapshot import create_engineer_keys, load_snapshot
 
 from update_checker import (
     get_latest_release,
@@ -71,6 +73,7 @@ from device import (
     autofill_device_info,
     decode_meter_serial_number,
     get_tariff_at_time,
+    parse_tariff_schedule_registers,
 )
 
 from measurement_stats import MeasurementRun
@@ -100,6 +103,8 @@ TRANSLATIONS = {
         "invalid_modbus_address": "Введите адрес Modbus от 1 до 254.",
         "menu_settings": "☰ Настройки программы",
         "menu_help": "Справка",
+        "menu_simulation": "Симуляция по файлу",
+        "menu_export_keys": "Создать ключи выгрузки",
         "menu_power_supply": "Источник питания",
         "power_supply_read": "Прочитать",
         "power_supply_reading": "Обмен с источником…",
@@ -353,6 +358,8 @@ TRANSLATIONS = {
         "invalid_modbus_address": "Enter a Modbus address from 1 to 254.",
         "menu_settings": "☰ Program Settings",
         "menu_help": "Help",
+        "menu_simulation": "Simulate from file",
+        "menu_export_keys": "Create export keys",
         "menu_power_supply": "Power Supply",
         "power_supply_read": "Read",
         "power_supply_reading": "Communicating with power supply…",
@@ -605,6 +612,8 @@ TRANSLATIONS = {
         "invalid_modbus_address": "请输入 1 至 254 的 Modbus 地址。",
         "menu_settings": "☰ 程序设置",
         "menu_help": "帮助",
+        "menu_simulation": "从文件模拟",
+        "menu_export_keys": "创建导出密钥",
         "menu_power_supply": "电源",
         "power_supply_read": "读取",
         "power_supply_reading": "正在与电源通信…",
@@ -1140,6 +1149,9 @@ def set_language(lang_code):
         compound="left",
     )
 
+    settings_m.add_command(label=tr("menu_simulation"), command=_open_meter_simulation)
+    settings_m.add_command(label=tr("menu_export_keys"), command=_create_snapshot_keys)
+    settings_m.add_separator()
     settings_m.add_command(
         label=tr("menu_help"),
         command=show_help,
@@ -3689,6 +3701,122 @@ def _prompt_password():
 
     root.wait_window(win)
     return result[0]
+
+
+def _create_snapshot_keys():
+    directory = filedialog.askdirectory(parent=root, title="Папка для ключей выгрузки")
+    if not directory:
+        return
+
+    title = tr("menu_export_keys")
+    password = simpledialog.askstring(title, "Пароль закрытого ключа (от 12 символов)", show="*", parent=root)
+    if password is None:
+        return
+    repeated = simpledialog.askstring(title, "Повторите пароль", show="*", parent=root)
+    if repeated is None:
+        return
+    if password != repeated:
+        _show_emis_notice(title, "Пароли не совпадают.", wait=True)
+        return
+    try:
+        create_engineer_keys(directory, password)
+    except (OSError, RuntimeError, ValueError) as error:
+        _show_emis_notice(title, str(error), wait=True)
+        return
+    _show_emis_notice(
+        title,
+        "Ключи сохранены. Для сборки client положите emis_export_public.key рядом с файлами проекта. "
+        "Закрытый ключ emis_export_engineer.key оставьте у инженеров ЭМИС.",
+        wait=True,
+    )
+
+
+def _open_meter_simulation():
+    title = tr("menu_simulation")
+    snapshot_path = filedialog.askopenfilename(parent=root, title=title, filetypes=[("ЭМИС", "*.emis")])
+    if not snapshot_path:
+        return
+    key_path = filedialog.askopenfilename(
+        parent=root, title="Выберите закрытый ключ инженера", filetypes=[("Ключ ЭМИС", "*.key")]
+    )
+    if not key_path:
+        return
+    password = simpledialog.askstring(title, "Пароль закрытого ключа", show="*", parent=root)
+    if password is None:
+        return
+    try:
+        snapshot = load_snapshot(snapshot_path, key_path, password)
+        captured_time = datetime.datetime.fromisoformat(snapshot["Дата и время счётчика"])
+        raw_schedule = snapshot["Тарифное расписание"]["Исходные регистры"]
+    except (OSError, ValueError, TypeError, KeyError, RecursionError) as error:
+        _show_emis_notice(title, str(error), wait=True)
+        return
+
+    try:
+        periods = parse_tariff_schedule_registers(raw_schedule)
+    except (ValueError, TypeError):
+        periods = []
+
+    window = tk.Toplevel(root, background=emis_background)
+    window.title(title)
+    window.transient(root)
+    window.geometry("680x480")
+    window.minsize(520, 340)
+    card = ttk.Frame(window, padding=(16, 12), style="Emis.Card.TFrame")
+    card.pack(fill="both", expand=True, padx=14, pady=14)
+    ttk.Label(card, text=title, style="Emis.Heading.TLabel").pack(anchor="w")
+    ttk.Label(card, text="Автономный просмотр сохранённых настроек").pack(anchor="w", pady=(3, 10))
+
+    controls = ttk.Frame(card)
+    controls.pack(fill="x", pady=(0, 10))
+    ttk.Label(controls, text="Время симуляции (ЧЧ:ММ)").pack(side="left")
+    clock = tk.StringVar(window, value=captured_time.strftime("%H:%M"))
+    ttk.Entry(controls, textvariable=clock, width=7).pack(side="left", padx=8)
+    active_tariff = ttk.Label(controls)
+    active_tariff.pack(side="left")
+
+    def update_tariff(*_args):
+        try:
+            simulated_time = datetime.datetime.strptime(clock.get(), "%H:%M")
+        except ValueError:
+            active_tariff.config(text="Введите время в формате ЧЧ:ММ")
+        else:
+            number = get_tariff_at_time(periods, simulated_time)
+            active_tariff.config(text=f"Текущий тариф: {number if number is not None else '—'}")
+
+    clock.trace_add("write", update_tariff)
+    update_tariff()
+
+    table = ttk.Frame(card)
+    table.pack(fill="both", expand=True)
+    details = ttk.Treeview(table, columns=("value",), show="tree headings", selectmode="browse")
+    details.heading("#0", text="Параметр")
+    details.heading("value", text="Значение")
+    details.column("#0", width=315)
+    details.column("value", width=230)
+    scroll = ttk.Scrollbar(table, orient="vertical", command=details.yview)
+    details.configure(yscrollcommand=scroll.set)
+    scroll.pack(side="right", fill="y")
+    details.pack(side="left", fill="both", expand=True)
+
+    def add_value(parent, title, value):
+        if isinstance(value, dict):
+            group = details.insert(parent, "end", text=title, open=not parent)
+            for name, entry in value.items():
+                add_value(group, name, entry)
+        elif isinstance(value, list) and any(isinstance(entry, dict) for entry in value):
+            group = details.insert(parent, "end", text=title)
+            for index, entry in enumerate(value, 1):
+                add_value(group, str(index), entry)
+        else:
+            if isinstance(value, bool):
+                value = "Да" if value else "Нет"
+            elif isinstance(value, list):
+                value = ", ".join(map(str, value)) or "—"
+            details.insert(parent, "end", text=title, values=("—" if value is None else value,))
+
+    for name, value in snapshot.items():
+        add_value("", name, value)
 
 
 def show_help():

@@ -13,7 +13,7 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = [('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')]
 binaries = []
-hiddenimports = ['babel.numbers']
+hiddenimports = ['babel.numbers', '_cffi_backend']
 tmp_ret = collect_all('sv_ttk')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
