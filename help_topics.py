@@ -49,7 +49,7 @@ HELP_TOPICS = {
         ),
         (
             "Симуляция по файлу",
-            "В меню настроек выберите «Симуляция по файлу». Откройте выгрузку .emis и закрытый ключ инженера, затем введите пароль ключа. Счётчик для просмотра не требуется. Измените время симуляции, чтобы проверить тариф по сохранённому расписанию. Для первичной настройки выберите «Создать ключи выгрузки». Для сборки клиентской программы нужен только открытый ключ emis_export_public.key.",
+            "В меню настроек выберите «Симуляция по файлу». Откройте выгрузку .emis. На подготовленном ПК ключ используется автоматически. На другом ПК выберите резервную копию ключа и введите её пароль. Счётчик для просмотра не требуется. Измените время симуляции, чтобы проверить тариф по сохранённому расписанию. Переносимую копию можно сохранить через меню «Сохранить копию ключа».",
         ),
         (
             "Обновления",
@@ -104,7 +104,7 @@ HELP_TOPICS = {
         ),
         (
             "Simulate from file",
-            "Use Simulate from file in the program settings menu. Select the .emis export and the engineer private key, then enter the key password. No meter is required. Change the simulated time to check the tariff against the saved schedule. Use Create export keys for initial setup. Only emis_export_public.key is needed to build the client edition.",
+            "Use Simulate from file in the program settings menu. Select the .emis export. On the configured PC, the app uses the local key automatically. On another PC, choose the key backup and enter its password. No meter is required. Change the simulated time to check the tariff against the saved schedule. Use Back up export key to save a portable copy.",
         ),
         (
             "Updates",
@@ -159,7 +159,7 @@ HELP_TOPICS = {
         ),
         (
             "从文件模拟",
-            "在程序设置菜单中选择「从文件模拟」。打开 .emis 导出文件和工程师私钥，然后输入密钥密码。无需连接电表。可更改模拟时间，查看保存的时段表对应的费率。首次使用时请选择「创建导出密钥」。构建客户端只需公钥文件 emis_export_public.key。",
+            "在程序设置菜单中选择「从文件模拟」。打开 .emis 导出文件。已配置的电脑会自动使用本地密钥。在其他电脑上请选择密钥备份并输入密码。无需连接电表。可更改模拟时间，查看保存的时段表对应的费率。可使用「备份导出密钥」保存可移植的副本。",
         ),
         (
             "更新",

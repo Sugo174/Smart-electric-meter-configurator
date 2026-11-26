@@ -40,7 +40,7 @@ from constants import (
     ENERGY_DECIMAL_PLACES,
 )
 
-from meter_snapshot import create_engineer_keys, load_snapshot
+from meter_snapshot import SnapshotKeyError, backup_engineer_key, load_snapshot
 
 from update_checker import (
     get_latest_release,
@@ -104,7 +104,7 @@ TRANSLATIONS = {
         "menu_settings": "☰ Настройки программы",
         "menu_help": "Справка",
         "menu_simulation": "Симуляция по файлу",
-        "menu_export_keys": "Создать ключи выгрузки",
+        "menu_export_keys": "Сохранить копию ключа",
         "menu_power_supply": "Источник питания",
         "power_supply_read": "Прочитать",
         "power_supply_reading": "Обмен с источником…",
@@ -359,7 +359,7 @@ TRANSLATIONS = {
         "menu_settings": "☰ Program Settings",
         "menu_help": "Help",
         "menu_simulation": "Simulate from file",
-        "menu_export_keys": "Create export keys",
+        "menu_export_keys": "Back up export key",
         "menu_power_supply": "Power Supply",
         "power_supply_read": "Read",
         "power_supply_reading": "Communicating with power supply…",
@@ -613,7 +613,7 @@ TRANSLATIONS = {
         "menu_settings": "☰ 程序设置",
         "menu_help": "帮助",
         "menu_simulation": "从文件模拟",
-        "menu_export_keys": "创建导出密钥",
+        "menu_export_keys": "备份导出密钥",
         "menu_power_supply": "电源",
         "power_supply_read": "读取",
         "power_supply_reading": "正在与电源通信…",
@@ -3719,14 +3719,13 @@ def _create_snapshot_keys():
         _show_emis_notice(title, "Пароли не совпадают.", wait=True)
         return
     try:
-        create_engineer_keys(directory, password)
+        backup_engineer_key(directory, password)
     except (OSError, RuntimeError, ValueError) as error:
         _show_emis_notice(title, str(error), wait=True)
         return
     _show_emis_notice(
         title,
-        "Ключи сохранены. Для сборки client положите emis_export_public.key рядом с файлами проекта. "
-        "Закрытый ключ emis_export_engineer.key оставьте у инженеров ЭМИС.",
+        "Защищённая паролем копия emis_export_engineer.key сохранена. Передавайте её только инженерам ЭМИС.",
         wait=True,
     )
 
@@ -3736,16 +3735,19 @@ def _open_meter_simulation():
     snapshot_path = filedialog.askopenfilename(parent=root, title=title, filetypes=[("ЭМИС", "*.emis")])
     if not snapshot_path:
         return
-    key_path = filedialog.askopenfilename(
-        parent=root, title="Выберите закрытый ключ инженера", filetypes=[("Ключ ЭМИС", "*.key")]
-    )
-    if not key_path:
-        return
-    password = simpledialog.askstring(title, "Пароль закрытого ключа", show="*", parent=root)
-    if password is None:
-        return
     try:
-        snapshot = load_snapshot(snapshot_path, key_path, password)
+        try:
+            snapshot = load_snapshot(snapshot_path)
+        except (FileNotFoundError, SnapshotKeyError):
+            key_path = filedialog.askopenfilename(
+                parent=root, title="Выберите закрытый ключ инженера", filetypes=[("Ключ ЭМИС", "*.key")]
+            )
+            if not key_path:
+                return
+            password = simpledialog.askstring(title, "Пароль закрытого ключа", show="*", parent=root)
+            if password is None:
+                return
+            snapshot = load_snapshot(snapshot_path, key_path, password)
         captured_time = datetime.datetime.fromisoformat(snapshot["Дата и время счётчика"])
         raw_schedule = snapshot["Тарифное расписание"]["Исходные регистры"]
     except (OSError, ValueError, TypeError, KeyError, RecursionError) as error:
