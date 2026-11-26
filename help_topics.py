@@ -48,8 +48,8 @@ HELP_TOPICS = {
             "При выборе порта программа автоматически считывает напряжение и состояние выхода. Введите уставку и нажмите «Задать». При вводе 1000 В и выше отправляется 999,9 В. Выход можно включить или выключить кнопкой. Включение требует подтверждения.",
         ),
         (
-            "Симуляция по файлу",
-            "В меню настроек выберите «Симуляция по файлу». Откройте выгрузку .emis. На подготовленном ПК ключ используется автоматически. На другом ПК выберите резервную копию ключа и введите её пароль. Счётчик для просмотра не требуется. Измените время симуляции, чтобы проверить тариф по сохранённому расписанию. Переносимую копию можно сохранить через меню «Сохранить копию ключа».",
+            "Чтение выгрузки EMIS",
+            "В меню настроек выберите «Чтение выгрузки EMIS». Откройте выгрузку .emis. Внутренняя сборка ЭМИС открывает выгрузки автоматически. Счётчик для просмотра не требуется. Дата, время и текущий тариф показаны на момент выгрузки.",
         ),
         (
             "Обновления",
@@ -103,8 +103,8 @@ HELP_TOPICS = {
             "When you select the port, the app automatically reads the voltage and output state. Enter a setpoint and apply it. Values of 1000 V or higher are sent as 999.9 V. Use the output button to switch the output on or off. Switching it on requires confirmation.",
         ),
         (
-            "Simulate from file",
-            "Use Simulate from file in the program settings menu. Select the .emis export. On the configured PC, the app uses the local key automatically. On another PC, choose the key backup and enter its password. No meter is required. Change the simulated time to check the tariff against the saved schedule. Use Back up export key to save a portable copy.",
+            "Read EMIS export",
+            "Use Read EMIS export in the program settings menu. Select the .emis export. The internal EMIS build opens exports automatically. No meter is required. The date, time, and current tariff reflect the moment of export.",
         ),
         (
             "Updates",
@@ -158,8 +158,8 @@ HELP_TOPICS = {
             "选择端口后，程序自动读取电压和输出状态。输入设定值并应用。输入 1000 V 或更高时，程序发送 999.9 V。可用按钮开启或关闭输出，开启输出需确认。",
         ),
         (
-            "从文件模拟",
-            "在程序设置菜单中选择「从文件模拟」。打开 .emis 导出文件。已配置的电脑会自动使用本地密钥。在其他电脑上请选择密钥备份并输入密码。无需连接电表。可更改模拟时间，查看保存的时段表对应的费率。可使用「备份导出密钥」保存可移植的副本。",
+            "读取 EMIS 导出文件",
+            "在程序设置菜单中选择「读取 EMIS 导出文件」。打开 .emis 导出文件。EMIS 内部版本会自动打开导出文件。无需连接电表。日期、时间和当前费率为导出时的记录。",
         ),
         (
             "更新",

@@ -1,4 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 import runpy
 import struct
 from pathlib import Path
@@ -9,11 +10,17 @@ app_version = runpy.run_path(
 
 architecture_suffix = "-x86" if struct.calcsize("P") == 4 else ""
 build_name = f"Smart-Meter-Configurator-v{app_version}-Windows-7{architecture_suffix}"
+internal_key_dir = os.environ.get("EMIS_INTERNAL_KEY_MODULE_DIR")
+if internal_key_dir:
+    build_name += "-EMIS-Internal"
+
 from PyInstaller.utils.hooks import collect_all
 
 datas = [('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')]
 binaries = []
 hiddenimports = ['babel.numbers', '_cffi_backend']
+if internal_key_dir:
+    hiddenimports.append('_emis_internal_snapshot_key')
 tmp_ret = collect_all('sv_ttk')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
@@ -23,7 +30,7 @@ block_cipher = None
 
 a = Analysis(
     ['gui.py'],
-    pathex=[],
+    pathex=[internal_key_dir] if internal_key_dir else [],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

@@ -14,7 +14,7 @@
 # =============================================================================
 
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog, ttk
+from tkinter import filedialog, messagebox, ttk
 import re
 import time
 import datetime
@@ -40,7 +40,8 @@ from constants import (
     ENERGY_DECIMAL_PLACES,
 )
 
-from meter_snapshot import SnapshotKeyError, backup_engineer_key, load_snapshot
+from meter_snapshot import load_snapshot
+from snapshot_report import create_snapshot_pdf, snapshot_children, snapshot_value
 
 from update_checker import (
     get_latest_release,
@@ -73,7 +74,6 @@ from device import (
     autofill_device_info,
     decode_meter_serial_number,
     get_tariff_at_time,
-    parse_tariff_schedule_registers,
 )
 
 from measurement_stats import MeasurementRun
@@ -103,8 +103,7 @@ TRANSLATIONS = {
         "invalid_modbus_address": "Введите адрес Modbus от 1 до 254.",
         "menu_settings": "☰ Настройки программы",
         "menu_help": "Справка",
-        "menu_simulation": "Симуляция по файлу",
-        "menu_export_keys": "Сохранить копию ключа",
+        "menu_read_emis_export": "Чтение выгрузки EMIS",
         "menu_power_supply": "Источник питания",
         "power_supply_read": "Прочитать",
         "power_supply_reading": "Обмен с источником…",
@@ -358,8 +357,7 @@ TRANSLATIONS = {
         "invalid_modbus_address": "Enter a Modbus address from 1 to 254.",
         "menu_settings": "☰ Program Settings",
         "menu_help": "Help",
-        "menu_simulation": "Simulate from file",
-        "menu_export_keys": "Back up export key",
+        "menu_read_emis_export": "Read EMIS export",
         "menu_power_supply": "Power Supply",
         "power_supply_read": "Read",
         "power_supply_reading": "Communicating with power supply…",
@@ -612,8 +610,7 @@ TRANSLATIONS = {
         "invalid_modbus_address": "请输入 1 至 254 的 Modbus 地址。",
         "menu_settings": "☰ 程序设置",
         "menu_help": "帮助",
-        "menu_simulation": "从文件模拟",
-        "menu_export_keys": "备份导出密钥",
+        "menu_read_emis_export": "读取 EMIS 导出文件",
         "menu_power_supply": "电源",
         "power_supply_read": "读取",
         "power_supply_reading": "正在与电源通信…",
@@ -1149,8 +1146,7 @@ def set_language(lang_code):
         compound="left",
     )
 
-    settings_m.add_command(label=tr("menu_simulation"), command=_open_meter_simulation)
-    settings_m.add_command(label=tr("menu_export_keys"), command=_create_snapshot_keys)
+    settings_m.add_command(label=tr("menu_read_emis_export"), command=_open_emis_export)
     settings_m.add_separator()
     settings_m.add_command(
         label=tr("menu_help"),
@@ -3703,61 +3699,16 @@ def _prompt_password():
     return result[0]
 
 
-def _create_snapshot_keys():
-    directory = filedialog.askdirectory(parent=root, title="Папка для ключей выгрузки")
-    if not directory:
-        return
-
-    title = tr("menu_export_keys")
-    password = simpledialog.askstring(title, "Пароль закрытого ключа (от 12 символов)", show="*", parent=root)
-    if password is None:
-        return
-    repeated = simpledialog.askstring(title, "Повторите пароль", show="*", parent=root)
-    if repeated is None:
-        return
-    if password != repeated:
-        _show_emis_notice(title, "Пароли не совпадают.", wait=True)
-        return
-    try:
-        backup_engineer_key(directory, password)
-    except (OSError, RuntimeError, ValueError) as error:
-        _show_emis_notice(title, str(error), wait=True)
-        return
-    _show_emis_notice(
-        title,
-        "Защищённая паролем копия emis_export_engineer.key сохранена. Передавайте её только инженерам ЭМИС.",
-        wait=True,
-    )
-
-
-def _open_meter_simulation():
-    title = tr("menu_simulation")
+def _open_emis_export():
+    title = tr("menu_read_emis_export")
     snapshot_path = filedialog.askopenfilename(parent=root, title=title, filetypes=[("ЭМИС", "*.emis")])
     if not snapshot_path:
         return
     try:
-        try:
-            snapshot = load_snapshot(snapshot_path)
-        except (FileNotFoundError, SnapshotKeyError):
-            key_path = filedialog.askopenfilename(
-                parent=root, title="Выберите закрытый ключ инженера", filetypes=[("Ключ ЭМИС", "*.key")]
-            )
-            if not key_path:
-                return
-            password = simpledialog.askstring(title, "Пароль закрытого ключа", show="*", parent=root)
-            if password is None:
-                return
-            snapshot = load_snapshot(snapshot_path, key_path, password)
-        captured_time = datetime.datetime.fromisoformat(snapshot["Дата и время счётчика"])
-        raw_schedule = snapshot["Тарифное расписание"]["Исходные регистры"]
+        snapshot = load_snapshot(snapshot_path)
     except (OSError, ValueError, TypeError, KeyError, RecursionError) as error:
         _show_emis_notice(title, str(error), wait=True)
         return
-
-    try:
-        periods = parse_tariff_schedule_registers(raw_schedule)
-    except (ValueError, TypeError):
-        periods = []
 
     window = tk.Toplevel(root, background=emis_background)
     window.withdraw()
@@ -3773,57 +3724,137 @@ def _open_meter_simulation():
     ttk.Label(card, text=title, style="Emis.Heading.TLabel").pack(anchor="w")
     ttk.Label(card, text="Автономный просмотр сохранённых настроек").pack(anchor="w", pady=(3, 10))
 
-    controls = ttk.Frame(card)
-    controls.pack(fill="x", pady=(0, 10))
-    ttk.Label(controls, text="Время симуляции (ЧЧ:ММ)").pack(side="left")
-    clock = tk.StringVar(window, value=captured_time.strftime("%H:%M"))
-    ttk.Entry(controls, textvariable=clock, width=7).pack(side="left", padx=8)
-    active_tariff = ttk.Label(controls)
-    active_tariff.pack(side="left")
-
-    def update_tariff(*_args):
+    def save_pdf():
+        filename = os.path.splitext(os.path.basename(snapshot_path))[0] + ".pdf"
+        destination = filedialog.asksaveasfilename(
+            parent=window, title="Сохранить как PDF", defaultextension=".pdf",
+            filetypes=[("PDF", "*.pdf")], initialfile=filename,
+        )
+        if not destination:
+            return
         try:
-            simulated_time = datetime.datetime.strptime(clock.get(), "%H:%M")
-        except ValueError:
-            active_tariff.config(text="Введите время в формате ЧЧ:ММ")
+            pdf = create_snapshot_pdf(snapshot)
+            with open(destination, "wb") as stream:
+                stream.write(pdf)
+        except (OSError, ValueError, RuntimeError) as error:
+            _show_emis_notice("Ошибка сохранения PDF", str(error), parent=window, wait=True)
         else:
-            number = get_tariff_at_time(periods, simulated_time)
-            active_tariff.config(text=f"Текущий тариф: {number if number is not None else '—'}")
+            _show_emis_notice("PDF сохранён", os.path.basename(destination), parent=window, wait=True)
 
-    clock.trace_add("write", update_tariff)
-    update_tariff()
+    ttk.Button(card, text="Сохранить как PDF", command=save_pdf, style="Emis.Primary.TButton").pack(
+        side="bottom", anchor="e", pady=(10, 0)
+    )
 
     table = ttk.Frame(card)
     table.pack(fill="both", expand=True)
-    details = ttk.Treeview(table, columns=("value",), show="tree headings", selectmode="browse")
-    details.heading("#0", text="Параметр")
-    details.heading("value", text="Значение")
-    details.column("#0", width=315)
-    details.column("value", width=230)
-    scroll = ttk.Scrollbar(table, orient="vertical", command=details.yview)
-    details.configure(yscrollcommand=scroll.set)
+    canvas = tk.Canvas(table, background=emis_surface, highlightthickness=0)
+    scroll = ttk.Scrollbar(table, orient="vertical", command=canvas.yview)
+    canvas.configure(yscrollcommand=scroll.set)
     scroll.pack(side="right", fill="y")
-    details.pack(side="left", fill="both", expand=True)
+    canvas.pack(side="left", fill="both", expand=True)
 
-    def add_value(parent, title, value):
-        if isinstance(value, dict):
-            group = details.insert(parent, "end", text=title, open=not parent)
-            for name, entry in value.items():
-                add_value(group, name, entry)
-        elif isinstance(value, list) and any(isinstance(entry, dict) for entry in value):
-            group = details.insert(parent, "end", text=title)
-            for index, entry in enumerate(value, 1):
-                add_value(group, str(index), entry)
+    rows_frame = ttk.Frame(canvas)
+    rows_window = canvas.create_window(0, 0, window=rows_frame, anchor="nw")
+    rows_frame.columnconfigure((0, 2), weight=1, uniform="export_columns")
+    rows_frame.bind("<Configure>", lambda _event: canvas.configure(scrollregion=canvas.bbox("all")))
+    window.bind("<MouseWheel>", lambda event: canvas.yview_scroll(-int(event.delta / 120), "units"))
+
+    for column, heading in ((0, "Параметр"), (2, "Значение")):
+        ttk.Label(rows_frame, text=heading, background="#DDF3EB", foreground="#00664D", padding=(8, 5)).grid(
+            row=0, column=column, sticky="ew", pady=(0, 4)
+        )
+
+    rows = []
+    expanded = {}
+    caption_labels = []
+    value_labels = []
+
+    def resize_rows(event):
+        canvas.itemconfigure(rows_window, width=event.width)
+        for label, depth in caption_labels:
+            label.configure(wraplength=max(80, event.width // 2 - 38 - depth * 16))
+        for label in value_labels:
+            label.configure(wraplength=max(80, event.width // 2 - 16))
+
+    canvas.bind("<Configure>", resize_rows)
+
+    def toggle_group(group, arrow):
+        expanded[group] = not expanded[group]
+        arrow.config(text="▼" if expanded[group] else "▶")
+        for widgets, parents in rows:
+            visible = all(expanded[parent] for parent in parents)
+            for widget in widgets:
+                if visible:
+                    widget.grid()
+                else:
+                    widget.grid_remove()
+
+    clipboard_menu = tk.Menu(window, tearoff=False)
+
+    def copy_text(value):
+        window.clipboard_clear()
+        window.clipboard_append(value)
+
+    def copy_menu(event, value):
+        clipboard_menu.delete(0, "end")
+        clipboard_menu.add_command(label="Копировать", command=lambda: copy_text(value))
+        try:
+            clipboard_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            clipboard_menu.grab_release()
+
+    def bind_copy(label, text):
+        label.configure(takefocus=True, cursor="hand2")
+        label.bind("<Button-1>", lambda _event: label.focus_set())
+        label.bind("<Double-Button-1>", lambda _event: copy_text(text))
+        label.bind("<Button-3>", lambda event: copy_menu(event, text))
+        label.bind("<<Copy>>", lambda _event: copy_text(text))
+
+    def add_row(name, value, parents=()):
+        row = len(rows) + 1
+        depth = len(parents)
+        caption = ttk.Frame(rows_frame)
+        caption.grid(row=row, column=0, sticky="new", padx=(6 + depth * 16, 8), pady=2)
+
+        children = snapshot_children(value)
+
+        if children is not None:
+            expanded[row] = True
+            arrow = tk.Button(
+                caption, text="▼", foreground="#00664D", activeforeground="#00664D",
+                background=emis_surface, activebackground="#DDF3EB", cursor="hand2",
+                relief="flat", borderwidth=0, padx=3, pady=0,
+                command=lambda: toggle_group(row, arrow),
+            )
+            arrow.pack(side="left", anchor="n", padx=(0, 4))
         else:
-            if isinstance(value, bool):
-                value = "Да" if value else "Нет"
-            elif isinstance(value, list):
-                value = ", ".join(map(str, value)) or "—"
-            details.insert(parent, "end", text=title, values=("—" if value is None else value,))
+            ttk.Frame(caption, width=22).pack(side="left")
+
+        label = ttk.Label(caption, text=name, foreground="#437467", justify="left")
+        label.pack(side="left", anchor="n")
+        caption_labels.append((label, depth))
+        bind_copy(label, name)
+
+        widgets = [caption]
+        if children is None:
+            text = snapshot_value(value)
+            value_label = ttk.Label(rows_frame, text=text, foreground=emis_text, justify="left")
+            value_label.grid(row=row, column=2, sticky="nw", padx=(8, 6), pady=2)
+            bind_copy(value_label, text)
+            value_labels.append(value_label)
+            widgets.append(value_label)
+        rows.append((widgets, parents))
+
+        if children is not None:
+            for child_name, child_value in children:
+                add_row(child_name, child_value, (*parents, row))
 
     for name, value in snapshot.items():
-        add_value("", name, value)
+        add_row(name, value)
 
+    tk.Frame(rows_frame, background="#9EC8BB", width=1).grid(
+        row=0, column=1, rowspan=len(rows) + 1, sticky="ns"
+    )
     window.deiconify()
 
 
@@ -4449,7 +4480,7 @@ def _set_app_title(info=None):
     title = f"{tr('app_name')} V{APP_VERSION}"
     serial_number = ((info or {}).get("serial_number") or "").strip()
     if serial_number:
-        title += f" · № {serial_number}"
+        title += f" № {serial_number}"
     if root.title() != title:
         root.title(title)
 

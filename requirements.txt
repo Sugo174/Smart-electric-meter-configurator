@@ -4,3 +4,4 @@ sv_ttk>=2.3.0
 tkcalendar>=1.6.1
 openpyxl==3.1.5
 PyNaCl>=1.5.0
+reportlab>=4.2.5

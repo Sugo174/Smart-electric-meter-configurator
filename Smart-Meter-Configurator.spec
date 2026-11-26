@@ -1,4 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 import runpy
 from pathlib import Path
 
@@ -8,12 +9,16 @@ app_version = runpy.run_path(
 
 build_name = f"Smart-Meter-Configurator-v{app_version}"
 
+internal_key_dir = os.environ.get("EMIS_INTERNAL_KEY_MODULE_DIR")
+if internal_key_dir:
+    build_name += "-EMIS-Internal"
+
 a = Analysis(
     ['gui.py'],
-    pathex=[],
+    pathex=[internal_key_dir] if internal_key_dir else [],
     binaries=[],
     datas=[('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')],
-    hiddenimports=["_cffi_backend"],
+    hiddenimports=["_cffi_backend"] + (["_emis_internal_snapshot_key"] if internal_key_dir else []),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
