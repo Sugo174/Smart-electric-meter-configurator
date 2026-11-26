@@ -17,7 +17,7 @@ a = Analysis(
     ['gui.py'],
     pathex=[internal_key_dir] if internal_key_dir else [],
     binaries=[],
-    datas=[('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')],
+    datas=[('app.ico', 'icons'), ('app.png', 'icons'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')],
     hiddenimports=["_cffi_backend"] + (["_emis_internal_snapshot_key"] if internal_key_dir else []),
     hookspath=[],
     hooksconfig={},

@@ -16,7 +16,7 @@ if internal_key_dir:
 
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('app.ico', '.'), ('app.png', '.'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')]
+datas = [('app.ico', 'icons'), ('app.png', 'icons'), ('icons', 'icons'), ('images', 'images'), ('verification_template.xlsx', '.'), ('verification_template_single.xlsx', '.')]
 binaries = []
 hiddenimports = ['babel.numbers', '_cffi_backend']
 if internal_key_dir:

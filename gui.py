@@ -1188,7 +1188,10 @@ def set_language(lang_code):
         label=tr("menu_read_emis_export"), command=_open_emis_export,
         image=ICONS.get("read_export"), compound="left",
     )
-    settings_m.add_command(label=tr("menu_virtual_meter"), command=_connect_virtual_meter)
+    settings_m.add_command(
+        label=tr("menu_virtual_meter"), command=_connect_virtual_meter,
+        image=ICONS.get("virtual_meter"), compound="left",
+    )
     settings_m.add_separator()
     settings_m.add_command(
         label=tr("menu_help"),
@@ -1429,6 +1432,7 @@ def load_icons():
         "update": resource_path("icons/update.png"),
         "help": resource_path("icons/help.png"),
         "read_export": resource_path("icons/read_export.png"),
+        "virtual_meter": resource_path("icons/virtual_meter.png"),
         "power_supply": resource_path("icons/power_supply.png"),
         "exit": resource_path("icons/exit.png"),
         "flag_ru": resource_path("icons/flag_ru.png"),
@@ -3836,22 +3840,29 @@ def _open_emis_export():
 
     table = ttk.Frame(card)
     table.pack(fill="both", expand=True)
+    table.columnconfigure(0, weight=1)
+    table.rowconfigure(1, weight=1)
+
+    header = ttk.Frame(table)
+    header.grid(row=0, column=0, sticky="ew")
+    header.columnconfigure((0, 2), weight=1, uniform="export_columns")
+    for column, heading in ((0, "Параметр"), (2, "Значение")):
+        ttk.Label(header, text=heading, background="#DDF3EB", foreground="#00664D", padding=(8, 5)).grid(
+            row=0, column=column, sticky="ew"
+        )
+    tk.Frame(header, background="#9EC8BB", width=1).grid(row=0, column=1, sticky="ns")
+
     canvas = tk.Canvas(table, background=emis_surface, highlightthickness=0)
+    canvas.grid(row=1, column=0, sticky="nsew")
     scroll = ttk.Scrollbar(table, orient="vertical", command=canvas.yview)
+    scroll.grid(row=1, column=1, sticky="ns")
     canvas.configure(yscrollcommand=scroll.set)
-    scroll.pack(side="right", fill="y")
-    canvas.pack(side="left", fill="both", expand=True)
 
     rows_frame = ttk.Frame(canvas)
     rows_window = canvas.create_window(0, 0, window=rows_frame, anchor="nw")
     rows_frame.columnconfigure((0, 2), weight=1, uniform="export_columns")
     rows_frame.bind("<Configure>", lambda _event: canvas.configure(scrollregion=canvas.bbox("all")))
     window.bind("<MouseWheel>", lambda event: canvas.yview_scroll(-int(event.delta / 120), "units"))
-
-    for column, heading in ((0, "Параметр"), (2, "Значение")):
-        ttk.Label(rows_frame, text=heading, background="#DDF3EB", foreground="#00664D", padding=(8, 5)).grid(
-            row=0, column=column, sticky="ew", pady=(0, 4)
-        )
 
     rows = []
     expanded = {}
@@ -6113,8 +6124,9 @@ load_config()
 root = tk.Tk()
 _set_app_title()
 # ICO содержит отдельные изображения для разных размеров Windows.
+app_icon_folder = "icons/" if getattr(sys, "frozen", False) else ""
 try:
-    app_icon_path = resource_path("app.ico")
+    app_icon_path = resource_path(app_icon_folder + "app.ico")
 
     # Значок главного окна.
     root.iconbitmap(app_icon_path)
@@ -6125,7 +6137,7 @@ try:
 except tk.TclError:
     # Запасной вариант, если система не поддерживает ICO.
     try:
-        app_icon_img = tk.PhotoImage(file=resource_path("app.png"))
+        app_icon_img = tk.PhotoImage(file=resource_path(app_icon_folder + "app.png"))
         root.iconphoto(True, app_icon_img)
     except tk.TclError:
         pass
