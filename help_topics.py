@@ -36,6 +36,10 @@ HELP_TOPICS = {
             "Вкладка пока пустая. Просмотр архивов ещё недоступен.",
         ),
         (
+            "Сервисное инфо",
+            "Вкладка показывает техническую версию ПО и дату его компиляции. Сведения читаются при подключении счётчика.",
+        ),
+        (
             "Протокол поверки",
             "На вкладке «Текущие значения» нажмите «Заполнить протокол». Проверьте данные прибора, заполните сведения о поверке, выберите класс точности 0,5 или 1 и укажите результаты четырёх проверок.\n\n"
             "Для каждого канала предусмотрено пять точек напряжения и четыре точки тока, мощности и периода. Слева можно выбрать любую точку. На точках напряжения выставьте указанную уставку и введите показание внешнего вольтметра в Uэт. На точках тока оставьте напряжение на Uном, выставляйте на ЭнИ 75 → 37,5 → 22,5 → 7,5 мВ и вводите Uэт и Tизм с частотомера. В двухканальном исполнении физически переключайте стенд на нужный канал.\n\n"
@@ -91,6 +95,10 @@ HELP_TOPICS = {
             "This tab is currently empty. Archive viewing is not available yet.",
         ),
         (
+            "Service info",
+            "The tab shows the technical firmware version and build date. The app reads them when the meter connects.",
+        ),
+        (
             "Verification report",
             "On Live readings, click Fill in protocol. Check the meter details, complete the report form, select accuracy class 0.5 or 1, and enter the outcomes of the four checks.\n\n"
             "Each channel has five voltage points and four current, power, and period points. Select any point from the list on the left. For voltage points, set the specified voltage and enter the external voltmeter reading in Uэт. For current points, keep the source at nominal voltage and set the EnI calibrator to 75 → 37.5 → 22.5 → 7.5 mV. Enter the external voltmeter reading in Uэт and the frequency counter period in Tизм. For a dual-channel meter, switch the bench connections to the channel being tested.\n\n"
@@ -144,6 +152,10 @@ HELP_TOPICS = {
         (
             "档案",
             "此选项卡暂为空白，尚不能查看档案。",
+        ),
+        (
+            "服务信息",
+            "此选项卡显示技术固件版本和编译日期。连接电表时会读取这些信息。",
         ),
         (
             "检定记录",

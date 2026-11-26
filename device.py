@@ -779,45 +779,41 @@ def read_device_settings_params(port, slave, baud, parity, device_type):
         return False, str(e)
 
 
+def _read_device_info_string(dev, address):
+    registers = dev.read_registers(address, DEVICE_INFO_REGISTER_COUNT, functioncode=3)
+    data = b"".join(register.to_bytes(2, "big") for register in registers)
+    return "".join(chr(byte) for byte in data.split(b"\x00", 1)[0] if 32 <= byte < 127).rstrip()
+
+
+def read_device_service_info(port, slave, baud, parity):
+    """Читает служебную версию ПО и дату компиляции отдельно от основного опроса."""
+    values = {}
+    try:
+        dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
+        try:
+            for field, address in (("firmware_version", 0xAB90), ("firmware_build_date", 0xABA0)):
+                try:
+                    values[field] = _read_device_info_string(dev, address)
+                except (OSError, minimalmodbus.ModbusException):
+                    continue
+        finally:
+            dev.serial.close()
+    except (OSError, minimalmodbus.ModbusException):
+        pass
+    return values
+
+
 def read_device_info(port, slave, baud, parity):
     """Чтение информации о приборе."""
     try:
         dev = make_instrument(port, slave, baud, PARITY_MAP[parity])
         try:
-            def _read_string(start_addr, max_bytes=16):
-                """Читает строку до первого нуля или max_bytes."""
-                num_regs = (max_bytes + 1) // 2  # Округляем вверх
-                regs = dev.read_registers(start_addr, num_regs, functioncode=3)
-                
-                # Собираем все байты
-                all_bytes = []
-                for reg in regs:
-                    all_bytes.append((reg >> 8) & 0xFF)
-                    all_bytes.append(reg & 0xFF)
-                
-                # Ищем конец строки (первый ноль)
-                end_idx = 0
-                for i, b in enumerate(all_bytes):
-                    if b == 0:
-                        end_idx = i
-                        break
-                else:
-                    end_idx = len(all_bytes)
-                
-                # Преобразуем в строку, оставляя только печатаемые символы
-                text = []
-                for b in all_bytes[:end_idx]:
-                    if 32 <= b < 127:  # Печатаемые ASCII
-                        text.append(chr(b))
-                
-                return ''.join(text).rstrip()
-
             # Читаем до 16 байт для каждого поля
-            serial_number = _read_string(0xABB0, 16)
-            manufacturer = _read_string(0xABB8, 16)
-            meter_type = _read_string(0xABC0, 16)
-            sw_version = _read_string(0xABC8, 16)
-            release_date = _read_string(0xABD0, 16)
+            serial_number = _read_device_info_string(dev, 0xABB0)
+            manufacturer = _read_device_info_string(dev, 0xABB8)
+            meter_type = _read_device_info_string(dev, 0xABC0)
+            sw_version = _read_device_info_string(dev, 0xABC8)
+            release_date = _read_device_info_string(dev, 0xABD0)
             
             return True, {
                 "serial_number": serial_number,

@@ -68,6 +68,7 @@ from device import (
     read_tariff_schedule,
     write_tariff_schedule,
     read_device_info,
+    read_device_service_info,
     write_device_info_field,
     validate_meter_serial_number,
     validate_scanned_serial_number,
@@ -133,6 +134,9 @@ TRANSLATIONS = {
         "tab_settings": "Настройки прибора",
         "tab_tariff": "Тарифное расписание",
         "tab_archives": "Архивы",
+        "tab_service_info": "Сервисное инфо",
+        "lbl_technical_firmware": "Тех. версия ПО",
+        "lbl_firmware_build_date": "Дата компиляции тех. ПО",
         "lbl_current_tariff": "Текущий тариф",
 
         # Вкладка "Соединение"
@@ -387,6 +391,9 @@ TRANSLATIONS = {
         "tab_settings": "Device Settings",
         "tab_tariff": "Tariff Schedule",
         "tab_archives": "Archives",
+        "tab_service_info": "Service info",
+        "lbl_technical_firmware": "Technical firmware version",
+        "lbl_firmware_build_date": "Firmware build date",
         "lbl_current_tariff": "Current tariff",
 
         # Connection tab
@@ -640,6 +647,9 @@ TRANSLATIONS = {
         "tab_settings": "设备设置",
         "tab_tariff": "费率时段表",
         "tab_archives": "档案",
+        "tab_service_info": "服务信息",
+        "lbl_technical_firmware": "技术固件版本",
+        "lbl_firmware_build_date": "固件编译日期",
         "lbl_current_tariff": "当前费率",
 
         # 连接选项卡
@@ -1146,7 +1156,10 @@ def set_language(lang_code):
         compound="left",
     )
 
-    settings_m.add_command(label=tr("menu_read_emis_export"), command=_open_emis_export)
+    settings_m.add_command(
+        label=tr("menu_read_emis_export"), command=_open_emis_export,
+        image=ICONS.get("read_export"), compound="left",
+    )
     settings_m.add_separator()
     settings_m.add_command(
         label=tr("menu_help"),
@@ -1176,6 +1189,10 @@ def set_language(lang_code):
     notebook.tab(tab_settings, text=tr("tab_settings"))
     notebook.tab(tab_tariff, text=tr("tab_tariff"))
     notebook.tab(tab_archives, text=tr("tab_archives"))
+    notebook.tab(tab_service_info, text=tr("tab_service_info"))
+    service_info_heading.config(text=tr("tab_service_info"))
+    for field, key in (("firmware_version", "lbl_technical_firmware"), ("firmware_build_date", "lbl_firmware_build_date")):
+        service_info_captions[field].config(text=tr(key))
     tariff_title.configure(text=tr("lbl_current_tariff"))
     tariff_schedule_label.configure(text=tr("lbl_tariff_schedule"))
     tariff_schedule_button.configure(text=tr("btn_tariff_schedule"))
@@ -1382,6 +1399,7 @@ def load_icons():
         "language": resource_path("icons/language.png"),
         "update": resource_path("icons/update.png"),
         "help": resource_path("icons/help.png"),
+        "read_export": resource_path("icons/read_export.png"),
         "power_supply": resource_path("icons/power_supply.png"),
         "exit": resource_path("icons/exit.png"),
         "flag_ru": resource_path("icons/flag_ru.png"),
@@ -3033,6 +3051,10 @@ def connect_scan():
                     )
                 except Exception as error:
                     result["type_detection_error"] = tr("dlg_detect_type_error") + f"\n{error}"
+            if success and not scan_cancelled.is_set():
+                result["service_info"] = read_device_service_info(
+                    result["port"], result["slave"], result["baud"], result["parity"]
+                )
             scan_result[0] = result if success else None
             scan_error[0] = None if success else result
         except Exception as e:
@@ -3065,6 +3087,7 @@ def connect_scan():
             conn["device_type"] = selected_type
             conn["device_type_confirmed"] = detected_type is not None
             device_type = selected_type
+            _show_service_info(result_data["service_info"])
             was_ever_connected = True
             is_device_ready = True
 
@@ -3166,6 +3189,7 @@ def disconnect_device(show_message=False):
     conn = None
     device_type = None
     meter_status_details.pack_forget()
+    _show_service_info({})
     _update_meter_status_details(None)
     _stop_measurement()
     is_device_ready = False
@@ -4483,6 +4507,11 @@ def _set_app_title(info=None):
         title += f" № {serial_number}"
     if root.title() != title:
         root.title(title)
+
+
+def _show_service_info(info):
+    for field, label in service_info_values.items():
+        label.config(text=info.get(field) or "—")
 
 
 def _update_meter_status_details(info):
@@ -6128,6 +6157,25 @@ tab_tariff = tk.Frame(notebook, background=emis_background)
 notebook.add(tab_tariff, text=tr("tab_tariff"))
 tab_archives = tk.Frame(notebook, background=emis_background)
 notebook.add(tab_archives, text=tr("tab_archives"))
+
+tab_service_info = tk.Frame(notebook, background=emis_background)
+notebook.add(tab_service_info, text=tr("tab_service_info"))
+service_info_card = ttk.Frame(tab_service_info, padding=(22, 16), style="Emis.Card.TFrame")
+service_info_card.pack(pady=20)
+service_info_heading = ttk.Label(service_info_card, text=tr("tab_service_info"), style="Emis.Heading.TLabel")
+service_info_heading.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 8))
+service_info_captions = {}
+service_info_values = {}
+for row, (field, key) in enumerate((
+    ("firmware_version", "lbl_technical_firmware"),
+    ("firmware_build_date", "lbl_firmware_build_date"),
+), start=1):
+    caption = ttk.Label(service_info_card, text=tr(key), foreground="#53645F")
+    caption.grid(row=row, column=0, sticky="w", padx=(0, 14), pady=4)
+    value = ttk.Label(service_info_card, text="—", font=("Consolas", 11), foreground=emis_text, width=-13)
+    value.grid(row=row, column=1, sticky="w", pady=4)
+    service_info_captions[field] = caption
+    service_info_values[field] = value
 
 tariff_panel = ttk.Frame(tab_tariff, padding=(24, 18), style="Emis.Card.TFrame")
 tariff_panel.pack(pady=(28, 0))
