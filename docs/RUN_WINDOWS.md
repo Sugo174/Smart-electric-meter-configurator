@@ -24,9 +24,9 @@ Python installation is not required for packaged builds.
    The Windows 10/11 build requires the `_internal` folder.
 4. Connect the RS-485 adapter to the computer and the meter.
 5. Run the application executable.
-6. Select the meter configuration: single-channel or dual-channel.
-7. Select the adapter's COM port and click Connect.
-8. After connecting, check the device information and readings.
+6. Select the adapter's COM port and click **Connect**.
+7. If automatic detection fails, select **Single-channel** or **Dual-channel** when prompted.
+8. After connecting, check the meter information and readings. The status bar shows the serial number and software version when available.
 
 Before connecting, release the selected COM port in other applications.
 Detected ports remain visible in the list even when they are busy.

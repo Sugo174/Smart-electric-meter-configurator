@@ -2,6 +2,22 @@
 
 All notable changes to the Smart Meter Configurator will be documented in this file.
 
+## [V1.14] - 2026-11-26
+
+### Added
+
+- Automatic detection of single-channel and dual-channel SKVT EMIS-ELECTRA 977 meters, with manual selection when detection fails.
+- Meter serial number and software version in the connection status area, plus the serial number in the window title.
+- A Service Info tab showing the technical firmware version and build date.
+- Encrypted `.emis` export from Device Settings. The internal EMIS edition can open these files, save them as PDF, and emulate a connected meter offline.
+
+### Changed
+
+- Tariff schedule validation now runs as you type and blocks saving when start times are out of order.
+- The interface remains responsive while Modbus communication settings are applied.
+- Updated the layout of Meter Information, Live Readings, and Device Settings, and refreshed menu icons and dialogs.
+- Updated built-in help in Russian, English, and Simplified Chinese.
+
 ## [V1.13] - 2026-11-25
 
 ### Added

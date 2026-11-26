@@ -96,6 +96,8 @@ The application can automatically detect:
 - Device address
 - Baud rate
 - Parity settings
+
+The app also identifies single-channel and dual-channel SKVT EMIS-ELECTRA 977 meters when connecting. If automatic detection fails, it prompts you to select the configuration manually. The status bar shows the meter serial number and software version after connection.
  
 This allows engineers to establish communication with a meter without prior knowledge of its current communication parameters, significantly reducing commissioning time and setup complexity.
  
@@ -157,10 +159,16 @@ The application can read, edit, validate, and write daily tariff schedules direc
 - Supports from 1 to 14 tariff periods
 - Supports tariff numbers from 1 to 4
 - Requires the first period to start at `00:00`
-- Validates strictly increasing start times before writing
+- Checks start times as you edit and enables writing only when they are strictly increasing
 - Reads the schedule back from the meter after a successful write
 
 The meter stores 14 schedule records. When fewer periods are configured, the application automatically repeats the final period to fill the required register block.
+
+### Service Information and Meter Snapshots
+
+- The Service Info tab shows the technical firmware version and build date.
+- Device Settings can save an encrypted `.emis` snapshot of the connected meter.
+- The internal EMIS edition can open snapshots, export their contents to PDF, and use them to connect a virtual meter without a COM port.
 
 ### Update Checks
 
@@ -223,7 +231,7 @@ Designed for easy extension with additional languages.
 ### User Experience
  
 - Modern desktop UI
-- Visual meter type selection
+- Automatic meter type detection with a visual manual chooser as a fallback
 - Optimized commissioning workflow
 - Simplified navigation for field use
  

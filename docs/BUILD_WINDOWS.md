@@ -104,15 +104,16 @@ package requires its `_internal` directory.
 2. Add a changelog entry describing the changes.
 3. Run tests in both Python environments.
 4. Run `build_release.py` for all three Windows targets.
-5. Extract both generated ZIP archives into separate test folders.
+5. Extract all three generated ZIP archives into separate test folders.
 6. Verify application startup, icons, and communication with a meter.
 7. Check the Windows 7 package on Windows 7.
 8. Commit and push the source and documentation changes.
 9. Create a GitHub Release from the intended commit.
    Use `v` followed by `APP_VERSION` as the tag.
-10. Attach both generated ZIP archives from `releases/`.
+10. Attach all three standard ZIP archives from `releases/`.
+    Packages named `EMIS-Internal` are for internal distribution only.
 11. Publish a regular release and mark it as the latest release.
-12. Verify both downloads and update detection
+12. Verify all three downloads and update detection
     from the previous application version.
 
 The build recipes have permanent filenames.
